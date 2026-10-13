@@ -1,0 +1,11 @@
+# Runtime data, credentials and compiled artifacts
+.finanzas-runtime/
+.finanzas-data/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+backend/.venv/

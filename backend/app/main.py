@@ -1,19 +1,25 @@
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
+import os
 from typing import Literal
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from .auth import current_database, init_auth_db, PrivateAppMiddleware, router as auth_router
 from pydantic import BaseModel, Field
 
-DB = Path(__file__).resolve().parents[1] / 'finanzas.db'
+DB = Path(os.environ.get('FINANZAS_DB_PATH', str(Path(__file__).resolve().parents[1] / 'finanzas.db')))
 
+@contextmanager
 def connection():
-    db = sqlite3.connect(DB)
+    db = sqlite3.connect(current_database.get() or DB, timeout=15)
     db.row_factory = sqlite3.Row
     db.execute('PRAGMA foreign_keys = ON')
-    return db
+    try:
+        with db:
+            yield db
+    finally:
+        db.close()
 
 def init_db():
     with connection() as db:
@@ -42,8 +48,7 @@ def init_db():
             db.executemany('INSERT INTO accounts(name,kind,balance_cents) VALUES (?,?,?)',
                 [('Mi banco','bank',0),('Mi efectivo','cash',0)])
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def init_finance_db():
     init_db()
     init_cards()
     init_extra()
@@ -57,11 +62,22 @@ async def lifespan(app: FastAPI):
             scheduled_id INTEGER PRIMARY KEY REFERENCES scheduled_payments(id),
             event_id TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS gmail_imports (
+            gmail_id TEXT PRIMARY KEY,
+            movement_id INTEGER NOT NULL UNIQUE REFERENCES movements(id)
+        );
         """)
+    path = current_database.get() or DB
+    path.chmod(0o600)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_auth_db()
     yield
 
 app = FastAPI(title='FinanzasApp API', lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=['http://localhost:5173','http://127.0.0.1:5173'], allow_credentials=False, allow_methods=['*'], allow_headers=['*'])
+app.add_middleware(PrivateAppMiddleware)
+app.include_router(auth_router)
 
 class AccountIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
@@ -78,6 +94,8 @@ class MovementIn(BaseModel):
     classification: Literal['fijo','variable'] | None = None
     category: str | None = None
     frequency: str | None = None
+    recurring_due_date: str | None = None
+    gmail_id: str | None = Field(default=None, min_length=1, max_length=300)
 
 @app.get('/health')
 def health(): return {'status':'ok'}
@@ -112,6 +130,16 @@ def add_movement(m: MovementIn):
     with connection() as db:
         try:
             db.execute('BEGIN IMMEDIATE')
+            if m.gmail_id:
+                imported = db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=?', (m.gmail_id,)).fetchone()
+                if imported:
+                    return {'id': imported['movement_id'], 'message': 'Este correo ya está registrado', 'already_imported': True}
+            if m.recurring_due_date:
+                from datetime import date
+                try: date.fromisoformat(m.recurring_due_date)
+                except ValueError: raise HTTPException(400, 'Fecha de próximo pago inválida')
+                if m.kind != 'expense' or m.classification != 'fijo' or m.frequency not in ('mensual', 'semanal', 'anual'):
+                    raise HTTPException(400, 'El recordatorio requiere un gasto fijo y una frecuencia válida')
             account = db.execute('SELECT * FROM accounts WHERE id=?', (m.account_id,)).fetchone()
             if not account: raise HTTPException(404, 'Cuenta de origen no encontrada')
             dest = None
@@ -134,8 +162,16 @@ def add_movement(m: MovementIn):
                 db.execute('UPDATE accounts SET balance_cents=balance_cents+? WHERE id=?',(m.amount_cents,m.destination_id))
             cursor = db.execute('''INSERT INTO movements(kind,amount_cents,concept,account_id,destination_id,fee_cents,frequency,classification,category,created_at)
                 VALUES (?,?,?,?,?,?,?,?,?,?)''',(m.kind,m.amount_cents,m.concept,m.account_id,m.destination_id,m.fee_cents,m.frequency,m.classification,m.category,datetime.now(timezone.utc).isoformat()))
+            scheduled_id = None
+            if m.recurring_due_date:
+                plan = db.execute('INSERT INTO scheduled_payments(name,amount_cents,due_date,frequency,account_id,category,created_at) VALUES(?,?,?,?,?,?,?)',
+                    (m.concept, m.amount_cents, m.recurring_due_date, {'mensual':'monthly','semanal':'weekly','anual':'yearly'}[m.frequency], m.account_id, m.category or 'Otros', datetime.now(timezone.utc).isoformat()))
+                scheduled_id = plan.lastrowid
+            if m.gmail_id:
+                db.execute('INSERT INTO gmail_imports(gmail_id,movement_id) VALUES(?,?)', (m.gmail_id, cursor.lastrowid))
+                db.execute("INSERT INTO gmail_reviews(gmail_id,status) VALUES(?,'reviewed') ON CONFLICT(gmail_id) DO UPDATE SET status='reviewed'", (m.gmail_id,))
             db.commit()
-            return {'id':cursor.lastrowid,'message':'Registrado'}
+            return {'id':cursor.lastrowid,'message':'Registrado','scheduled_id':scheduled_id}
         except Exception:
             db.rollback()
             raise
@@ -365,3 +401,13 @@ def export_csv(year:int | None=None):
 # Import al final para evitar dependencias circulares al registrar el router.
 from .google_routes import router as google_router
 app.include_router(google_router)
+
+# One production origin: compiled frontend and authenticated /api routes.
+from fastapi.staticfiles import StaticFiles
+static_dir = Path(os.environ.get('FINANZAS_STATIC_DIR', str(Path(__file__).resolve().parents[2] / 'frontend/dist')))
+if static_dir.is_dir():
+    app.mount('/', StaticFiles(directory=static_dir, html=True), name='frontend')
+else:
+    @app.get('/')
+    def missing_frontend():
+        raise HTTPException(503, 'Compila el frontend con el script de instalación antes de iniciar la app')

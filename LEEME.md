@@ -1,48 +1,40 @@
-# FinanzasApp Web V4 — proyecto completo
+# FinanzasApp
 
-Web React + TypeScript + Vite; backend FastAPI + SQLite. **No incluye dependencias instaladas ni datos personales anteriores**.
+Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Organizada en Inicio, Mi dinero, Pagos, Reportes y Conexiones, con diseño móvil y acceso desde Safari.
 
-## Iniciar en Windows
+## Ejecutar en tu computadora y entrar desde iPhone
 
-En terminal 1, desde `backend`:
+Sigue [la guía de acceso con Safari y túnel gratuito](docs/ACCESO_IPHONE.md). Incluye instalación, usuarios, Cloudflare temporal, Tailscale Funnel para dirección estable, Google OAuth y respaldo cifrado.
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
-```
-
-En terminal 2, desde `frontend`:
+Windows, desde la carpeta del proyecto:
 
 ```powershell
-npm install
-npm run dev
+py -3 scripts/manage.py install
+py -3 scripts/manage.py user-add miusuario
+py -3 scripts/manage.py serve
 ```
 
-Visita http://localhost:5173 y API http://localhost:8000/docs.
+Para acceso por Internet, detén `serve`, instala cloudflared y ejecuta `py -3 scripts/manage.py tunnel`. En macOS/Linux usa `bash scripts/finanzas.sh` con los mismos argumentos. También hay un adaptador [PowerShell](scripts/finanzas.ps1).
 
-## SQLite
+La computadora debe permanecer encendida. La web y la API compiladas se sirven juntas; no se publica Vite. Cada usuario tiene sus datos y su sesión Google. No hay registro público; los usuarios se crean desde la terminal. Un túnel no sustituye las credenciales OAuth: debes configurarlas y autorizar el callback HTTPS exacto en Google Cloud.
 
-Se crea `backend/finanzas.db` automáticamente al arrancar por primera vez. El archivo `backend/esquema_adicional.sql` documenta tablas de integración y puede ejecutarse en SQLite; **no necesitas importarlo** porque FastAPI las crea automáticamente. Antes de reemplazar una instalación anterior, cierra FastAPI y respalda el archivo `backend/finanzas.db`. Copia tu base anterior si quieres preservar registros (no se incluye en este ZIP).
+## Funciones
 
-## Google (desactivado hasta configurar OAuth)
+- Registrar ingresos, gastos y retiros, con saldos por cuenta y tarjetas.
+- Guardar gastos fijos y próximos pagos; crear recordatorios recurrentes en Calendar.
+- Revisar comprobantes de Gmail, confirmar importe y cuenta y registrar un gasto una sola vez por buzón e ID.
+- Metas de ahorro informativas, reportes por categoría y exportación CSV.
+- Inicio de sesión, sesiones con cookie HttpOnly y CSRF, datos aislados, tokens Google cifrados y respaldo cifrado.
+- Manifest e iconos para Añadir a pantalla de inicio en Safari. Requiere conexión; no ofrece finanzas sin conexión.
 
-1. Crea proyecto en Google Cloud y habilita Gmail API y Google Calendar API.
-2. Configura pantalla de consentimiento; agrega tu correo a usuarios de prueba.
-3. Crea cliente OAuth **Web** con URL de redirección `http://localhost:8000/google/callback`.
-4. Dentro de la terminal PowerShell del backend, antes de arrancar el servidor:
+Los recordatorios no realizan pagos; los aportes a metas solo reflejan progreso y no trasladan fondos. Gmail busca cada minuto mientras Inicio o Conexiones estén visibles; no envía notificaciones push. Desconectar elimina los tokens locales; puedes revocar permisos desde tu cuenta Google.
+
+## Desarrollo y comprobaciones
 
 ```powershell
-$env:GOOGLE_CLIENT_ID="CLIENT_ID_DE_GOOGLE"
-$env:GOOGLE_CLIENT_SECRET="CLIENT_SECRET_DE_GOOGLE"
+py -3 scripts/manage.py test
 ```
 
-5. Inicia FastAPI y en `Conexiones` pulsa `Conectar Google`.
+`install` prepara copias Linux/Windows/macOS en `.finanzas-runtime`, instala Python y ejecuta `npm ci` y la compilación. Tras editar fuentes, detén los procesos y ejecuta `install` otra vez antes de iniciar. Las pruebas usan bases temporales y APIs Google simuladas; la conexión real necesita credenciales y consentimiento.
 
-**Importante**: OAuth de Gmail con `gmail.readonly` tiene alcance restringido; para distribuirlo públicamente puede requerirse verificación y otros controles. Esta implementación es **prototipo local monousuario**, con credenciales solo en memoria. No exponer servidor a internet. `Desconectar` borra la sesión local; revoca también el permiso desde tu cuenta Google cuando corresponda.
-
-Gmail presenta candidatos y permite descartar/marcar revisado (persistido en SQLite), **pero no los convierte todavía a movimientos**. Calendar permite crear o actualizar un recordatorio por pago programado, persistiendo `event_id` para evitar duplicados de la propia app. En este prototipo crea eventos puntuales, aún no reglas recurrentes. Los recordatorios **no confirman cargos bancarios**.
-
-## Desarrollo futuro
-
-Autenticación de usuarios, OAuth por sesión y tokens cifrados, revisión y registro desde Gmail con deduplicación, periodicidad en Calendar, pruebas frontend y políticas de privacidad.
+Los datos personales viven fuera del checkout; consulta las ubicaciones en la guía. El SQLite, `node_modules` y el venv Windows originalmente versionados se conservan. No se importan registros anteriores de forma automática. Los scripts originales de desarrollo sin autenticación han quedado sustituidos por el arranque con usuarios.

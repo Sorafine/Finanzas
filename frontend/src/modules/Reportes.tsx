@@ -1,6 +1,189 @@
-import {useEffect,useState} from 'react';
-import {req,money} from '../shared/api';
-type Report={year:number;totals:{income_cents:number;expense_cents:number;net_cents:number;transactions:number};monthly:{month:string;income_cents:number;expense_cents:number;transactions:number}[];categories:{category:string;amount_cents:number;transactions:number}[];accounts:{id:number;name:string;kind:string;balance_cents:number;transaction_count:number}[]};
-export default function Reportes(){const [year,setYear]=useState(new Date().getFullYear());const [data,setData]=useState<Report|null>(null);const [error,setError]=useState('');useEffect(()=>{req<Report>(`/reports/overview?year=${year}`).then(setData).catch(e=>setError(e.message))},[year]);
-const months=Array.from({length:12},(_,i)=>`${year}-${String(i+1).padStart(2,'0')}`);const rows=months.map(m=>data?.monthly.find(x=>x.month===m)??{month:m,income_cents:0,expense_cents:0,transactions:0});const max=Math.max(1,...rows.flatMap(r=>[r.income_cents,r.expense_cents]));const catTotal=data?.categories.reduce((n,c)=>n+c.amount_cents,0)||1;
-return <div className="reports-module"><div className="section-head"><h2>Reportes financieros</h2><label>Año <select value={year} onChange={e=>setYear(Number(e.target.value))}>{Array.from({length:6},(_,i)=>new Date().getFullYear()-i).map(y=><option key={y}>{y}</option>)}</select></label></div><p className="muted">Tus indicadores se calculan directamente desde SQLite. Los retiros no cuentan como gasto, salvo la comisión.</p>{error&&<div className="error">{error}</div>}{data&&<><section className="report-kpis"><div className="stat"><small>Ingresos</small><strong>{money(data.totals.income_cents)}</strong></div><div className="stat"><small>Gastos</small><strong>{money(data.totals.expense_cents)}</strong></div><div className="stat"><small>Balance del periodo</small><strong>{money(data.totals.net_cents)}</strong></div><div className="stat"><small>Operaciones</small><strong>{data.totals.transactions}</strong></div></section><section className="panel"><h2>Ingresos y gastos mensuales</h2><div className="report-bars">{rows.map(r=><div className="report-month" key={r.month}><div className="bar-pair"><div title={`Ingresos ${money(r.income_cents)}`} className="bar income" style={{height:`${100*r.income_cents/max}%`}}/><div title={`Gastos ${money(r.expense_cents)}`} className="bar expense" style={{height:`${100*r.expense_cents/max}%`}}/></div><small>{r.month.slice(5)}</small></div>)}</div><div className="report-legend"><span>● Ingresos</span><span>● Gastos</span></div></section><section className="panel"><h2>Gastos por categoría</h2>{data.categories.length?data.categories.map(c=><div className="category-row" key={c.category}><div><strong>{c.category}</strong><span>{money(c.amount_cents)} · {c.transactions} mov.</span></div><div className="progress"><i style={{width:`${100*c.amount_cents/catTotal}%`}}/></div></div>):<p className="muted">Aún no hay gastos registrados para este año.</p>}</section><section className="panel"><h2>Saldos por cuenta</h2>{data.accounts.map(a=><div className="movement" key={a.id}><div className="grow"><strong>{a.name}</strong><small>{a.transaction_count} movimientos relacionados</small></div><b>{money(a.balance_cents)}</b></div>)}</section><a className="report-download" href={`/api/reports/export.csv?year=${year}`} download>↓ Exportar movimientos a CSV (Excel)</a><p className="hint">La exportación refleja movimientos del año seleccionado. El saldo de cuentas es el saldo actual, no histórico.</p></>}</div>}
+import { useEffect, useState } from "react";
+import { req, money } from "../shared/api";
+type Report = {
+  year: number;
+  totals: {
+    income_cents: number;
+    expense_cents: number;
+    net_cents: number;
+    transactions: number;
+  };
+  monthly: {
+    month: string;
+    income_cents: number;
+    expense_cents: number;
+    transactions: number;
+  }[];
+  categories: {
+    category: string;
+    amount_cents: number;
+    transactions: number;
+  }[];
+  accounts: {
+    id: number;
+    name: string;
+    kind: string;
+    balance_cents: number;
+    transaction_count: number;
+  }[];
+};
+export default function Reportes() {
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [data, setData] = useState<Report | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    setError("");
+    setData(null);
+    req<Report>(`/reports/overview?year=${year}`)
+      .then((value) => {
+        if (active) setData(value);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [year]);
+  const months = Array.from(
+    { length: 12 },
+    (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`,
+  );
+  const rows = months.map(
+    (m) =>
+      data?.monthly.find((x) => x.month === m) ?? {
+        month: m,
+        income_cents: 0,
+        expense_cents: 0,
+        transactions: 0,
+      },
+  );
+  const max = Math.max(
+    1,
+    ...rows.flatMap((r) => [r.income_cents, r.expense_cents]),
+  );
+  const catTotal =
+    data?.categories.reduce((n, c) => n + c.amount_cents, 0) || 1;
+  return (
+    <div className="reports-module">
+      <div className="section-head">
+        <h2>Reportes financieros</h2>
+        <label>
+          Año{" "}
+          <select
+            value={year}
+            onChange={(e) => setYear(Number(e.target.value))}
+          >
+            {Array.from(
+              { length: 6 },
+              (_, i) => new Date().getFullYear() - i,
+            ).map((y) => (
+              <option key={y}>{y}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="muted">
+        Descubre en qué se va tu dinero y cuánto has ahorrado. Retirar efectivo
+        no cuenta como gasto; su comisión sí.
+      </p>
+      {error && <div className="error">{error}</div>}
+      {data && (
+        <>
+          <section className="report-kpis">
+            <div className="stat">
+              <small>Ingresos</small>
+              <strong>{money(data.totals.income_cents)}</strong>
+            </div>
+            <div className="stat">
+              <small>Gastos</small>
+              <strong>{money(data.totals.expense_cents)}</strong>
+            </div>
+            <div className="stat">
+              <small>Balance del periodo</small>
+              <strong>{money(data.totals.net_cents)}</strong>
+            </div>
+            <div className="stat">
+              <small>Operaciones</small>
+              <strong>{data.totals.transactions}</strong>
+            </div>
+          </section>
+          <section className="panel">
+            <h2>Ingresos y gastos mensuales</h2>
+            <div className="report-bars">
+              {rows.map((r) => (
+                <div className="report-month" key={r.month}>
+                  <div className="bar-pair">
+                    <div
+                      title={`Ingresos ${money(r.income_cents)}`}
+                      className="bar income"
+                      style={{ height: `${(100 * r.income_cents) / max}%` }}
+                    />
+                    <div
+                      title={`Gastos ${money(r.expense_cents)}`}
+                      className="bar expense"
+                      style={{ height: `${(100 * r.expense_cents) / max}%` }}
+                    />
+                  </div>
+                  <small>{r.month.slice(5)}</small>
+                </div>
+              ))}
+            </div>
+            <div className="report-legend">
+              <span>● Ingresos</span>
+              <span>● Gastos</span>
+            </div>
+          </section>
+          <section className="panel">
+            <h2>Gastos por categoría</h2>
+            {data.categories.length ? (
+              data.categories.map((c) => (
+                <div className="category-row" key={c.category}>
+                  <div>
+                    <strong>{c.category}</strong>
+                    <span>
+                      {money(c.amount_cents)} · {c.transactions} mov.
+                    </span>
+                  </div>
+                  <div className="progress">
+                    <i
+                      style={{ width: `${(100 * c.amount_cents) / catTotal}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="muted">
+                Aún no hay gastos registrados para este año.
+              </p>
+            )}
+          </section>
+          <section className="panel">
+            <h2>Saldos por cuenta</h2>
+            {data.accounts.map((a) => (
+              <div className="movement" key={a.id}>
+                <div className="grow">
+                  <strong>{a.name}</strong>
+                  <small>{a.transaction_count} movimientos relacionados</small>
+                </div>
+                <b>{money(a.balance_cents)}</b>
+              </div>
+            ))}
+          </section>
+          <a
+            className="report-download"
+            href={`/api/reports/export.csv?year=${year}`}
+            download
+          >
+            ↓ Exportar movimientos a CSV (Excel)
+          </a>
+          <p className="hint">
+            La exportación refleja movimientos del año seleccionado. El saldo de
+            cuentas es el saldo actual, no histórico.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
