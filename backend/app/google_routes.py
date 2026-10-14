@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from .main import connection, MovementIn, add_movement
-from .auth import identity, registry, cipher, google_token, save_google_token, PUBLIC_URL
+from .auth import identity, registry, cipher, google_token, save_google_token, PUBLIC_URL, setting_enabled
 
 router = APIRouter(prefix='/google', tags=['Google'])
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/calendar.events']
@@ -63,7 +63,7 @@ def credentials():
 def status():
     info = google_token()
     return {'configured': bool(os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET')),
-        'connected': info is not None, 'mode': 'private_users'}
+        'connected': info is not None, 'enabled':setting_enabled('google_enabled'), 'mode': 'private_users'}
 
 
 @router.get('/connect')

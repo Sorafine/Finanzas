@@ -1246,3 +1246,69 @@ header > div {
     font-size: 16px;
   }
 }
+.admin-module {
+  display: grid;
+  gap: 18px;
+}
+.admin-setting,
+.admin-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid #e5edf1;
+}
+.admin-setting p {
+  font-size: 13px;
+  color: #526c78;
+}
+.admin-user:last-child {
+  border-bottom: 0;
+}
+.admin-user .connection-actions {
+  margin: 0;
+}
+.callback-address {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  padding: 12px;
+  background: #edf5f8;
+  border-radius: 10px;
+}
+.report-shortcut {
+  margin-top: 16px;
+  min-height: 44px;
+}
+.register-switch {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  color: #166c88;
+  text-decoration: underline;
+  margin-top: 18px;
+  padding: 10px;
+}
+.admin-module .panel h2 {
+  margin-top: 0;
+}
+@media (max-width: 600px) {
+  .admin-setting,
+  .admin-user {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .admin-user .connection-actions {
+    width: 100%;
+  }
+  .admin-module .panel {
+    min-width: 0;
+  }
+  .callback-address {
+    font-size: 12px;
+  }
+  .sidebar nav button {
+    padding: 10px 17px;
+  }
+}

@@ -11,7 +11,7 @@ Descarga el proyecto y abre una terminal en la carpeta `Finanzas`. Estos comando
 ```powershell
 py -3 scripts/manage.py install
 py -3 scripts/manage.py user-add miusuario
-py -3 scripts/manage.py user-add amiga
+py -3 scripts/manage.py admin-grant miusuario
 ```
 
 En macOS/Linux:
@@ -19,10 +19,10 @@ En macOS/Linux:
 ```bash
 bash scripts/finanzas.sh install
 bash scripts/finanzas.sh user-add miusuario
-bash scripts/finanzas.sh user-add amiga
+bash scripts/finanzas.sh admin-grant miusuario
 ```
 
-Repite `user-add` para cada persona. La contraseña se pide en la terminal, sin mostrarla; usa al menos 12 caracteres y una distinta por persona. No hay registro público. El administrador puede restablecer una contraseña con `password-reset miusuario`, que cierra sus sesiones anteriores.
+El comando `admin-grant` asigna la administración solo a tu usuario existente. No se elige al primer visitante ni se concede este permiso al registrarse. Solo se permite una cuenta administradora. Si ya tenías usuarios antes de actualizar, sus perfiles se conservan y debes ejecutar `admin-grant TU_USUARIO` una vez. Tras iniciar el servidor, las demás personas pueden pulsar **Crear cuenta** en la pantalla de entrada; tendrán perfiles vacíos y sus propias conexiones Google. Puedes seguir creando cuentas desde la terminal con `user-add`. La contraseña usa al menos 12 caracteres. El administrador puede restablecer una contraseña con `password-reset miusuario`, que cierra sus sesiones anteriores.
 
 Para comprobar la aplicación localmente:
 
@@ -86,7 +86,7 @@ El Client Secret se pide sin mostrarlo. Reinicia el túnel y conecta Google desd
 
 En modo de prueba, Google puede limitar la duración de los permisos y pedir reconectar. Para distribuir una app con Gmail fuera de las personas de prueba puede requerirse verificación de Google. La conexión real solo se considera validada después de completar consentimiento, revisar un correo y crear un evento en la cuenta autorizada.
 
-Inicio y Conexiones buscan comprobantes de consumos realizados en soles cada minuto mientras están visibles. El filtro revisa el cuerpo del mensaje, exige evidencia de una operación realizada e importe y excluye promociones, ofertas de empleo, regalos, transferencias, retiros y recordatorios. Es conservador: los correos ambiguos o sin importe detectable no se proponen. Cada gasto requiere confirmación. Los correos se distinguen por buzón e ID para no duplicarlos. Calendar crea series mensuales/semanales/anuales; los recordatorios no efectúan pagos. Desconectar Google borra los tokens locales, pero no borra eventos ya creados ni revoca por sí solo los permisos en Google.
+Inicio y Revisar gastos buscan comprobantes de consumos realizados en soles cada minuto mientras están visibles. El filtro revisa el cuerpo del mensaje, exige evidencia de una operación realizada e importe y excluye promociones, ofertas de empleo, regalos, transferencias, retiros y recordatorios. Es conservador: los correos ambiguos o sin importe detectable no se proponen. Cada gasto requiere confirmación. Los correos se distinguen por buzón e ID para no duplicarlos. Calendar crea series mensuales/semanales/anuales; los recordatorios no efectúan pagos. Desconectar Google borra los tokens locales, pero no borra eventos ya creados ni revoca por sí solo los permisos en Google.
 
 ## 6. Respaldo, actualización y datos
 
@@ -116,3 +116,11 @@ Puedes cambiarla con `FINANZAS_DATA_DIR`. Protege la cuenta de la computadora y 
 ## Qué se ha comprobado
 
 Instalación y compilación en Linux, pruebas de aislamiento de datos, cookies/CSRF, caducidad y cierre de sesión, cifrado de tokens y respaldo/restauración. Las integraciones Google usan simulaciones durante las pruebas automatizadas. Windows/macOS y un iPhone físico requieren comprobarse en esos equipos. La activación real de los túneles requiere el cliente y la cuenta/red del propietario; preparar los scripts no publica la aplicación ni establece un túnel en su computadora.
+
+## Administración y revisión de Gmail
+
+La cuenta administradora ve **Administración** en la navegación de escritorio y dentro de Conexiones en móvil. Puede habilitar o pausar el registro web y el servicio Google, ver el estado de los usuarios, pausar/reactivar accesos y retirar una conexión Google. El panel no muestra contraseñas, tokens ni los gastos de otras personas. Pausar un usuario invalida sus sesiones y conserva sus datos; la cuenta administradora no se puede pausar desde el panel. Un segundo `admin-grant` para otra persona se rechaza.
+
+**Conexiones** permite a cada persona conectar o desconectar su propia cuenta Google. **Revisar gastos** tiene los comprobantes, la confirmación de importe/cuenta y la opción de descartar. El aviso de Inicio lleva a esa pantalla. La revisión requiere una cuenta Google conectada y el servicio habilitado; no registra consumos automáticamente.
+
+Crear una cuenta en FinanzasApp no añade su Gmail a los usuarios de prueba de Google. Mientras OAuth esté en modo de prueba, agrega en Google Cloud el correo que cada persona usará al conectar. Para ampliar el acceso fuera de esos usuarios, Google puede requerir verificación y otros cambios en su consentimiento.

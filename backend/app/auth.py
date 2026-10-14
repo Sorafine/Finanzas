@@ -16,7 +16,7 @@ from urllib.parse import urlsplit
 from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 DATA_DIR = Path(os.environ.get('FINANZAS_DATA_DIR', str(Path.home() / '.local/share/finanzasapp')))
 PUBLIC_URL = os.environ.get('FINANZAS_PUBLIC_URL', '').rstrip('/')
@@ -30,6 +30,7 @@ class Identity:
     username: str
     session_hash: str
     csrf_token: str
+    is_admin: bool = False
 
 
 current_identity: ContextVar[Identity | None] = ContextVar('finanzas_identity', default=None)
@@ -81,7 +82,16 @@ def init_auth_db():
             state_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id),
             session_hash TEXT NOT NULL, verifier TEXT NOT NULL, expires_at INTEGER NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS app_settings (
+            name TEXT PRIMARY KEY, value TEXT NOT NULL
+        );
         ''')
+        columns = {r['name'] for r in db.execute('PRAGMA table_info(users)')}
+        if 'is_admin' not in columns:
+            db.execute('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0')
+        if 'is_active' not in columns:
+            db.execute('ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1')
+        db.execute('CREATE UNIQUE INDEX IF NOT EXISTS one_administrator ON users(is_admin) WHERE is_admin=1')
         db.execute('DELETE FROM sessions WHERE expires_at <= ?', (int(time.time()),))
         db.execute('DELETE FROM oauth_states WHERE expires_at <= ?', (int(time.time()),))
     key_path = DATA_DIR / 'token.key'
@@ -125,17 +135,64 @@ def normalize_username(username):
     return name
 
 
-def create_user(username, password):
+def setting_enabled(name, default=True):
+    with registry() as db:
+        row = db.execute('SELECT value FROM app_settings WHERE name=?', (name,)).fetchone()
+    return row['value'] == '1' if row else default
+
+
+def registration_enabled():
+    with registry() as db:
+        return bool(db.execute('SELECT 1 FROM users WHERE is_admin=1 AND is_active=1').fetchone()) and setting_enabled('registration_enabled')
+
+
+def create_user(username, password, self_service=False):
     name = normalize_username(username)
     if not 12 <= len(password) <= 128:
         raise ValueError('Usa una contraseña de 12 a 128 caracteres')
     user_id = secrets.token_hex(16)
+    encoded = password_hash(password)
+    path = user_database(user_id)
     with registry() as db:
+        db.execute('BEGIN IMMEDIATE')
+        if self_service:
+            owner = db.execute('SELECT 1 FROM users WHERE is_admin=1 AND is_active=1').fetchone()
+            enabled = db.execute("SELECT value FROM app_settings WHERE name='registration_enabled'").fetchone()
+            if not owner or (enabled and enabled['value'] != '1'):
+                raise HTTPException(403, 'El administrador ha pausado la creación de cuentas')
         try:
-            db.execute('INSERT INTO users VALUES(?,?,?,?)', (user_id, name, password_hash(password), int(time.time())))
+            db.execute('INSERT INTO users(id,username,password_hash,created_at) VALUES(?,?,?,?)', (user_id, name, encoded, int(time.time())))
         except sqlite3.IntegrityError:
             raise ValueError('Ese usuario ya existe') from None
+        if path.exists(): raise RuntimeError('No se puede sobrescribir un perfil existente')
+        context = current_database.set(path)
+        try:
+            from .main import init_finance_db
+            init_finance_db()
+        except Exception:
+            if path.exists(): path.unlink()
+            raise
+        finally:
+            current_database.reset(context)
     return user_id
+
+
+def grant_admin(username):
+    name = normalize_username(username)
+    with registry() as db:
+        db.execute('BEGIN IMMEDIATE')
+        user = db.execute('SELECT * FROM users WHERE username=?', (name,)).fetchone()
+        if not user: raise ValueError('Crea ese usuario antes de asignar la administración')
+        owner = db.execute('SELECT id FROM users WHERE is_admin=1').fetchone()
+        if owner and owner['id'] != user['id']:
+            raise ValueError('Ya hay un administrador. No se concede ese permiso a otra cuenta.')
+        db.execute('UPDATE users SET is_admin=1,is_active=1 WHERE id=?', (user['id'],))
+
+
+def administrator():
+    user = identity()
+    if not user.is_admin: raise HTTPException(403, 'Este apartado es solo para el administrador')
+    return user
 
 
 def identity():
@@ -150,9 +207,9 @@ def session_from_cookie(token):
         return None
     digest = hashlib.sha256(token.encode()).hexdigest()
     with registry() as db:
-        row = db.execute('''SELECT s.*,u.username FROM sessions s JOIN users u ON u.id=s.user_id
-            WHERE s.token_hash=? AND s.expires_at>?''', (digest, int(time.time()))).fetchone()
-    return Identity(row['user_id'], row['username'], digest, row['csrf_token']) if row else None
+        row = db.execute('''SELECT s.*,u.username,u.is_admin FROM sessions s JOIN users u ON u.id=s.user_id
+            WHERE s.token_hash=? AND s.expires_at>? AND u.is_active=1''', (digest, int(time.time()))).fetchone()
+    return Identity(row['user_id'], row['username'], digest, row['csrf_token'], bool(row['is_admin'])) if row else None
 
 
 def google_token():
@@ -184,6 +241,53 @@ class LoginIn(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
+class RegisterIn(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    username: str = Field(min_length=3, max_length=64)
+    password: str = Field(min_length=12, max_length=128)
+
+
+def session_response(user_id):
+    token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
+    with registry() as db:
+        user = db.execute('SELECT * FROM users WHERE id=? AND is_active=1', (user_id,)).fetchone()
+        if not user: raise HTTPException(401, 'Esta cuenta no está activa')
+        db.execute('INSERT INTO sessions VALUES(?,?,?,?)', (hashlib.sha256(token.encode()).hexdigest(), user_id, csrf, int(time.time())+SESSION_SECONDS))
+    response = JSONResponse({'username':user['username'], 'csrf_token':csrf, 'is_admin':bool(user['is_admin'])})
+    response.set_cookie(COOKIE, token, httponly=True, secure=bool(PUBLIC_URL), samesite='lax', max_age=SESSION_SECONDS, path='/')
+    return response
+
+
+@router.get('/options')
+def registration_options():
+    return {'registration_enabled':registration_enabled()}
+
+
+@router.post('/register', status_code=201)
+def register(payload:RegisterIn, request:Request):
+    if not registration_enabled():
+        raise HTTPException(403, 'El administrador ha pausado la creación de cuentas')
+    now = int(time.time())
+    peer = request.client.host if request.client else 'unknown'
+    with registry() as db:
+        db.execute('BEGIN IMMEDIATE')
+        bucket = 'signup:' + peer
+        attempt = db.execute('SELECT * FROM login_attempts WHERE bucket=?', (bucket,)).fetchone()
+        if attempt and attempt['resets_at']>now and attempt['count']>=12:
+            raise HTTPException(429, 'Demasiados registros. Vuelve a intentarlo en unos minutos')
+        if attempt and attempt['resets_at']>now:
+            db.execute('UPDATE login_attempts SET count=count+1 WHERE bucket=?', (bucket,))
+        else:
+            db.execute('INSERT OR REPLACE INTO login_attempts VALUES(?,1,?)', (bucket,now+900))
+    try:
+        user_id = create_user(payload.username, payload.password, self_service=True)
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from None
+    response = session_response(user_id)
+    response.status_code = 201
+    return response
+
+
 @router.post('/login')
 def login(payload: LoginIn, request: Request):
     name = payload.username.strip().lower()
@@ -205,22 +309,18 @@ def login(payload: LoginIn, request: Request):
     # Same expensive computation for nonexistent names avoids a timing shortcut.
     dummy = 'scrypt$' + '00'*16 + '$' + '00'*32
     valid = password_matches(payload.password, user['password_hash'] if user else dummy)
-    if not user or not valid:
+    if not user or not valid or not user['is_active']:
         return JSONResponse({'detail': 'Usuario o contraseña incorrectos'}, status_code=401)
-    token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     with registry() as db:
         db.execute('DELETE FROM login_attempts WHERE bucket=?', (f'user:{name}',))
         db.execute('DELETE FROM sessions WHERE expires_at<=?', (now,))
-        db.execute('INSERT INTO sessions VALUES(?,?,?,?)', (hashlib.sha256(token.encode()).hexdigest(), user['id'], csrf, now+SESSION_SECONDS))
-    response = JSONResponse({'username': user['username'], 'csrf_token': csrf})
-    response.set_cookie(COOKIE, token, httponly=True, secure=bool(PUBLIC_URL), samesite='lax', max_age=SESSION_SECONDS, path='/')
-    return response
+    return session_response(user['id'])
 
 
 @router.get('/me')
 def me():
     user = identity()
-    return {'username': user.username, 'csrf_token': user.csrf_token}
+    return {'username': user.username, 'csrf_token': user.csrf_token, 'is_admin':user.is_admin}
 
 
 @router.post('/logout')
@@ -252,7 +352,7 @@ class PrivateAppMiddleware:
         path = scope['path']
         request = Request(scope)
         public_files = ('/', '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon.ico')
-        public = path in ('/auth/login', '/health') or (not is_api and (path in public_files or path.startswith('/assets/')))
+        public = path in ('/auth/login', '/auth/register', '/auth/options', '/health') or (not is_api and (path in public_files or path.startswith('/assets/')))
         expected_host = urlsplit(PUBLIC_URL).hostname
         host = urlsplit('http://' + request.headers.get('host', '')).hostname
         if host not in {'localhost', '127.0.0.1', 'testserver', expected_host}:
@@ -273,6 +373,9 @@ class PrivateAppMiddleware:
             if not hmac.compare_digest(request.headers.get('x-csrf-token',''), user.csrf_token):
                 await JSONResponse({'detail':'Tu sesión necesita actualizarse. Vuelve a entrar.'}, status_code=403)(scope, receive, send)
                 return
+        if user and path.startswith('/google/') and path not in ('/google/status','/google/disconnect') and not setting_enabled('google_enabled'):
+            await JSONResponse({'detail':'El administrador ha pausado las conexiones de Google'}, status_code=503)(scope, receive, send)
+            return
         identity_token = current_identity.set(user)
         db_token = current_database.set(user_database(user.user_id) if user else None)
         async def safe_send(message):

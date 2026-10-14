@@ -12,10 +12,12 @@ export default function GmailNotice({ onOpen }: { onOpen: () => void }) {
       if (running || document.hidden) return;
       running = true;
       try {
-        const status = await req<{ connected: boolean }>("/google/status");
+        const status = await req<{ connected: boolean; enabled?: boolean }>(
+          "/google/status",
+        );
         if (!active) return;
-        setConnected(status.connected);
-        if (status.connected) {
+        setConnected(status.connected && status.enabled !== false);
+        if (status.connected && status.enabled !== false) {
           const data = await req<{ suggestions: unknown[] }>(
             "/google/gmail/suggestions",
           );
@@ -59,7 +61,7 @@ export default function GmailNotice({ onOpen }: { onOpen: () => void }) {
         </small>
       </div>
       <button className="secondary" onClick={onOpen}>
-        {count ? "Actualizar" : "Ver conexión"}
+        {count ? "Revisar gastos" : "Abrir revisión"}
       </button>
     </section>
   );

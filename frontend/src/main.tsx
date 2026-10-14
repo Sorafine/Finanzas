@@ -1,3 +1,5 @@
+import RevisionGastos from "./modules/RevisionGastos";
+import Administracion from "./modules/Administracion";
 import AuthGate from "./shared/AuthGate";
 import GmailNotice from "./modules/GmailNotice";
 import Reportes from "./modules/Reportes";
@@ -17,6 +19,8 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Banknote,
+  Mail,
+  Settings,
 } from "lucide-react";
 import "./styles.css";
 
@@ -58,9 +62,11 @@ const concepts: Record<string, string[]> = {
 function App({
   username,
   onLogout,
+  isAdmin,
 }: {
   username: string;
   onLogout: () => void;
+  isAdmin: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [due, setDue] = useState("");
@@ -184,8 +190,10 @@ function App({
     { name: "Mi dinero", icon: Wallet },
     { name: "Pagos", icon: CalendarDays },
     { name: "Reportes", icon: BarChart3 },
+    { name: "Revisar gastos", icon: Mail },
     { name: "Conexiones", icon: RefreshCw },
   ];
+  if (isAdmin) menus.push({ name: "Administración", icon: Settings });
   const kindText = (k: string) =>
     k === "income" ? "Ingreso" : k === "expense" ? "Gasto" : "Retiro";
   return (
@@ -301,7 +309,13 @@ function App({
                 <strong>{money(summary.expense_cents)}</strong>
               </article>
             </section>
-            <GmailNotice onOpen={() => setView("Conexiones")} />
+            <GmailNotice onOpen={() => setView("Revisar gastos")} />
+            <button
+              className="link report-shortcut"
+              onClick={() => setView("Reportes")}
+            >
+              Ver mis reportes
+            </button>
             <div className="section-head">
               <h2>Últimos movimientos</h2>
               <button className="link" onClick={() => setView("Registrar")}>
@@ -553,22 +567,36 @@ function App({
         ) : view === "Pagos" ? (
           <Planes accounts={accounts} />
         ) : view === "Conexiones" ? (
-          <Conexiones accounts={accounts} reload={load} />
+          <Conexiones
+            onReview={() => setView("Revisar gastos")}
+            onAdmin={() => setView("Administración")}
+            isAdmin={isAdmin}
+          />
+        ) : view === "Revisar gastos" ? (
+          <RevisionGastos
+            accounts={accounts}
+            reload={load}
+            onConnect={() => setView("Conexiones")}
+          />
+        ) : view === "Administración" && isAdmin ? (
+          <Administracion />
         ) : (
           <Reportes />
         )}
       </main>
       <div className="mobile-nav">
-        {menus.map((m) => (
-          <button
-            key={m.name}
-            className={view === m.name ? "active" : ""}
-            onClick={() => setView(m.name)}
-          >
-            <m.icon size={20} />
-            <small>{m.name}</small>
-          </button>
-        ))}
+        {menus
+          .filter((m) => m.name !== "Reportes" && m.name !== "Administración")
+          .map((m) => (
+            <button
+              key={m.name}
+              className={view === m.name ? "active" : ""}
+              onClick={() => setView(m.name)}
+            >
+              <m.icon size={20} />
+              <small>{m.name}</small>
+            </button>
+          ))}
       </div>
     </div>
   );
@@ -577,8 +605,13 @@ function App({
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthGate>
-      {(username, logout) => (
-        <App key={username} username={username} onLogout={logout} />
+      {(username, logout, isAdmin) => (
+        <App
+          key={username}
+          username={username}
+          onLogout={logout}
+          isAdmin={isAdmin}
+        />
       )}
     </AuthGate>
   </React.StrictMode>,

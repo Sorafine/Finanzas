@@ -430,7 +430,7 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
     for name in ('install','serve','configure','google-configure','check-users','test','funnel'):
         commands.add_parser(name)
-    for name in ('user-add','password-reset'):
+    for name in ('user-add','password-reset','admin-grant'):
         commands.add_parser(name).add_argument('username')
     tunneling = commands.add_parser('tunnel')
     tunneling.add_argument('--name', help='Nombre de un túnel Cloudflare ya configurado; omitir para enlace gratuito temporal')
@@ -446,6 +446,7 @@ def main():
         return
     port = environment()
     actions = {
+        'admin-grant': lambda: (auth_module().grant_admin(args.username), print('Administración asignada. Vuelve a entrar en la app.')),
         'user-add': lambda: add_user(args.username), 'password-reset': lambda: reset_password(args.username),
         'configure': configure, 'google-configure': lambda: configure(True), 'serve': lambda: serve(port),
         'tunnel': lambda: tunnel(port, args.name), 'funnel': lambda: funnel(port), 'check-users': ensure_users,
@@ -455,6 +456,9 @@ def main():
 
 
 if __name__ == '__main__':
+    def terminate(signum, frame):
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGTERM, terminate)
     try:
         main()
     except KeyboardInterrupt:

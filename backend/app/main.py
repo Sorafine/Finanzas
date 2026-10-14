@@ -78,6 +78,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title='FinanzasApp API', lifespan=lifespan)
 app.add_middleware(PrivateAppMiddleware)
 app.include_router(auth_router)
+from .admin_routes import router as admin_router
+app.include_router(admin_router)
 
 class AccountIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)

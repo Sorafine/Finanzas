@@ -2,18 +2,25 @@ import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { Wallet, LockKeyhole } from "lucide-react";
 import { req } from "./api";
 import { setCsrfToken } from "./session";
-type Session = { username: string; csrf_token: string };
+type Session = { username: string; csrf_token: string; is_admin: boolean };
 export default function AuthGate({
   children,
 }: {
-  children: (username: string, logout: () => void) => ReactNode;
+  children: (
+    username: string,
+    logout: () => void,
+    isAdmin: boolean,
+  ) => ReactNode;
 }) {
   const [user, setUser] = useState<Session | null>(null),
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [username, setUsername] = useState(""),
     [password, setPassword] = useState(""),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [registering, setRegistering] = useState(false),
+    [registrationEnabled, setRegistrationEnabled] = useState(false),
+    [confirmation, setConfirmation] = useState("");
   useEffect(() => {
     let active = true;
     const expired = () => {
@@ -22,6 +29,11 @@ export default function AuthGate({
       setPassword("");
     };
     window.addEventListener("finanzas-session-expired", expired);
+    req<{ registration_enabled: boolean }>("/auth/options")
+      .then((options) => {
+        if (active) setRegistrationEnabled(options.registration_enabled);
+      })
+      .catch(() => {});
     req<Session>("/auth/me")
       .then((session) => {
         if (active) {
@@ -44,12 +56,19 @@ export default function AuthGate({
     setBusy(true);
     setError("");
     try {
-      const session = await req<Session>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ username, password }),
-      });
+      if (registering && password !== confirmation)
+        throw new Error("Las contraseñas no coinciden");
+      const session = await req<Session>(
+        registering ? "/auth/register" : "/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+        },
+      );
       setCsrfToken(session.csrf_token);
       setPassword("");
+      setConfirmation("");
+      setRegistering(false);
       setUser(session);
     } catch (e) {
       setError((e as Error).message);
@@ -86,7 +105,7 @@ export default function AuthGate({
             {error}
           </div>
         )}
-        {children(user.username, () => void logout())}
+        {children(user.username, () => void logout(), user.is_admin === true)}
       </>
     );
   return (
@@ -98,7 +117,7 @@ export default function AuthGate({
             finanzas<span>app</span>
           </strong>
         </div>
-        <h1>Tu dinero, a tu ritmo</h1>
+        <h1>{registering ? "Crea tu espacio" : "Tu dinero, a tu ritmo"}</h1>
         <p className="muted">
           Entra a tu espacio para ver tus gastos, ahorrar y recordar tus pagos.
         </p>
@@ -120,7 +139,8 @@ export default function AuthGate({
             <input
               required
               type="password"
-              autoComplete="current-password"
+              autoComplete={registering ? "new-password" : "current-password"}
+              minLength={registering ? 12 : 1}
               maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -131,17 +151,52 @@ export default function AuthGate({
               {error}
             </p>
           )}
+          {registering && (
+            <>
+              <p className="hint">
+                Usa al menos 12 caracteres. El usuario admite letras, números,
+                punto, @, guion y guion bajo.
+              </p>
+              <label>
+                Repite la contraseña
+                <input
+                  required
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={12}
+                  maxLength={128}
+                  value={confirmation}
+                  onChange={(e) => setConfirmation(e.target.value)}
+                />
+              </label>
+            </>
+          )}
           <button className="primary" disabled={busy}>
-            {busy ? "Entrando…" : "Entrar"}
+            {busy ? "Guardando…" : registering ? "Crear mi cuenta" : "Entrar"}
           </button>
         </form>
         <p className="hint">
           <LockKeyhole size={15} /> Tus datos y tu cuenta Google son personales.
         </p>
-        <p className="hint">
-          ¿No tienes acceso? Pídele un usuario a la persona que administra la
-          app.
-        </p>
+        {registrationEnabled ? (
+          <button
+            type="button"
+            className="register-switch"
+            disabled={busy}
+            onClick={() => {
+              setRegistering((value) => !value);
+              setError("");
+              setPassword("");
+              setConfirmation("");
+            }}
+          >
+            {registering ? "Ya tengo cuenta: entrar" : "Crear cuenta"}
+          </button>
+        ) : (
+          <p className="hint">
+            El registro de cuentas está pausado. Pide acceso al administrador.
+          </p>
+        )}
       </section>
     </main>
   );
