@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Target, Plus } from "lucide-react";
+import { goalIcons } from "../shared/FinanceUI";
+import GmailNotice from "./GmailNotice";
 import { req, money, cents, dateLabel } from "../shared/api";
 import Modal from "../shared/Modal";
 type Goal = {
@@ -8,8 +10,23 @@ type Goal = {
   target_cents: number;
   saved_cents: number;
   target_date: string | null;
+  icon: string;
 };
-export default function Metas() {
+export default function Metas({
+  username,
+  isAdmin,
+  onReview,
+  onConnect,
+  onAdmin,
+  onLogout,
+}: {
+  username: string;
+  isAdmin: boolean;
+  onReview: () => void;
+  onConnect: () => void;
+  onAdmin: () => void;
+  onLogout: () => void;
+}) {
   const [goals, setGoals] = useState<Goal[]>([]),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -21,6 +38,7 @@ export default function Metas() {
     [amount, setAmount] = useState(""),
     [due, setDue] = useState(""),
     [formError, setFormError] = useState("");
+  const [icon, setIcon] = useState("travel");
   const refresh = async () => setGoals(await req<Goal[]>("/goals"));
   useEffect(() => {
     void refresh()
@@ -46,6 +64,7 @@ export default function Metas() {
             name: name.trim(),
             target_cents: cents(amount),
             target_date: due || null,
+            icon,
           }),
         });
         setNotice("Meta creada.");
@@ -63,11 +82,8 @@ export default function Metas() {
     }
   }
   return (
-    <div className="stack">
-      <div className="page-actions">
-        <p className="muted">
-          Tus objetivos de ahorro, separados de los pagos.
-        </p>
+    <div className="stack metas-reference">
+      <div className="page-actions align-end">
         <button
           className="primary"
           onClick={() => {
@@ -92,11 +108,22 @@ export default function Metas() {
       <div className="account-grid">
         {goals.map((g) => (
           <article className="panel" key={g.id}>
-            <h2>{g.name}</h2>
-            <strong>
-              {money(g.saved_cents)}{" "}
-              <span className="muted">de {money(g.target_cents)}</span>
-            </strong>
+            <div className="goal-title">
+              <span className="goal-symbol">
+                {(() => {
+                  const Icon =
+                    goalIcons.find((i) => i.id === g.icon)?.icon || Target;
+                  return <Icon size={23} />;
+                })()}
+              </span>
+              <h2>{g.name}</h2>
+            </div>
+            <p className="hint">
+              Faltan {money(Math.max(0, g.target_cents - g.saved_cents))}
+              {g.target_date
+                ? ` · meta ${dateLabel(g.target_date)}`
+                : " · Sin fecha límite"}
+            </p>
             <div
               className="progress"
               role="progressbar"
@@ -115,13 +142,12 @@ export default function Metas() {
                 }}
               />
             </div>
-            <p className="hint">
-              {g.target_date
-                ? `Objetivo: ${dateLabel(g.target_date)}`
-                : "Sin fecha límite"}
-            </p>
+            <div className="goal-amounts">
+              <strong>{money(g.saved_cents)}</strong>
+              <small>de {money(g.target_cents)}</small>
+            </div>
             <button
-              className="secondary"
+              className="link goal-update"
               onClick={() => {
                 setSelected(g);
                 setAmount("");
@@ -157,6 +183,71 @@ export default function Metas() {
         El progreso es informativo: no aparta dinero ni descuenta el saldo de
         tus cuentas.
       </p>
+      <section className="panel goal-icon-intro">
+        <h2>Nueva meta · elige un icono</h2>
+        <p className="muted">
+          Toca el que mejor represente lo que quieres lograr
+        </p>
+        <div className="goal-icon-grid">
+          {goalIcons.map((i) => (
+            <button
+              type="button"
+              key={i.id}
+              onClick={() => {
+                setIcon(i.id);
+                setCreate(true);
+                setAmount("");
+                setFormError("");
+              }}
+            >
+              <span>
+                <i.icon size={24} />
+              </span>
+              <small>{i.name}</small>
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="panel more-settings">
+        <GmailNotice onOpen={onReview} />
+        <div className="settings-line">
+          <div>
+            <strong>Cuenta de Google</strong>
+            <small>Gestiona tu conexión de Gmail y Calendar</small>
+          </div>
+          <button className="secondary" onClick={onConnect}>
+            Gestionar
+          </button>
+        </div>
+        {isAdmin && (
+          <div className="settings-line">
+            <div>
+              <strong>Usuarios y permisos</strong>
+              <small>Solo visible para administradores</small>
+            </div>
+            <button className="secondary" onClick={onAdmin}>
+              Abrir
+            </button>
+          </div>
+        )}
+        <div className="settings-line">
+          <div>
+            <strong>Cerrar sesión</strong>
+            <small>{username}</small>
+          </div>
+          <button className="secondary" onClick={onLogout}>
+            Salir
+          </button>
+        </div>
+        <button
+          className="link mobile-reports-link"
+          onClick={() => {
+            location.hash = "reportes";
+          }}
+        >
+          Ver reportes
+        </button>
+      </section>
       {(create || selected) && (
         <Modal
           title={selected ? "Actualizar progreso" : "Nueva meta de ahorro"}
@@ -202,6 +293,24 @@ export default function Metas() {
                 onChange={(e) => setAmount(e.target.value)}
               />
             </label>
+            {!selected && (
+              <div className="goal-icon-grid compact">
+                {goalIcons.map((i) => (
+                  <button
+                    type="button"
+                    key={i.id}
+                    aria-pressed={icon === i.id}
+                    className={icon === i.id ? "selected" : ""}
+                    onClick={() => setIcon(i.id)}
+                  >
+                    <span>
+                      <i.icon size={21} />
+                    </span>
+                    <small>{i.name}</small>
+                  </button>
+                ))}
+              </div>
+            )}
             {!selected && (
               <label>
                 Fecha objetivo (opcional)

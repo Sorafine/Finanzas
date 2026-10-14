@@ -9,9 +9,11 @@ import {
   dateLabel,
   localToday,
   frequencyLabel,
+  dueLabel,
 } from "../shared/api";
 import Modal from "../shared/Modal";
 import Historial from "./Historial";
+import { DateBadge } from "../shared/FinanceUI";
 type Plan = Scheduled & { completed?: number };
 export default function Planes({
   accounts,
@@ -38,7 +40,8 @@ export default function Planes({
     [sync, setSync] = useState(false),
     [formError, setFormError] = useState("");
   const [paidAmount, setPaidAmount] = useState(""),
-    [paidAccount, setPaidAccount] = useState("");
+    [paidAccount, setPaidAccount] = useState(""),
+    [paidOn, setPaidOn] = useState(localToday());
   async function refresh() {
     setPlans(await req<Plan[]>("/scheduled"));
   }
@@ -70,6 +73,7 @@ export default function Planes({
     setPaidAmount(String(p.amount_cents / 100));
     setPaidAccount(String(p.account_id));
     setFormError("");
+    setPaidOn(localToday());
   }
   async function confirmPay() {
     if (!pay) return;
@@ -82,6 +86,7 @@ export default function Planes({
         due_date: pay.due_date,
         account_id: Number(paidAccount),
         amount_cents: cents(paidAmount),
+        paid_on: paidOn,
       }),
     });
     let text = result.already_paid
@@ -134,8 +139,12 @@ export default function Planes({
   const pending = plans.filter((p) => p.active),
     paused = plans.filter((p) => !p.active && !p.completed);
   const visible = tab === "paused" ? paused : pending;
+  const committed = pending
+    .filter((p) => p.due_date <= localToday().slice(0, 7) + "-31")
+    .reduce((n, p) => n + p.amount_cents, 0);
+  const selectedAccount = accounts.find((a) => String(a.id) === paidAccount);
   return (
-    <div className="stack">
+    <div className={"stack plans-reference " + (pay ? "with-confirm" : "")}>
       <div className="page-actions">
         <div className="segmented" aria-label="Estado de pagos">
           <button
@@ -197,25 +206,41 @@ export default function Planes({
       ) : (
         <>
           {tab === "pending" && pending.length > 0 && (
-            <div className="payment-overview">
-              <CalendarDays size={24} />
-              <div className="grow">
+            <div className="payment-metrics panel">
+              <div>
+                <small>Comprometido este mes</small>
+                <strong>{money(committed)}</strong>
+              </div>
+              <div>
+                <small>Vencidos</small>
                 <strong>
-                  {money(pending.reduce((n, p) => n + p.amount_cents, 0))} en
-                  próximos vencimientos
+                  {pending.filter((p) => p.due_date < localToday()).length}
                 </strong>
-                <small>
-                  {pending.filter((p) => p.due_date < localToday()).length}{" "}
-                  vencidos · Cada pago se registra cuando confirmas que lo
-                  hiciste.
-                </small>
+              </div>
+              <div>
+                <small>Tu saldo cubre</small>
+                <strong>
+                  {accounts.reduce((n, a) => n + a.balance_cents, 0) >=
+                  committed
+                    ? "Todo"
+                    : `Faltan ${money(committed - accounts.reduce((n, a) => n + a.balance_cents, 0))}`}
+                </strong>
               </div>
             </div>
           )}
+          <small className="upcoming-caption">
+            PAGOS PROGRAMADOS · próximos y vencidos
+          </small>
           <section className="panel payment-list">
             {visible.length ? (
               visible.map((p) => (
-                <article className="payment-entry" key={p.id}>
+                <article
+                  className={
+                    "payment-entry " + (pay?.id === p.id ? "selected" : "")
+                  }
+                  key={p.id}
+                >
+                  <DateBadge day={p.due_date} />
                   <div className="payment-info">
                     <span
                       className={
@@ -237,7 +262,7 @@ export default function Planes({
                     </span>
                     <h3>{p.name}</h3>
                     <p>
-                      {dateLabel(p.due_date)} · {frequencyLabel[p.frequency]}
+                      {frequencyLabel[p.frequency]} · {dueLabel(p.due_date)}
                     </p>
                     <small>
                       {accounts.find((a) => a.id === p.account_id)?.name ||
@@ -458,15 +483,14 @@ export default function Planes({
       )}
       {pay && (
         <Modal
-          title="Confirmar pago realizado"
+          title="Confirmar pago"
+          variant="payment"
           onClose={() => {
             if (!busy) setPay(null);
           }}
         >
-          <h3>{pay.name}</h3>
-          <p className="muted">
-            Vencimiento: {dateLabel(pay.due_date)}. Confirma solo si ya lo
-            pagaste.
+          <p className="pay-summary">
+            {pay.name} · vence {dateLabel(pay.due_date)}
           </p>
           <form
             className="form"
@@ -481,7 +505,7 @@ export default function Planes({
               </div>
             )}
             <label>
-              Importe pagado (S/)
+              Monto real (S/)
               <input
                 required
                 type="number"
@@ -492,36 +516,66 @@ export default function Planes({
                 onChange={(e) => setPaidAmount(e.target.value)}
               />
             </label>
-            <label>
-              ¿De qué cuenta salió?
-              <select
-                required
-                aria-label="¿De qué cuenta salió?"
-                value={paidAccount}
-                onChange={(e) => setPaidAccount(e.target.value)}
-              >
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name} · {money(a.balance_cents)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="hint">
-              Se descontará este importe de la cuenta y se guardará un gasto. La
-              app no envía dinero ni realiza el pago por ti.
-            </p>
+            <div className="pay-account-date">
+              <label>
+                Cuenta
+                <select
+                  required
+                  aria-label="¿De qué cuenta salió?"
+                  value={paidAccount}
+                  onChange={(e) => setPaidAccount(e.target.value)}
+                >
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Fecha del pago
+                <input
+                  required
+                  type="date"
+                  max={localToday()}
+                  value={paidOn}
+                  onChange={(e) => setPaidOn(e.target.value)}
+                />
+              </label>
+            </div>
+            <div className="payment-balance-preview" role="status">
+              {selectedAccount && (
+                <>
+                  Saldo de {selectedAccount.name}:{" "}
+                  {money(selectedAccount.balance_cents)} →{" "}
+                  <b>
+                    {money(
+                      selectedAccount.balance_cents -
+                        (Number.isFinite(cents(paidAmount))
+                          ? cents(paidAmount)
+                          : 0),
+                    )}
+                  </b>
+                  <br />
+                </>
+              )}
+              Se creará el gasto
+              {pay.next_due_date
+                ? ` y el próximo pago (${dateLabel(pay.next_due_date)})`
+                : " y este pago quedará completado"}
+              .
+            </div>
             <div className="modal-actions">
               <button
                 type="button"
-                className="secondary"
+                className="link"
                 disabled={busy}
                 onClick={() => setPay(null)}
               >
                 Cancelar
               </button>
               <button className="primary" disabled={busy}>
-                {busy ? "Registrando…" : "Confirmar y registrar pago"}
+                {busy ? "Registrando…" : "Confirmar"}
               </button>
             </div>
           </form>

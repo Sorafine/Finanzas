@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager, contextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 import sqlite3
 import os
@@ -110,6 +110,7 @@ class MovementIn(BaseModel):
     frequency: str | None = None
     recurring_due_date: str | None = None
     gmail_id: str | None = Field(default=None, min_length=1, max_length=300)
+    occurred_on: date | None = None
 
 @app.get('/health')
 def health(): return {'status':'ok'}
@@ -155,6 +156,8 @@ def add_movement(m: MovementIn):
     with connection() as db:
         try:
             db.execute('BEGIN IMMEDIATE')
+            from .finance_dates import financial_timestamp
+            occurred_at = financial_timestamp(m.occurred_on)
             if m.gmail_id:
                 imported = db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=?', (m.gmail_id,)).fetchone()
                 if imported:
@@ -186,7 +189,7 @@ def add_movement(m: MovementIn):
             if dest:
                 db.execute('UPDATE accounts SET balance_cents=balance_cents+? WHERE id=?',(m.amount_cents,m.destination_id))
             cursor = db.execute('''INSERT INTO movements(kind,amount_cents,concept,account_id,destination_id,fee_cents,frequency,classification,category,created_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?)''',(m.kind,m.amount_cents,m.concept,m.account_id,m.destination_id,m.fee_cents,m.frequency,m.classification,m.category,datetime.now(timezone.utc).isoformat()))
+                VALUES (?,?,?,?,?,?,?,?,?,?)''',(m.kind,m.amount_cents,m.concept,m.account_id,m.destination_id,m.fee_cents,m.frequency,m.classification,m.category,occurred_at))
             scheduled_id = None
             if m.recurring_due_date:
                 plan = db.execute('INSERT INTO scheduled_payments(name,amount_cents,due_date,frequency,account_id,category,created_at) VALUES(?,?,?,?,?,?,?)',
@@ -328,7 +331,14 @@ def init_extra():
             movement_id INTEGER NOT NULL UNIQUE REFERENCES movements(id),
             UNIQUE(scheduled_id,due_date)
         );
+        CREATE TABLE IF NOT EXISTS account_transfers (
+            movement_id INTEGER PRIMARY KEY REFERENCES movements(id),
+            request_id TEXT NOT NULL UNIQUE
+        );
         ''')
+        db.execute('BEGIN IMMEDIATE')
+        if 'icon' not in {r['name'] for r in db.execute('PRAGMA table_info(savings_goals)')}:
+            db.execute("ALTER TABLE savings_goals ADD COLUMN icon TEXT NOT NULL DEFAULT 'other'")
 
 class ScheduledIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
@@ -342,6 +352,7 @@ class GoalIn(BaseModel):
     name: str = Field(min_length=1,max_length=120)
     target_cents: int = Field(gt=0)
     target_date: date | None = None
+    icon: Literal['travel','home','car','study','emergency','phone','gift','other'] = 'other'
 
 class GoalContribution(BaseModel):
     amount_cents: int = Field(gt=0)
@@ -349,9 +360,17 @@ class GoalContribution(BaseModel):
 @app.get('/scheduled')
 def get_scheduled():
     with connection() as db:
-        return [dict(r) for r in db.execute('''SELECT s.*,
+        rows = [dict(r) for r in db.execute('''SELECT s.*,
             EXISTS(SELECT 1 FROM payment_receipts p WHERE p.scheduled_id=s.id AND s.frequency='once') AS completed
             FROM scheduled_payments s ORDER BY active DESC,due_date,id''')]
+        from .history_routes import next_due
+        for row in rows:
+            first = db.execute('SELECT MIN(due_date) FROM payment_receipts WHERE scheduled_id=?',(row['id'],)).fetchone()[0]
+            try:
+                following = next_due(date.fromisoformat(row['due_date']),row['frequency'],date.fromisoformat(first or row['due_date']))
+                row['next_due_date'] = following.isoformat() if following else None
+            except (ValueError,OverflowError): row['next_due_date'] = None
+        return rows
 
 @app.post('/scheduled',status_code=201)
 def add_scheduled(item:ScheduledIn):
@@ -380,8 +399,8 @@ def get_goals():
 @app.post('/goals',status_code=201)
 def add_goal(goal:GoalIn):
     with connection() as db:
-        c=db.execute('INSERT INTO savings_goals(name,target_cents,target_date,created_at) VALUES(?,?,?,?)',
-            (goal.name.strip(),goal.target_cents,goal.target_date.isoformat() if goal.target_date else None,datetime.now(timezone.utc).isoformat()))
+        c=db.execute('INSERT INTO savings_goals(name,target_cents,target_date,created_at,icon) VALUES(?,?,?,?,?)',
+            (goal.name.strip(),goal.target_cents,goal.target_date.isoformat() if goal.target_date else None,datetime.now(timezone.utc).isoformat(),goal.icon))
         return dict(db.execute('SELECT * FROM savings_goals WHERE id=?',(c.lastrowid,)).fetchone())
 
 @app.post('/goals/{goal_id}/contribute')
@@ -446,6 +465,8 @@ from .history_routes import router as history_router
 app.include_router(history_router)
 from .card_reports import router as card_reports_router
 app.include_router(card_reports_router)
+from .design_routes import router as design_router
+app.include_router(design_router)
 
 # One production origin: compiled frontend and authenticated /api routes.
 from fastapi.staticfiles import StaticFiles

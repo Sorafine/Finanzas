@@ -128,7 +128,7 @@ Crear una cuenta en FinanzasApp no añade su Gmail a los usuarios de prueba de G
 
 ## Navegación y pagos realizados
 
-La barra principal tiene Inicio, Mi dinero, Pagos, Historial y Más, igual en escritorio y móvil. Gmail, metas, reportes, conexiones y administración están dentro de Más.
+En escritorio el menú contiene Inicio, Mi dinero, Pagos, Historial, Reportes y Metas y más. En móvil la barra inferior agrupa Reportes y las opciones de Google/administración dentro de Más. El botón + Nuevo abre el formulario lateral adaptado a la pantalla.
 
 Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago** guarda el vencimiento; cuando hayas pagado, **Ya pagué → Confirmar y registrar pago** descuenta el importe de la cuenta seleccionada y lo guarda en **Pagos → Pagados** y en **Historial**. Un pago mensual avanza al mes siguiente conservando su día habitual (los días 29–31 se ajustan al último día cuando sea necesario). Un pago único queda completado.
 
@@ -142,3 +142,14 @@ Al actualizar, detén la app, ejecuta `git pull --ff-only origin codex/iphone-sc
 En **Mi dinero → Agregar tarjeta**, escribe el nombre de la tarjeta (por ejemplo, BCP Visa clásica), elige crédito o débito y guarda los últimos cuatro dígitos. La vista previa reconoce BCP, BBVA, Interbank, Scotiabank, Falabella y Ripley por el nombre de la tarjeta o de su cuenta; puedes cambiar el banco manualmente. Si no reconoce la entidad, muestra una ilustración genérica. Las ilustraciones se cargan desde la propia app y funcionan sin pedir imágenes a servicios externos.
 
 **Ver informe** muestra deuda/límite/disponible de crédito y las próximas fechas de cierre/pago según los datos que registres. En débito muestra el saldo de la cuenta. El mes y año seleccionados filtran gastos, ingresos, categorías y movimientos de la cuenta vinculada. Si dos tarjetas usan la misma cuenta, el informe muestra la misma actividad de esa cuenta; la app no identifica automáticamente cuál se usó ni actualiza por sí sola la deuda del crédito.
+
+
+## Transferencias, fechas y exportación
+
+En **+ Nuevo → Transferir** elige origen, destino e importe. Puedes mover efectivo al banco, retirar hacia efectivo o transferir entre cuentas y billeteras. El importe se conserva entre las dos cuentas; solo una comisión reduce el saldo total y cuenta como gasto. El registro de la transferencia es idempotente ante reintentos de la misma operación.
+
+**Hoy / Ayer** y el selector de fecha guardan el movimiento en el día elegido de Perú. No se permiten gastos/ingresos futuros; usa Pagos para programarlos. El saldo actual cambia al guardar, incluso si el movimiento se fecha ayer.
+
+**Libre para gastar** reserva los pagos activos cuyo próximo vencimiento cae hasta el fin de mes, incluidos vencidos. No descuenta metas informativas ni deudas de tarjetas no programadas como pago. Puede ser negativo si los compromisos superan el saldo.
+
+En **Historial**, los filtros rápidos y la búsqueda también se aplican a **Exportar**. El CSV incluye toda la selección, con fecha de Perú, cuenta, destino, categoría, importe y comisión. **Reportes** compara los últimos 3, 6 o 12 meses, incluidos cambios de año; el margen del mes es ingresos menos gastos y comisiones, no un aporte automático a una meta.

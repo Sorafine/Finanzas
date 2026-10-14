@@ -1,105 +1,147 @@
 import { useState } from "react";
-import { Account, req, money, cents, localToday } from "../shared/api";
+import {
+  Account,
+  req,
+  money,
+  cents,
+  localToday,
+  dateShift,
+} from "../shared/api";
+import { expenseCategories } from "../shared/FinanceUI";
+type Kind = "expense" | "income" | "transfer";
 export default function Registrar({
   accounts,
   initialKind,
+  initialAccount = "",
+  initialDestination = "",
   onSaved,
   onCancel,
+  onBusyChange,
 }: {
   accounts: Account[];
-  initialKind: "expense" | "income" | "withdrawal";
+  initialKind: Kind;
+  initialAccount?: string;
+  initialDestination?: string;
   onSaved: (notice: string) => Promise<void>;
   onCancel: () => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [kind, setKind] = useState(initialKind),
     [amount, setAmount] = useState(""),
     [concept, setConcept] = useState(""),
     [account, setAccount] = useState(
-      String(
-        accounts.find((a) => initialKind !== "withdrawal" || a.kind !== "cash")
-          ?.id || "",
-      ),
+      initialAccount || String(accounts[0]?.id || ""),
     ),
     [destination, setDestination] = useState(
-      String(accounts.find((a) => a.kind === "cash")?.id || ""),
+      initialDestination ||
+        String(
+          accounts.find(
+            (a) => String(a.id) !== (initialAccount || String(accounts[0]?.id)),
+          )?.id || "",
+        ),
     ),
     [fee, setFee] = useState("0"),
-    [category, setCategory] = useState("Otros"),
-    [fixed, setFixed] = useState(false),
+    [category, setCategory] = useState("Comida"),
+    [categoryTouched, setCategoryTouched] = useState(false),
+    [day, setDay] = useState(localToday()),
+    [repeat, setRepeat] = useState(false),
     [due, setDue] = useState(""),
-    [frequency, setFrequency] = useState("mensual"),
     [calendar, setCalendar] = useState(false),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  const categories = [
-    "Otros",
-    "Comida",
-    "Transporte",
-    "Compras",
-    "Salidas",
-    "Salud",
-    "Vivienda",
-    "Servicios",
-    "Internet",
-    "Suscripciones",
-    "Educación",
-  ];
-  const source = accounts.filter(
-    (a) => kind !== "withdrawal" || a.kind !== "cash",
-  );
-  function changeKind(value: typeof kind) {
-    setKind(value);
-    setFixed(false);
+    [error, setError] = useState(""),
+    [requestId] = useState(() => crypto.randomUUID());
+  const source = accounts.find((a) => String(a.id) === account),
+    target = accounts.find((a) => String(a.id) === destination),
+    value = cents(amount),
+    charge = Number.isFinite(value) ? value : 0,
+    feeValue =
+      kind === "transfer" && Number.isFinite(cents(fee)) ? cents(fee) : 0,
+    remaining =
+      (source?.balance_cents || 0) +
+      (kind === "income" ? charge : -charge - feeValue);
+  function suggest(text: string) {
+    setConcept(text);
+    if (categoryTouched) return;
+    const match: [RegExp, string][] = [
+      [/almuerzo|comida|cena|desayuno|restaurante|cafe|café/i, "Comida"],
+      [/taxi|bus|pasaje|uber|movilidad/i, "Transporte"],
+      [/luz|agua|internet|telefono|teléfono/i, "Servicios"],
+      [/farmacia|medic|salud/i, "Salud"],
+      [/alquiler|renta|casa/i, "Casa"],
+      [/cine|netflix|spotify|juego/i, "Ocio"],
+    ];
+    const found = match.find(([pattern]) => pattern.test(text));
+    setCategory(found?.[1] || "Otros");
+  }
+  function changeKind(k: Kind) {
+    setKind(k);
+    setRepeat(false);
     setError("");
-    if (
-      value === "withdrawal" &&
-      accounts.find((a) => String(a.id) === account)?.kind === "cash"
-    )
-      setAccount(String(accounts.find((a) => a.kind !== "cash")?.id || ""));
   }
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
+    onBusyChange?.(true);
     setError("");
     try {
-      const value = cents(amount);
       if (!Number.isFinite(value) || value <= 0)
         throw new Error("Ingresa un importe mayor que cero.");
-      const result = await req<{ scheduled_id: number | null }>("/movements", {
-        method: "POST",
-        body: JSON.stringify({
-          kind,
-          amount_cents: value,
-          concept: concept.trim(),
-          account_id: Number(account),
-          destination_id: kind === "withdrawal" ? Number(destination) : null,
-          fee_cents: kind === "withdrawal" ? cents(fee) : 0,
-          category: kind === "expense" ? category : null,
-          classification:
-            kind === "expense" ? (fixed ? "fijo" : "variable") : null,
-          frequency: kind === "expense" && fixed ? frequency : null,
-          recurring_due_date: kind === "expense" && fixed ? due : null,
-        }),
-      });
-      let message =
-        kind === "income"
-          ? "Ingreso registrado. Tu saldo está actualizado."
-          : kind === "withdrawal"
-            ? "Retiro registrado. El dinero está en tu cuenta de efectivo."
-            : "Gasto registrado. Puedes verlo en Historial.";
-      if (result.scheduled_id) {
-        message = "Gasto registrado y siguiente vencimiento añadido a Pagos.";
-        if (calendar) {
-          try {
-            await req("/google/calendar/reminder", {
-              method: "POST",
-              body: JSON.stringify({ scheduled_id: result.scheduled_id }),
-            });
-            message += " Recordatorio añadido a Calendar.";
-          } catch {
-            message +=
-              " El recordatorio de Calendar quedó pendiente; podrás sincronizarlo desde Pagos.";
+      let message = "";
+      if (kind === "transfer") {
+        const result = await req<{ already_transferred: boolean }>(
+          "/transfers",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              account_id: Number(account),
+              destination_id: Number(destination),
+              amount_cents: value,
+              fee_cents: cents(fee),
+              concept: concept.trim() || "Transferencia entre cuentas",
+              occurred_on: day,
+              request_id: requestId,
+            }),
+          },
+        );
+        message = result.already_transferred
+          ? "Esta transferencia ya estaba registrada."
+          : "Transferencia registrada. El saldo de ambas cuentas está actualizado.";
+      } else {
+        const result = await req<{ scheduled_id: number | null }>(
+          "/movements",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              kind,
+              account_id: Number(account),
+              amount_cents: value,
+              concept: concept.trim(),
+              category: kind === "expense" ? category : null,
+              classification:
+                kind === "expense" ? (repeat ? "fijo" : "variable") : null,
+              frequency: kind === "expense" && repeat ? "mensual" : null,
+              recurring_due_date: kind === "expense" && repeat ? due : null,
+              occurred_on: day,
+            }),
+          },
+        );
+        message =
+          kind === "income"
+            ? "Ingreso guardado. Tu saldo está actualizado."
+            : "Gasto guardado. Puedes verlo en Historial.";
+        if (result.scheduled_id) {
+          message += " Próximo vencimiento añadido a Pagos.";
+          if (calendar) {
+            try {
+              await req("/google/calendar/reminder", {
+                method: "POST",
+                body: JSON.stringify({ scheduled_id: result.scheduled_id }),
+              });
+              message += " Recordatorio añadido a Calendar.";
+            } catch {
+              message += " El recordatorio de Calendar quedó pendiente.";
+            }
           }
         }
       }
@@ -108,205 +150,248 @@ export default function Registrar({
       setError((e as Error).message);
     } finally {
       setBusy(false);
+      onBusyChange?.(false);
     }
   }
   return (
-    <section className="panel form-panel">
+    <form className="movement-editor" onSubmit={save}>
       <div className="tabs" aria-label="Tipo de movimiento">
-        {(["expense", "income", "withdrawal"] as const).map((k) => (
+        {(["expense", "income", "transfer"] as const).map((k) => (
           <button
-            key={k}
             type="button"
-            disabled={busy}
+            key={k}
             className={kind === k ? "chosen" : ""}
+            disabled={busy}
             aria-pressed={kind === k}
             onClick={() => changeKind(k)}
           >
-            {{ expense: "Gasto", income: "Ingreso", withdrawal: "Retiro" }[k]}
+            {{ expense: "Gasto", income: "Ingreso", transfer: "Transferir" }[k]}
           </button>
         ))}
       </div>
-      <form className="form" onSubmit={save}>
-        {error && (
-          <div className="error" role="alert">
-            {error}
-          </div>
-        )}
-        <label>
-          Importe (S/)
+      {error && (
+        <div className="error" role="alert">
+          {error}
+        </div>
+      )}
+      <label className="big-amount">
+        <span>Importe</span>
+        <div>
+          <b>S/</b>
           <input
-            className="amount"
+            aria-label="Importe (S/)"
             required
             type="number"
             inputMode="decimal"
             min="0.01"
             step="0.01"
-            placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
           />
-        </label>
+        </div>
+      </label>
+      <input
+        className="concept-input"
+        aria-label={kind === "income" ? "Origen del ingreso" : "Concepto"}
+        required={kind !== "transfer"}
+        maxLength={150}
+        value={concept}
+        onChange={(e) => suggest(e.target.value)}
+        placeholder={
+          kind === "income"
+            ? "Sueldo, propina…"
+            : kind === "transfer"
+              ? "Transferencia entre cuentas"
+              : "¿En qué gastaste?"
+        }
+      />
+      {kind === "expense" && (
+        <div className="category-picker">
+          <small>
+            Categoría{!categoryTouched ? " · sugerida" : ""}: {category}
+          </small>
+          <div>
+            {expenseCategories.map((c) => (
+              <button
+                type="button"
+                key={c.name}
+                className={category === c.name ? "selected" : ""}
+                aria-pressed={category === c.name}
+                onClick={() => {
+                  setCategory(c.name);
+                  setCategoryTouched(true);
+                }}
+              >
+                <span>
+                  <c.icon size={23} />
+                </span>
+                <small>{c.name}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="editor-fields">
         <label>
-          {kind === "expense"
-            ? "¿En qué gastaste?"
-            : kind === "income"
-              ? "¿De dónde vino el dinero?"
-              : "Concepto"}
-          <input
-            required
-            maxLength={150}
-            placeholder={
-              kind === "expense"
-                ? "Ej. Almuerzo"
-                : kind === "income"
-                  ? "Ej. Sueldo"
-                  : "Ej. Retiro de cajero"
-            }
-            value={concept}
-            onChange={(e) => setConcept(e.target.value)}
-          />
-        </label>
-        <label>
-          {kind === "withdrawal" ? "Cuenta de origen" : "Cuenta"}
+          {kind === "transfer" ? "Desde" : "Cuenta"}
           <select
+            aria-label={kind === "transfer" ? "Cuenta de origen" : "Cuenta"}
             required
-            aria-label={kind === "withdrawal" ? "Cuenta de origen" : "Cuenta"}
             value={account}
-            onChange={(e) => setAccount(e.target.value)}
+            onChange={(e) => {
+              setAccount(e.target.value);
+              if (destination === e.target.value)
+                setDestination(
+                  String(
+                    accounts.find((a) => String(a.id) !== e.target.value)?.id ||
+                      "",
+                  ),
+                );
+            }}
           >
-            <option value="" disabled>
-              Elige una cuenta
-            </option>
-            {source.map((a) => (
+            {accounts.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} · {money(a.balance_cents)}
+                {a.name}
               </option>
             ))}
           </select>
         </label>
-        {kind === "expense" && (
-          <>
-            <label>
-              Categoría
-              <select
-                aria-label="Categoría"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                {categories.map((c) => (
-                  <option key={c}>{c}</option>
+        <label>
+          Fecha
+          <input
+            aria-label="Fecha del movimiento"
+            required
+            type="date"
+            max={localToday()}
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+          />
+          <span className="date-shortcuts">
+            <button type="button" onClick={() => setDay(localToday())}>
+              Hoy
+            </button>
+            <button
+              type="button"
+              onClick={() => setDay(dateShift(localToday(), -1))}
+            >
+              Ayer
+            </button>
+          </span>
+        </label>
+      </div>
+      {kind === "transfer" && (
+        <div className="editor-fields">
+          <label>
+            Hacia
+            <select
+              aria-label="Cuenta de destino"
+              required
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+            >
+              <option value="" disabled>
+                Elige destino
+              </option>
+              {accounts
+                .filter((a) => String(a.id) !== account)
+                .map((a) => (
+                  <option value={a.id} key={a.id}>
+                    {a.name}
+                  </option>
                 ))}
-              </select>
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={fixed}
-                onChange={(e) => setFixed(e.target.checked)}
-              />{" "}
-              Este gasto se repetirá
-            </label>
-            {fixed && (
-              <div className="subform">
-                <p className="hint">
-                  Este importe registra el gasto de hoy. El siguiente pago
-                  quedará pendiente.
-                </p>
-                <div className="field-pair">
-                  <label>
-                    Frecuencia
-                    <select
-                      aria-label="Frecuencia"
-                      value={frequency}
-                      onChange={(e) => setFrequency(e.target.value)}
-                    >
-                      <option value="mensual">Mensual</option>
-                      <option value="semanal">Semanal</option>
-                      <option value="anual">Anual</option>
-                    </select>
-                  </label>
-                  <label>
-                    Siguiente vencimiento
-                    <input
-                      required
-                      type="date"
-                      min={localToday()}
-                      value={due}
-                      onChange={(e) => setDue(e.target.value)}
-                    />
-                  </label>
-                </div>
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={calendar}
-                    onChange={(e) => setCalendar(e.target.checked)}
-                  />{" "}
-                  Añadir recordatorio a Calendar
-                </label>
-              </div>
-            )}
-          </>
-        )}
-        {kind === "withdrawal" && (
-          <>
-            <label>
-              Cuenta de efectivo
-              <select
-                required
-                aria-label="Cuenta de efectivo"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-              >
-                <option value="" disabled>
-                  Elige el destino
-                </option>
-                {accounts
-                  .filter((a) => a.kind === "cash")
-                  .map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Comisión (S/)
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="0.01"
-                required
-                value={fee}
-                onChange={(e) => setFee(e.target.value)}
-              />
-            </label>
-            <p className="hint">
-              El retiro mueve dinero a efectivo. Solo la comisión es un gasto.
-            </p>
-          </>
-        )}
-        <div className="modal-actions">
-          <button
-            type="button"
-            className="secondary"
-            disabled={busy}
-            onClick={onCancel}
-          >
-            Cancelar
-          </button>
-          <button className="primary" type="submit" disabled={busy}>
-            {busy
-              ? "Guardando…"
-              : kind === "expense"
-                ? "Guardar gasto"
-                : kind === "income"
-                  ? "Guardar ingreso"
-                  : "Guardar retiro"}
-          </button>
+            </select>
+          </label>
+          <label>
+            Comisión (S/)
+            <input
+              required
+              aria-label="Comisión (S/)"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={fee}
+              onChange={(e) => setFee(e.target.value)}
+            />
+          </label>
         </div>
-      </form>
-    </section>
+      )}
+      {kind === "expense" && (
+        <>
+          <label className="repeat-switch">
+            Se repite cada mes
+            <input
+              type="checkbox"
+              checked={repeat}
+              onChange={(e) => setRepeat(e.target.checked)}
+            />
+            <span aria-hidden="true" />
+          </label>
+          {repeat && (
+            <div className="subform form">
+              <label>
+                Siguiente vencimiento
+                <input
+                  required
+                  type="date"
+                  min={localToday()}
+                  value={due}
+                  onChange={(e) => setDue(e.target.value)}
+                />
+              </label>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={calendar}
+                  onChange={(e) => setCalendar(e.target.checked)}
+                />{" "}
+                Recordar en Calendar
+              </label>
+            </div>
+          )}
+        </>
+      )}
+      <div className="editor-footer">
+        <p role="status">
+          {charge > 0 && source
+            ? `Tras guardar, ${source.name} quedará en ${money(remaining)}`
+            : "Tu saldo se actualizará al guardar."}
+          {kind === "transfer" && charge > 0 && target ? (
+            <>
+              <br />
+              {target.name} quedará en {money(target.balance_cents + charge)}
+            </>
+          ) : null}
+        </p>
+        {remaining < 0 && (
+          <p className="overdue-text">
+            El saldo no alcanza para este movimiento.
+          </p>
+        )}
+        <button
+          className="primary full-width"
+          disabled={
+            busy || !accounts.length || (kind === "transfer" && !destination)
+          }
+        >
+          {busy
+            ? "Guardando…"
+            : kind === "expense"
+              ? "Guardar gasto"
+              : kind === "income"
+                ? "Guardar ingreso"
+                : "Guardar transferencia"}
+        </button>
+        <button
+          className="link full-width editor-cancel"
+          disabled={busy}
+          type="button"
+          onClick={onCancel}
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
   );
 }

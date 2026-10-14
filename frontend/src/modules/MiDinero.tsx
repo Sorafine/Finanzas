@@ -1,36 +1,34 @@
 import { useEffect, useState } from "react";
-import {
-  Wallet,
-  Plus,
-  PenLine,
-  CreditCard,
-  BarChart3,
-  Coins,
-  Landmark,
-  Smartphone,
-  ArrowLeftRight,
-} from "lucide-react";
-import { Account, Card, money } from "../shared/api";
+import { Account, Card, money, dateLabel, localToday } from "../shared/api";
+import { banks, detectBank } from "../shared/banks";
 import CardModal from "./mi-dinero/CardModal";
 import AccountModal from "./mi-dinero/AccountModal";
-import CardVisual from "./mi-dinero/CardVisual";
 import CardReport from "./mi-dinero/CardReport";
-import { banks, detectBank } from "../shared/banks";
 type Props = {
   accounts: Account[];
   cards: Card[];
   reload: () => Promise<void>;
   onWithdraw: () => void;
   onIncome: () => void;
+  onTransfer: (from: number, to?: number) => void;
   onHistory: (id: number) => void;
   notify: (s: string) => void;
 };
+function nextDate(day: number | null) {
+  if (!day) return null;
+  const [year, month] = localToday().split("-").map(Number);
+  const build = (y: number, m: number) =>
+    `${y}-${String(m).padStart(2, "0")}-${String(Math.min(day, new Date(Date.UTC(y, m, 0)).getUTCDate())).padStart(2, "0")}`;
+  let value = build(year, month);
+  if (value < localToday())
+    value = build(year + (month === 12 ? 1 : 0), month === 12 ? 1 : month + 1);
+  return value;
+}
 export default function MiDinero({
   accounts,
   cards,
   reload,
-  onWithdraw,
-  onIncome,
+  onTransfer,
   onHistory,
   notify,
 }: Props) {
@@ -52,54 +50,56 @@ export default function MiDinero({
         onHistory={onHistory}
       />
     );
+  const total = accounts.reduce((n, a) => n + a.balance_cents, 0),
+    bank = accounts
+      .filter((a) => a.kind === "bank")
+      .reduce((n, a) => n + a.balance_cents, 0),
+    cash = accounts
+      .filter((a) => a.kind === "cash")
+      .reduce((n, a) => n + a.balance_cents, 0),
+    wallet = total - bank - cash;
   return (
-    <div className="stack">
-      <div className="money-balance">
-        <div>
-          <small>
-            <Coins size={16} /> Saldo en tus cuentas
-          </small>
-          <strong>
-            {money(accounts.reduce((n, a) => n + a.balance_cents, 0))}
-          </strong>
+    <div className="stack money-reference">
+      <div className="page-actions align-end">
+        <button className="primary" onClick={() => setAccountForm(null)}>
+          + Agregar cuenta
+        </button>
+      </div>
+      <section className="panel account-total">
+        <small>Total en cuentas</small>
+        <strong>{money(total)}</strong>
+        <div
+          className="account-distribution"
+          role="img"
+          aria-label={`Banco ${money(bank)}, efectivo ${money(cash)}, billeteras ${money(wallet)}`}
+        >
+          <i style={{ width: (total ? (bank / total) * 100 : 0) + "%" }} />
+          <i style={{ width: (total ? (cash / total) * 100 : 0) + "%" }} />
+          <i style={{ width: (total ? (wallet / total) * 100 : 0) + "%" }} />
         </div>
-        <button className="primary" onClick={onIncome}>
-          <Plus size={17} /> Añadir ingreso
-        </button>
-      </div>
-      <div className="section-head">
-        <h2>Mis cuentas</h2>
-        <button className="secondary" onClick={() => setAccountForm(null)}>
-          <Plus size={16} /> Agregar cuenta
-        </button>
-      </div>
+        <small>
+          Banco {total ? Math.round((bank / total) * 100) : 0}% · Efectivo{" "}
+          {total ? Math.round((cash / total) * 100) : 0}%
+          {wallet ? ` · Billeteras ${Math.round((wallet / total) * 100)}%` : ""}
+        </small>
+      </section>
       <div className="account-grid">
         {accounts.map((a) => {
-          const Icon =
-            a.kind === "cash"
-              ? Wallet
-              : a.kind === "wallet"
-                ? Smartphone
-                : Landmark;
-          const bank = detectBank("", a.name);
+          const dest =
+            accounts.find(
+              (b) =>
+                b.id !== a.id &&
+                (a.kind === "cash" ? b.kind === "bank" : b.kind === "cash"),
+            ) || accounts.find((b) => b.id !== a.id);
           return (
             <article className="panel account-tile" key={a.id}>
               <div className="account-heading">
-                <span className="account-icon">
-                  {a.kind === "bank" && bank !== "other" ? (
-                    <b className={"bank-badge bank-" + bank}>
-                      {banks[bank].short}
-                    </b>
-                  ) : (
-                    <Icon size={23} />
-                  )}
-                </span>
                 <div className="grow">
-                  <h3>{a.name}</h3>
+                  <h2>{a.name}</h2>
                   <small>
                     {
                       {
-                        bank: "Banco",
+                        bank: "Cuenta bancaria",
                         cash: "Efectivo",
                         wallet: "Billetera digital",
                       }[a.kind]
@@ -107,88 +107,118 @@ export default function MiDinero({
                   </small>
                 </div>
                 <button
-                  className="icon-button"
+                  className="link subtle-edit"
                   onClick={() => setAccountForm(a)}
                   aria-label={`Editar ${a.name}`}
                 >
-                  <PenLine size={17} />
+                  Editar
                 </button>
               </div>
               <strong className="account-value">
                 {money(a.balance_cents)}
               </strong>
-              <button className="link" onClick={() => onHistory(a.id)}>
-                Ver movimientos →
-              </button>
+              <div className="connection-actions">
+                <button className="secondary" onClick={() => onHistory(a.id)}>
+                  Ver movimientos
+                </button>
+                <button
+                  className="secondary"
+                  disabled={!dest}
+                  onClick={() => onTransfer(a.id, dest?.id)}
+                >
+                  {a.kind === "cash"
+                    ? "Depositar al banco"
+                    : dest?.kind === "cash"
+                      ? "Pasar a efectivo"
+                      : "Transferir"}
+                </button>
+              </div>
             </article>
           );
         })}
       </div>
-      <button className="secondary withdrawal-action" onClick={onWithdraw}>
-        <ArrowLeftRight size={17} /> Pasar dinero a efectivo
-      </button>
-      <section className="my-cards" aria-labelledby="my-cards-title">
+      <section className="my-cards">
         <div className="section-head">
-          <div>
-            <h2 id="my-cards-title">Mis tarjetas</h2>
-            <p className="muted">
-              Tu crédito y tus cuentas, con una cara más familiar.
-            </p>
-          </div>
+          <h2>Mis tarjetas</h2>
           <button className="secondary" onClick={() => setCardForm(null)}>
-            <Plus size={16} /> Agregar tarjeta
+            + Agregar tarjeta
           </button>
         </div>
-        <div className="bank-card-grid">
+        <div className="reference-card-list">
           {cards.map((c) => {
-            const account = accounts.find((a) => a.id === c.account_id);
-            const usage = c.credit_limit_cents
-              ? (c.debt_cents / c.credit_limit_cents) * 100
-              : 0;
+            const account = accounts.find((a) => a.id === c.account_id),
+              close = nextDate(c.closing_day),
+              due = nextDate(c.due_day);
             return (
-              <article className="card-tile" key={c.id}>
-                <CardVisual card={c} account={account} />
-                <div className="card-tile-body">
+              <article className="reference-card-row" key={c.id}>
+                <div className="reference-card-face">
+                  <div>
+                    <strong>{c.name}</strong>
+                    <span>•••• {c.last_four}</span>
+                  </div>
+                  <small>
+                    {
+                      banks[detectBank(c.name, account?.name || "", c.issuer)]
+                        .name
+                    }{" "}
+                    · {c.card_type === "credit" ? "Crédito" : "Débito"} ·{" "}
+                    {c.brand}
+                  </small>
+                  <footer>
+                    <small>
+                      {c.card_type === "credit"
+                        ? "Deuda actual"
+                        : "Saldo de la cuenta"}
+                    </small>
+                    <b>
+                      {money(
+                        c.card_type === "credit"
+                          ? c.debt_cents
+                          : account?.balance_cents || 0,
+                      )}
+                    </b>
+                  </footer>
+                </div>
+                <div className="panel card-reference-details">
                   {c.card_type === "credit" ? (
                     <>
-                      <div className="card-mini-stats">
-                        <span>
-                          <small>Disponible</small>
-                          <b>
-                            {money(
-                              Math.max(0, c.credit_limit_cents - c.debt_cents),
-                            )}
-                          </b>
-                        </span>
-                        <span>
-                          <small>Límite utilizado</small>
-                          <b>
-                            {c.credit_limit_cents
-                              ? `${Math.round(usage)}%`
-                              : "Sin límite"}
-                          </b>
-                        </span>
+                      <div className="account-line">
+                        <span>Cierre de ciclo</span>
+                        <b>{close ? dateLabel(close) : "Sin configurar"}</b>
                       </div>
-                      <div className="progress">
-                        <i style={{ width: Math.min(100, usage) + "%" }} />
+                      <div className="account-line">
+                        <span>Fecha de pago</span>
+                        <b>{due ? dateLabel(due) : "Sin configurar"}</b>
                       </div>
+                      <p className="hint">
+                        La deuda no se suma a tu saldo disponible. Se actualiza
+                        al editar la tarjeta.
+                      </p>
                     </>
                   ) : (
-                    <p className="hint">Vinculada a {account?.name}</p>
+                    <>
+                      <h3>{account?.name}</h3>
+                      <p className="muted">
+                        Esta tarjeta usa el saldo de su cuenta.
+                      </p>
+                    </>
                   )}
-                  <div className="card-tile-actions">
-                    <button
-                      className="primary"
-                      onClick={() => setReportId(c.id)}
-                    >
-                      <BarChart3 size={17} /> Ver informe
-                    </button>
+                  <div className="connection-actions">
                     <button
                       className="secondary"
+                      onClick={() => {
+                        notify("");
+                        setReportId(c.id);
+                      }}
+                    >
+                      Ver informe
+                    </button>
+                    <button
+                      className="link"
                       onClick={() => setCardForm(c)}
                       aria-label={`Editar tarjeta ${c.name}`}
                     >
-                      Editar
+                      Editar tarjeta
                     </button>
                   </div>
                 </div>
@@ -197,22 +227,15 @@ export default function MiDinero({
           })}
         </div>
         {!cards.length && (
-          <div className="panel empty empty-cards">
-            <CreditCard size={36} />
-            <h3>Dale un lugar a tus tarjetas</h3>
+          <div className="panel empty compact">
             <p>
-              Agrega una tarjeta de débito o crédito para consultar su estado y
-              ver el informe de su cuenta.
+              Añade una tarjeta para tener a mano su estado, fechas e informe.
             </p>
-            <button className="primary" onClick={() => setCardForm(null)}>
+            <button className="link" onClick={() => setCardForm(null)}>
               Agregar mi primera tarjeta
             </button>
           </div>
         )}
-        <p className="hint">
-          Ilustraciones referenciales según el banco; el modelo físico puede
-          variar. Los datos se registran manualmente.
-        </p>
       </section>
       {accountForm !== undefined && (
         <AccountModal

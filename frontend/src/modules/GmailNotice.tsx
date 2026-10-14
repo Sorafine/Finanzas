@@ -47,21 +47,21 @@ export default function GmailNotice({ onOpen }: { onOpen: () => void }) {
           {failed
             ? "No pudimos revisar tu Gmail"
             : count
-              ? `${count} consumos por revisar en tu correo`
+              ? `Gmail encontró ${count} posibles gastos`
               : connected
                 ? "Gmail está al día"
                 : "Tus gastos del correo, aquí"}
         </strong>
         <small>
           {count
-            ? "Revísalos y confirma para actualizar tu saldo."
+            ? "Revísalos antes de registrarlos."
             : connected
               ? "Revisamos cada minuto mientras Inicio está visible."
               : "Conecta Google para revisar comprobantes y recordar pagos."}
         </small>
       </div>
       <button className="secondary" onClick={onOpen}>
-        {count ? "Revisar gastos" : "Abrir revisión"}
+        {count ? "Revisar" : "Abrir revisión"}
       </button>
     </section>
   );

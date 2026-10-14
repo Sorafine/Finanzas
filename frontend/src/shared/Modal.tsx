@@ -4,10 +4,12 @@ export default function Modal({
   title,
   onClose,
   children,
+  variant = "default",
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  variant?: "default" | "drawer" | "payment";
 }) {
   const dialog = useRef<HTMLElement>(null),
     close = useRef(onClose);
@@ -66,7 +68,7 @@ export default function Modal({
   }, []);
   return (
     <div
-      className="modal-overlay"
+      className={"modal-overlay modal-" + variant}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

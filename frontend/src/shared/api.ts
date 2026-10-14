@@ -79,6 +79,7 @@ export type Scheduled = {
   account_id: number;
   category: string;
   active: number;
+  next_due_date?: string | null;
 };
 export type HistoryItem = Movement & {
   account_name: string;
@@ -118,3 +119,35 @@ export const frequencyLabel = {
   monthly: "Mensual",
   yearly: "Anual",
 };
+
+export type Insights = {
+  monthly: { month: string; income_cents: number; expense_cents: number }[];
+  categories: { category: string; amount_cents: number }[];
+  current: { month: string; income_cents: number; expense_cents: number };
+  margin_percent: number | null;
+  previous_margin_percent: number | null;
+};
+export function dateShift(day: string, delta: number) {
+  const d = new Date(day + "T12:00:00-05:00");
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+export const monthName = (day = localToday()) =>
+  new Intl.DateTimeFormat("es-PE", {
+    month: "long",
+    timeZone: "America/Lima",
+  }).format(new Date(day + "T12:00:00-05:00"));
+export function dueLabel(day: string) {
+  const n = Math.round(
+    (Date.parse(day + "T12:00:00-05:00") -
+      Date.parse(localToday() + "T12:00:00-05:00")) /
+      86400000,
+  );
+  return n < 0
+    ? `Vencido hace ${-n} días`
+    : n === 0
+      ? "Vence hoy"
+      : n === 1
+        ? "Vence mañana"
+        : `Vence en ${n} días`;
+}

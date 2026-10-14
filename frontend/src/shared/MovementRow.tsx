@@ -1,15 +1,20 @@
 import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from "lucide-react";
 import { HistoryItem, Movement, money, dateLabel } from "./api";
 export const movementKind = (kind: string) =>
-  ({ income: "Ingreso", expense: "Gasto", withdrawal: "Retiro de efectivo" })[
-    kind
-  ] || kind;
+  ({
+    income: "Ingreso",
+    expense: "Gasto",
+    withdrawal: "Retiro de efectivo",
+    transfer: "Transferencia",
+  })[kind] || kind;
 export default function MovementRow({
   item,
   onOpen,
+  compact = false,
 }: {
   item: Movement & Partial<HistoryItem>;
   onOpen?: () => void;
+  compact?: boolean;
 }) {
   const Icon =
     item.kind === "income"
@@ -25,10 +30,20 @@ export default function MovementRow({
       <span className="grow">
         <strong>{item.concept}</strong>
         <small>
-          {dateLabel(item.created_at)}
-          {item.account_name
-            ? ` · ${item.account_name}`
-            : ` · ${movementKind(item.kind)}`}
+          {compact ? (
+            <>
+              {item.kind === "transfer" || item.kind === "withdrawal"
+                ? `${item.account_name || "Origen"} → ${item.destination_name || "Efectivo"}${item.fee_cents ? ` · comisión ${money(item.fee_cents)}` : ""}`
+                : `${item.category || movementKind(item.kind)} · ${item.account_name || ""}`}
+            </>
+          ) : (
+            <>
+              {dateLabel(item.created_at)}
+              {item.account_name
+                ? ` · ${item.account_name}`
+                : ` · ${movementKind(item.kind)}`}
+            </>
+          )}
         </small>
         {item.source === "payment" && (
           <small className="paid-label">Pago confirmado</small>

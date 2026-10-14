@@ -1,6 +1,6 @@
 # FinanzasApp
 
-Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Navegación sencilla: Inicio, Mi dinero, Pagos, Historial y Más. Con diseño móvil y acceso desde Safari.
+Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Navegación: Inicio, Mi dinero, Pagos, Historial, Reportes y Metas y más. Con diseño móvil y acceso desde Safari.
 
 ## Ejecutar en tu computadora y entrar desde iPhone
 
@@ -21,11 +21,12 @@ La computadora debe permanecer encendida. La web y la API compiladas se sirven j
 
 ## Funciones
 
-- Registrar ingresos, gastos y retiros, con saldos por cuenta y tarjetas.
-- Diseño con monedas e ilustraciones locales de tarjetas BCP, BBVA, Interbank, Scotiabank, Falabella y Ripley. Detección por nombre y selección manual del banco.
+- Registrar ingresos, gastos y transferencias entre cualquier par de cuentas, incluido efectivo al banco, con comisión opcional. Las transferencias no son gastos, salvo su comisión.
+- Diseño en verde oscuro y menta, menú lateral compacto y registro lateral con categorías por iconos.
+- Tarjetas con deuda y fechas a la vista; se conserva la detección de banco y la vista previa al editarlas.
 - Informe de cada tarjeta: estado del crédito, deuda, límite, disponible y fechas; actividad de la cuenta vinculada por mes, categoría e historial.
 - Programar pagos, confirmar los que ya realizaste y consultar sus comprobantes en Pagados. Los vencimientos recurrentes avanzan al confirmar y cada vencimiento solo se descuenta una vez.
-- Historial completo con búsqueda, filtros de tipo/cuenta/fechas, paginación y detalle del origen de cada movimiento.
+- Historial agrupado por día, búsqueda, filtros rápidos, paginación, detalle del movimiento y exportación CSV de la misma selección.
 - Recordatorios recurrentes opcionales en Google Calendar.
 - Revisar comprobantes de consumos realizados en soles desde Gmail, excluyendo promociones, transferencias, retiros y recordatorios. Confirmar importe y cuenta y registrar cada consumo una sola vez por buzón e ID.
 - Metas de ahorro informativas, reportes por categoría y exportación CSV.
@@ -38,11 +39,12 @@ Los recordatorios no realizan pagos; los aportes a metas solo reflejan progreso 
 
 ## Cómo usarla
 
-1. **Inicio:** consulta saldo, ingresos y gastos de este mes y próximos vencimientos. Si empiezas de cero, añade tu dinero actual como ingreso.
-2. **Mi dinero:** todas tus cuentas están visibles; puedes añadir o editar una cuenta y abrir su historial. Las tarjetas están en un apartado desplegable.
+1. **Inicio:** Libre para gastar es el total de cuentas menos los pagos activos con vencimiento hasta fin de mes, incluidos vencidos. Las metas informativas y la deuda manual de tarjetas no se descuentan de ese cálculo. Los gráficos usan movimientos reales.
+2. **Mi dinero:** consulta la distribución del saldo, añade o edita cuentas, pasa efectivo al banco o transfiere dinero, y revisa tarjetas e informes.
 3. **Pagos:** programa un vencimiento sin descontar dinero. Cuando ya lo hayas pagado, pulsa **Ya pagué**, revisa importe y cuenta y confirma. Se guarda un gasto; un pago recurrente prepara el siguiente vencimiento.
-4. **Historial:** busca cualquier ingreso, gasto o retiro. **Pagos → Pagados** muestra los pagos programados confirmados, con su fecha de vencimiento y registro.
-5. **Más:** entra a Revisar gastos de Gmail, Metas, Reportes o Conexiones. Administración solo aparece para el propietario.
+4. **Historial:** usa Este mes, Hoy, Semana o Todo, combina un tipo de movimiento y busca conceptos. Exportar descarga toda la selección filtrada, no solo la página visible. **Pagos → Pagados** conserva los comprobantes confirmados.
+5. **Reportes:** compara 3, 6 o 12 meses, categorías del mes actual y el margen entre ingresos y gastos. **Metas y más** permite elegir iconos y acceder a Gmail, Google, administración (solo propietario) y cerrar sesión.
+6. **+ Nuevo:** abre el panel de gasto, ingreso o transferencia. Puedes elegir fecha, usar Hoy/Ayer y revisar el saldo previsto antes de guardar. Programar un futuro pago se hace en Pagos.
 
 **Tarjetas:** en Mi dinero pulsa Agregar tarjeta, escribe un nombre como BCP Visa clásica y mira la vista previa. Puedes seleccionar el banco si la detección no coincide. Solo se guardan los últimos cuatro dígitos. Las ilustraciones son referenciales; no identifican el modelo físico exacto. Ver informe muestra la deuda y el límite que registres, con su porcentaje utilizado y próximas fechas. Los gastos del informe pertenecen a la cuenta vinculada y se comparten entre tarjetas de esa misma cuenta; no se atribuyen automáticamente a una tarjeta. Las compras de la cuenta no actualizan la deuda de crédito: edita la tarjeta para reflejar su estado actual.
 

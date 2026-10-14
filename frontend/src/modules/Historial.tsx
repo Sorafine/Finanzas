@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Search, ReceiptText } from "lucide-react";
 import {
   Account,
   HistoryResult,
@@ -7,6 +6,8 @@ import {
   req,
   money,
   dateLabel,
+  localToday,
+  dateShift,
 } from "../shared/api";
 import MovementRow, { movementKind } from "../shared/MovementRow";
 import Modal from "../shared/Modal";
@@ -26,34 +27,36 @@ export default function Historial({
   initialAccount?: string;
   initialKind?: string;
 }) {
+  const month = localToday().slice(0, 7) + "-01";
   const initial = {
     q: "",
     kind: initialKind,
     account: initialAccount,
-    from: "",
-    to: "",
+    from: initialAccount || initialKind === "payment" ? "" : month,
+    to: initialAccount || initialKind === "payment" ? "" : localToday(),
   };
   const [draft, setDraft] = useState<Filters>(initial),
     [filters, setFilters] = useState<Filters>(initial),
-    [page, setPage] = useState(1);
-  const [data, setData] = useState<HistoryResult | null>(null),
+    [page, setPage] = useState(1),
+    [data, setData] = useState<HistoryResult | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [selected, setSelected] = useState<HistoryItem | null>(null),
-    [retry, setRetry] = useState(0);
+    [retry, setRetry] = useState(0),
+    [showFilters, setShowFilters] = useState(false),
+    [period, setPeriod] = useState(initial.from ? "month" : "all");
+  function params() {
+    const p = new URLSearchParams({ kind: filters.kind, q: filters.q });
+    if (filters.account) p.set("account_id", filters.account);
+    if (filters.from) p.set("date_from", filters.from);
+    if (filters.to) p.set("date_to", filters.to);
+    return p;
+  }
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError("");
-    const params = new URLSearchParams({
-      page: String(page),
-      kind: filters.kind,
-      q: filters.q,
-    });
-    if (filters.account) params.set("account_id", filters.account);
-    if (filters.from) params.set("date_from", filters.from);
-    if (filters.to) params.set("date_to", filters.to);
-    req<HistoryResult>("/history?" + params)
+    req<HistoryResult>("/history?" + params() + "&page=" + page)
       .then((x) => {
         if (active) setData(x);
       })
@@ -67,44 +70,117 @@ export default function Historial({
       active = false;
     };
   }, [filters, page, retry]);
-  function reset() {
-    const empty = { q: "", kind: "all", account: "", from: "", to: "" };
-    setDraft(empty);
-    setFilters(empty);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setFilters((f) => (f.q === draft.q ? f : { ...f, q: draft.q }));
+      setPage(1);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [draft.q]);
+  function dates(value: string) {
+    const today = localToday();
+    const from =
+      value === "month"
+        ? month
+        : value === "today"
+          ? today
+          : value === "week"
+            ? dateShift(today, -6)
+            : "";
+    const patch = { from, to: from ? today : "" };
+    setPeriod(value);
+    setDraft((d) => ({ ...d, ...patch }));
+    setFilters((f) => ({ ...f, ...patch }));
     setPage(1);
   }
-  const [showFilters, setShowFilters] = useState(Boolean(initialAccount));
+  function kind(value: string) {
+    setDraft((d) => ({ ...d, kind: value }));
+    setFilters((f) => ({ ...f, kind: value }));
+    setPage(1);
+  }
+  function reset() {
+    const f = { q: "", kind: "all", account: "", from: "", to: "" };
+    setDraft(f);
+    setFilters(f);
+    setPeriod("all");
+    setPage(1);
+  }
+  const groups = new Map<string, HistoryItem[]>();
+  data?.items.forEach((item) => {
+    const day = new Date(Date.parse(item.created_at) - 5 * 3600000)
+      .toISOString()
+      .slice(0, 10);
+    groups.set(day, [...(groups.get(day) || []), item]);
+  });
   const pages = Math.max(1, Math.ceil((data?.total || 0) / 30));
   return (
-    <div className="stack">
-      <form
-        className="panel history-filters form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setFilters({ ...draft });
-          setPage(1);
-        }}
-      >
-        <label className="search-field">
-          <span>
-            <Search size={16} /> Buscar movimiento
-          </span>
-          <input
-            placeholder="Ej. Internet, comida…"
-            maxLength={150}
-            value={draft.q}
-            onChange={(e) => setDraft({ ...draft, q: e.target.value })}
-          />
-        </label>
+    <div className="stack history-reference">
+      <div className="page-actions align-end">
+        <a
+          className="secondary"
+          href={"/api/history?" + params() + "&format=csv"}
+          download
+        >
+          Exportar
+        </a>
+      </div>
+      <div className="filter-chips" aria-label="Filtros rápidos">
+        {[
+          ["month", "Este mes"],
+          ["today", "Hoy"],
+          ["week", "Semana"],
+          ["all", "Todo"],
+        ].map(([id, name]) => (
+          <button
+            key={id}
+            aria-pressed={period === id}
+            className={period === id ? "selected" : ""}
+            onClick={() => dates(id)}
+          >
+            {name}
+          </button>
+        ))}
+        {[
+          ["expense", "Gastos"],
+          ["income", "Ingresos"],
+          ["transfer", "Transferencias"],
+        ].map(([id, name]) => (
+          <button
+            key={id}
+            aria-pressed={filters.kind === id}
+            className={filters.kind === id ? "selected" : ""}
+            onClick={() => kind(filters.kind === id ? "all" : id)}
+          >
+            {name}
+          </button>
+        ))}
         <button
-          type="button"
-          className="link filter-toggle"
           aria-expanded={showFilters}
           onClick={() => setShowFilters((x) => !x)}
         >
-          {showFilters ? "Ocultar filtros" : "Filtrar por tipo, cuenta o fecha"}
+          Más filtros
         </button>
-        {showFilters && (
+      </div>
+      <label className="history-search">
+        <span className="sr-only">Buscar movimiento</span>
+        <input
+          aria-label="Buscar movimiento"
+          maxLength={150}
+          placeholder="Buscar: internet, comida…"
+          value={draft.q}
+          onChange={(e) => setDraft({ ...draft, q: e.target.value })}
+        />
+      </label>
+      {showFilters && (
+        <form
+          className="panel form history-advanced"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setFilters({ ...draft });
+            setPeriod("custom");
+            setPage(1);
+          }}
+        >
           <div className="filter-grid">
             <label>
               Tipo
@@ -113,11 +189,11 @@ export default function Historial({
                 value={draft.kind}
                 onChange={(e) => setDraft({ ...draft, kind: e.target.value })}
               >
-                <option value="all">Todos los movimientos</option>
+                <option value="all">Todos</option>
                 <option value="payment">Pagos confirmados</option>
                 <option value="expense">Gastos</option>
                 <option value="income">Ingresos</option>
-                <option value="withdrawal">Retiros de efectivo</option>
+                <option value="transfer">Transferencias</option>
               </select>
             </label>
             <label>
@@ -155,37 +231,21 @@ export default function Historial({
               />
             </label>
           </div>
-        )}
-        <div className="filter-actions">
-          <button className="primary" type="submit">
-            Aplicar filtros
+          <div className="filter-actions">
+            <button className="primary">Aplicar filtros</button>
+            <button type="button" className="link" onClick={reset}>
+              Limpiar filtros
+            </button>
+          </div>
+        </form>
+      )}
+      {filters.account && (
+        <p className="hint">
+          Cuenta: {accounts.find((a) => String(a.id) === filters.account)?.name}{" "}
+          <button className="link" onClick={reset}>
+            Ver todo
           </button>
-          <button className="link" type="button" onClick={reset}>
-            Limpiar filtros
-          </button>
-        </div>
-      </form>
-      {(filters.kind !== "all" ||
-        filters.account ||
-        filters.from ||
-        filters.to) && (
-        <div className="active-filters">
-          <span className="badge">
-            {filters.kind === "payment"
-              ? "Pagos confirmados"
-              : filters.kind === "expense"
-                ? "Gastos"
-                : filters.kind === "income"
-                  ? "Ingresos"
-                  : filters.kind === "withdrawal"
-                    ? "Retiros"
-                    : "Todos los tipos"}
-            {filters.account
-              ? ` · ${accounts.find((a) => String(a.id) === filters.account)?.name || "Cuenta"}`
-              : ""}
-            {filters.from || filters.to ? " · Fechas filtradas" : ""}
-          </span>
-        </div>
+        </p>
       )}
       {error && (
         <div className="error" role="alert">
@@ -196,18 +256,12 @@ export default function Historial({
         </div>
       )}
       {loading ? (
-        <div className="panel empty" role="status">
-          Cargando historial…
-        </div>
+        <p role="status">Cargando historial…</p>
       ) : (
         !error &&
         data && (
           <>
             <div className="history-summary">
-              <div>
-                <small>Movimientos encontrados</small>
-                <strong>{data.total}</strong>
-              </div>
               <div>
                 <small>Ingresos</small>
                 <strong className="positive">
@@ -215,32 +269,49 @@ export default function Historial({
                 </strong>
               </div>
               <div>
-                <small>Gastos y comisiones</small>
+                <small>Gastos</small>
                 <strong>{money(data.totals.expense_cents)}</strong>
               </div>
-            </div>
-            <section className="panel">
-              <div className="section-head">
-                <h2>
-                  {filters.kind === "payment"
-                    ? "Pagos confirmados"
-                    : "Movimientos"}
-                </h2>
-                <span className="muted">Más recientes primero</span>
+              <div>
+                <small>Neto del periodo</small>
+                <strong
+                  className={
+                    data.totals.income_cents >= data.totals.expense_cents
+                      ? "positive"
+                      : ""
+                  }
+                >
+                  {money(data.totals.income_cents - data.totals.expense_cents)}
+                </strong>
               </div>
-              {data.items.length ? (
-                data.items.map((m) => (
-                  <MovementRow
-                    key={m.id}
-                    item={m}
-                    onOpen={() => setSelected(m)}
-                  />
-                ))
-              ) : (
+            </div>
+            <section className="panel history-entries">
+              {[...groups].map(([day, items]) => (
+                <div className="history-day" key={day}>
+                  <h2>
+                    {day === localToday()
+                      ? "HOY"
+                      : day === dateShift(localToday(), -1)
+                        ? "AYER"
+                        : dateLabel(day)}
+                  </h2>
+                  {items.map((m) => (
+                    <MovementRow
+                      compact
+                      key={m.id}
+                      item={m}
+                      onOpen={() => setSelected(m)}
+                    />
+                  ))}
+                </div>
+              ))}
+              {!data.items.length && (
                 <div className="empty">
-                  <ReceiptText size={32} />
-                  <h3>Sin movimientos en esta búsqueda</h3>
-                  <p>Prueba otras fechas o limpia los filtros.</p>
+                  <h3>Sin movimientos en este periodo</h3>
+                  <p>Prueba otras fechas o consulta todo el historial.</p>
+                  <button className="link" onClick={reset}>
+                    Ver todo el historial
+                  </button>
                 </div>
               )}
               {data.total > 30 && (
@@ -248,7 +319,7 @@ export default function Historial({
                   <button
                     className="secondary"
                     disabled={page <= 1}
-                    onClick={() => setPage((x) => x - 1)}
+                    onClick={() => setPage((p) => p - 1)}
                   >
                     Anterior
                   </button>
@@ -258,7 +329,7 @@ export default function Historial({
                   <button
                     className="secondary"
                     disabled={page >= pages}
-                    onClick={() => setPage((x) => x + 1)}
+                    onClick={() => setPage((p) => p + 1)}
                   >
                     Siguiente
                   </button>
@@ -266,8 +337,8 @@ export default function Historial({
               )}
             </section>
             <p className="hint">
-              Las fechas corresponden a Perú. Los retiros trasladan dinero; solo
-              su comisión cuenta como gasto.
+              {data.total} movimientos · Las transferencias no son gastos; sus
+              comisiones sí.
             </p>
           </>
         )
@@ -279,15 +350,8 @@ export default function Historial({
           <dl className="detail-list">
             <dt>Tipo</dt>
             <dd>{movementKind(selected.kind)}</dd>
-            <dt>Registrado</dt>
-            <dd>
-              {dateLabel(selected.created_at)} ·{" "}
-              {new Date(selected.created_at).toLocaleTimeString("es-PE", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "America/Lima",
-              })}
-            </dd>
+            <dt>Fecha del movimiento</dt>
+            <dd>{dateLabel(selected.created_at)}</dd>
             <dt>Cuenta</dt>
             <dd>{selected.account_name}</dd>
             {selected.destination_name && (
