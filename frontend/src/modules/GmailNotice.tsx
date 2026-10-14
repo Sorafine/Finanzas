@@ -45,7 +45,7 @@ export default function GmailNotice({ onOpen }: { onOpen: () => void }) {
           {failed
             ? "No pudimos revisar tu Gmail"
             : count
-              ? `${count} posibles gastos en tu correo`
+              ? `${count} consumos por revisar en tu correo`
               : connected
                 ? "Gmail está al día"
                 : "Tus gastos del correo, aquí"}

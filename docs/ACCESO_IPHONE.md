@@ -86,7 +86,7 @@ El Client Secret se pide sin mostrarlo. Reinicia el túnel y conecta Google desd
 
 En modo de prueba, Google puede limitar la duración de los permisos y pedir reconectar. Para distribuir una app con Gmail fuera de las personas de prueba puede requerirse verificación de Google. La conexión real solo se considera validada después de completar consentimiento, revisar un correo y crear un evento en la cuenta autorizada.
 
-Inicio y Conexiones buscan comprobantes recientes cada minuto mientras están visibles. Cada gasto requiere confirmación. Los correos se distinguen por buzón e ID para no duplicarlos. Calendar crea series mensuales/semanales/anuales; los recordatorios no efectúan pagos. Desconectar Google borra los tokens locales, pero no borra eventos ya creados ni revoca por sí solo los permisos en Google.
+Inicio y Conexiones buscan comprobantes de consumos realizados en soles cada minuto mientras están visibles. El filtro revisa el cuerpo del mensaje, exige evidencia de una operación realizada e importe y excluye promociones, ofertas de empleo, regalos, transferencias, retiros y recordatorios. Es conservador: los correos ambiguos o sin importe detectable no se proponen. Cada gasto requiere confirmación. Los correos se distinguen por buzón e ID para no duplicarlos. Calendar crea series mensuales/semanales/anuales; los recordatorios no efectúan pagos. Desconectar Google borra los tokens locales, pero no borra eventos ya creados ni revoca por sí solo los permisos en Google.
 
 ## 6. Respaldo, actualización y datos
 

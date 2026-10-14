@@ -22,7 +22,7 @@ La computadora debe permanecer encendida. La web y la API compiladas se sirven j
 
 - Registrar ingresos, gastos y retiros, con saldos por cuenta y tarjetas.
 - Guardar gastos fijos y próximos pagos; crear recordatorios recurrentes en Calendar.
-- Revisar comprobantes de Gmail, confirmar importe y cuenta y registrar un gasto una sola vez por buzón e ID.
+- Revisar comprobantes de consumos realizados en soles desde Gmail, excluyendo promociones, transferencias, retiros y recordatorios. Confirmar importe y cuenta y registrar cada consumo una sola vez por buzón e ID.
 - Metas de ahorro informativas, reportes por categoría y exportación CSV.
 - Inicio de sesión, sesiones con cookie HttpOnly y CSRF, datos aislados, tokens Google cifrados y respaldo cifrado.
 - Manifest e iconos para Añadir a pantalla de inicio en Safari. Requiere conexión; no ofrece finanzas sin conexión.

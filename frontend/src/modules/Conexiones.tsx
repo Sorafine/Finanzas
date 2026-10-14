@@ -174,8 +174,8 @@ export default function Conexiones({
           <span className="badge">{list.length} por revisar</span>
         </div>
         <p className="muted">
-          Buscamos comprobantes recientes al abrir esta pantalla y cada minuto
-          mientras esté visible.
+          Buscamos comprobantes de consumos realizados en soles. Excluimos
+          promociones, transferencias y recordatorios de pago.
         </p>
         <div className="connection-actions">
           <button
@@ -183,12 +183,12 @@ export default function Conexiones({
             disabled={!status?.connected || busy}
             onClick={() => void execute(read)}
           >
-            {busy ? "Buscando…" : "Actualizar desde Gmail"}
+            {busy ? "Buscando…" : "Buscar consumos en Gmail"}
           </button>
         </div>
         {checked && !list.length && (
           <p className="empty">
-            Todo al día. No hay nuevos comprobantes por revisar.
+            No hay nuevos comprobantes de consumo por revisar.
           </p>
         )}
         {list.map((x) => (
@@ -207,7 +207,7 @@ export default function Conexiones({
                 disabled={busy}
                 onClick={() => select(x)}
               >
-                Actualizar mi saldo
+                Registrar consumo
               </button>
               <button
                 className="secondary"

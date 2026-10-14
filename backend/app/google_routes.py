@@ -5,6 +5,9 @@ import secrets
 import uuid
 import hashlib
 import time
+import base64
+import unicodedata
+from html.parser import HTMLParser
 from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
 from fastapi import APIRouter, HTTPException
@@ -119,25 +122,131 @@ def gmail_key(message_id):
     return info['finanzas_account_key'] + ':' + message_id
 
 
+CONSUMPTION_QUERY = ('newer_than:30d -category:promotions -category:social -in:spam -in:trash '
+    '{subject:consumo subject:compra subject:recibo subject:"cargo aprobado" '
+    'subject:"transaccion aprobada" subject:"pago realizado" subject:"pago aprobado" subject:"pago exitoso"}')
+
+
+class MailText(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.chunks = []
+        self.hidden = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ('script', 'style'): self.hidden += 1
+        if tag in ('br', 'p', 'div', 'tr', 'td', 'li'): self.chunks.append(' ')
+
+    def handle_endtag(self, tag):
+        if tag in ('script', 'style') and self.hidden: self.hidden -= 1
+        if tag in ('p', 'div', 'tr', 'td', 'li'): self.chunks.append(' ')
+
+    def handle_data(self, data):
+        if not self.hidden: self.chunks.append(data)
+
+
+def message_text(payload):
+    if payload.get('filename'): return ''  # Never classify attached files as the message itself.
+    parts = payload.get('parts', [])
+    if parts:
+        if payload.get('mimeType') == 'multipart/alternative':
+            plain = next((p for p in parts if p.get('mimeType') == 'text/plain'), None)
+            if plain:
+                text = message_text(plain)
+                if text: return text
+        return ' '.join(message_text(p) for p in parts)
+    kind = payload.get('mimeType', '')
+    data = payload.get('body', {}).get('data', '')
+    if kind not in ('text/plain', 'text/html') or not data or len(data) > 700000: return ''
+    try:
+        text = base64.urlsafe_b64decode(data + '=' * (-len(data) % 4)).decode('utf-8', errors='replace')
+    except (ValueError, TypeError): return ''
+    if kind == 'text/html':
+        parser = MailText()
+        parser.feed(text)
+        text = ' '.join(parser.chunks)
+    return text
+
+
+def normalized(text):
+    return ' '.join(''.join(c for c in unicodedata.normalize('NFKD', text.lower())
+        if not unicodedata.combining(c)).split())
+
+
+def consumption(record):
+    """Conservative receipt detection; a price in an email never suffices."""
+    headers = {h['name'].lower(): h['value'] for h in record.get('payload', {}).get('headers', [])}
+    subject = headers.get('subject', '')
+    title = normalized(subject)
+    body = message_text(record.get('payload', {})) or record.get('snippet', '')
+    text = normalized(subject + ' ' + body)
+    if re.search(r'\b(oferta|ofertas|promocion|promociones|regalo|regalos|descuento|descuentos|'
+                 r'gratis|postula|vacante|vacantes|empleo|ganaste|gana|sorteo|cashback)\b|solo por hoy', title):
+        return None
+    if re.search(r'\b(retiro|transferencia|abono|deposito|devolucion|reembolso|extorno|vencimiento|'
+                 r'recordatorio|estado de cuenta|pago minimo)\b|'
+                 r'\bpago de (?:tu |la |un )?(?:tarjeta|prestamo|deuda)\b', title):
+        return None
+    if re.search(r'\b(compra|consumo|pago|transaccion|cargo)\b.{0,45}\b(rechazad[oa]|'
+                 r'denegad[oa]|pendiente|cancelad[oa]|anulad[oa]|fallid[oa])\b|'
+                 r'\b(no se realizo|no fue aprobad[oa]|intento de compra|pago por realizar|'
+                 r'transferencia realizada|retiro realizado)\b', text):
+        return None
+    noun = r'(?:compra|consumo|pago|transaccion|cargo)'
+    done = r'(?:realizad[oa]|aprobad[oa]|confirmad[oa]|registrad[oa]|procesad[oa]|exitos[oa]|efectuad[oa])'
+    evidence = re.search(r'\b' + noun + r'\b.{0,70}\b' + done + r'\b|'
+        r'\b(?:realizaste|has realizado|se ha realizado|se realizo|efectuaste|registramos|confirmamos)\b.{0,50}\b' + noun + r'\b|'
+        r'\b(?:confirmacion|comprobante|recibo)\b.{0,25}\b(?:de|del)\b.{0,15}\b(?:tu )?' + noun + r'\b', text)
+    if not evidence: return None
+    non_expense = r'(?:transferencia|retiro|abono|deposito|devolucion|reembolso|extorno)'
+    if re.search(r'\b' + non_expense + r'\b.{0,60}\b' + done + r'\b|'
+        r'\b(?:realizaste|has realizado|se ha realizado|se realizo|recibiste)\b.{0,50}\b' + non_expense + r'\b', text):
+        return None
+    # Prefer the amount next to the confirmed operation, not the available balance.
+    amount_pattern = r'(?:S/\.?|PEN|soles)\s*(\d[\d.,]*)'
+    window = text[evidence.start():evidence.end()+180]
+    match = None
+    for candidate in re.finditer(amount_pattern, window, re.IGNORECASE):
+        prefix = re.split(r'[.;]', window[max(0,candidate.start()-55):candidate.start()])[-1]
+        if not re.search(r'\b(saldo|limite|disponible|cashback|descuento|comision|ahorro)\b', prefix):
+            match = candidate
+            break
+    if not match:
+        match = re.search(r'\b(?:importe|monto|total)(?: de (?:la|tu) compra)?\s*[:\-]?\s*' + amount_pattern, text, re.IGNORECASE)
+    if not match: return None
+    detected = match.group(1).rstrip('.,')
+    amount = parse_amount(detected)
+    if amount is None: return None
+    return {'gmail_id':record['id'], 'subject':subject, 'sender':headers.get('from',''),
+        'date':headers.get('date',''), 'snippet':record.get('snippet',''),
+        'amount_detected':detected, 'amount_cents':amount, 'status':'pending_review'}
+
+
 @router.get('/gmail/suggestions')
 def suggestions():
     from googleapiclient.discovery import build
     service=build('gmail','v1',credentials=credentials(),cache_discovery=False)
     try:
-        response=service.users().messages().list(userId='me',q='newer_than:30d (compra OR consumo OR retiro OR transferencia OR pago)',maxResults=15).execute()
         out=[]
         with connection() as db:
             existing={x[0] for x in db.execute("SELECT gmail_id FROM gmail_reviews UNION SELECT gmail_id FROM gmail_imports")}
-        for m in response.get('messages',[]):
-            if gmail_key(m['id']) in existing: continue
-            record=service.users().messages().get(userId='me',id=m['id'],format='metadata',metadataHeaders=['Subject','From','Date']).execute()
-            headers={h['name'].lower():h['value'] for h in record.get('payload',{}).get('headers',[])}
-            snippet=record.get('snippet','')
-            text=headers.get('subject','')+' '+snippet
-            match=re.search(r'(?:S/|PEN)\s*(\d[\d.,]*)',text,re.IGNORECASE)
-            detected=match.group(1).rstrip('.,') if match else None
-            out.append({'gmail_id':m['id'],'subject':headers.get('subject',''),'sender':headers.get('from',''), 'date':headers.get('date',''),'snippet':snippet,'amount_detected':detected,'amount_cents':parse_amount(detected),'status':'pending_review'})
+        page = None
+        for _ in range(3):  # Bounded scan; irrelevant first-page mail cannot crowd out receipts.
+            args = {'userId':'me', 'q':CONSUMPTION_QUERY, 'maxResults':50}
+            if page: args['pageToken'] = page
+            response = service.users().messages().list(**args).execute()
+            for m in response.get('messages',[]):
+                if gmail_key(m['id']) in existing: continue
+                record=service.users().messages().get(userId='me',id=m['id'],format='full').execute()
+                candidate = consumption(record)
+                if candidate:
+                    out.append(candidate)
+                    if len(out) == 15: return {'suggestions':out}
+            page = response.get('nextPageToken')
+            if not page: break
         return {'suggestions':out}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(502,'Error al consultar Gmail') from e
 
@@ -168,10 +277,22 @@ class GmailImportIn(BaseModel):
 
 @router.post('/gmail/import')
 def import_expense(item:GmailImportIn):
-    credentials()
+    from googleapiclient.discovery import build
+    key = gmail_key(item.gmail_id)
+    with connection() as db:
+        existing = db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=?',(key,)).fetchone()
+    if existing:
+        return {'id':existing['movement_id'], 'message':'Este correo ya está registrado', 'already_imported':True}
+    service = build('gmail','v1',credentials=credentials(),cache_discovery=False)
+    try:
+        record = service.users().messages().get(userId='me',id=item.gmail_id,format='full').execute()
+    except Exception:
+        raise HTTPException(502,'No se pudo comprobar el consumo en Gmail. Vuelve a intentarlo.') from None
+    if not consumption(record):
+        raise HTTPException(400,'Este correo no contiene un comprobante de consumo realizado con importe en soles')
     return add_movement(MovementIn(kind='expense', amount_cents=item.amount_cents,
         concept=item.concept, account_id=item.account_id, category=item.category,
-        classification='variable', gmail_id=gmail_key(item.gmail_id)))
+        classification='variable', gmail_id=key))
 
 class ReviewIn(BaseModel):
     gmail_id:str=Field(min_length=1,max_length=200)
