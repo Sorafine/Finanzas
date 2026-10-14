@@ -1,6 +1,6 @@
 # FinanzasApp
 
-Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Organizada en Inicio, Mi dinero, Pagos, Reportes, Revisar gastos y Conexiones, con diseño móvil y acceso desde Safari.
+Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Navegación sencilla: Inicio, Mi dinero, Pagos, Historial y Más. Con diseño móvil y acceso desde Safari.
 
 ## Ejecutar en tu computadora y entrar desde iPhone
 
@@ -22,7 +22,9 @@ La computadora debe permanecer encendida. La web y la API compiladas se sirven j
 ## Funciones
 
 - Registrar ingresos, gastos y retiros, con saldos por cuenta y tarjetas.
-- Guardar gastos fijos y próximos pagos; crear recordatorios recurrentes en Calendar.
+- Programar pagos, confirmar los que ya realizaste y consultar sus comprobantes en Pagados. Los vencimientos recurrentes avanzan al confirmar y cada vencimiento solo se descuenta una vez.
+- Historial completo con búsqueda, filtros de tipo/cuenta/fechas, paginación y detalle del origen de cada movimiento.
+- Recordatorios recurrentes opcionales en Google Calendar.
 - Revisar comprobantes de consumos realizados en soles desde Gmail, excluyendo promociones, transferencias, retiros y recordatorios. Confirmar importe y cuenta y registrar cada consumo una sola vez por buzón e ID.
 - Metas de ahorro informativas, reportes por categoría y exportación CSV.
 - Registro de cuentas normales y panel privado para un único administrador.
@@ -31,6 +33,16 @@ La computadora debe permanecer encendida. La web y la API compiladas se sirven j
 - Manifest e iconos para Añadir a pantalla de inicio en Safari. Requiere conexión; no ofrece finanzas sin conexión.
 
 Los recordatorios no realizan pagos; los aportes a metas solo reflejan progreso y no trasladan fondos. Gmail busca cada minuto mientras Inicio o Revisar gastos estén visibles; no envía notificaciones push. Desconectar elimina los tokens locales; puedes revocar permisos desde tu cuenta Google.
+
+## Cómo usarla
+
+1. **Inicio:** consulta saldo, ingresos y gastos de este mes y próximos vencimientos. Si empiezas de cero, añade tu dinero actual como ingreso.
+2. **Mi dinero:** todas tus cuentas están visibles; puedes añadir o editar una cuenta y abrir su historial. Las tarjetas están en un apartado desplegable.
+3. **Pagos:** programa un vencimiento sin descontar dinero. Cuando ya lo hayas pagado, pulsa **Ya pagué**, revisa importe y cuenta y confirma. Se guarda un gasto; un pago recurrente prepara el siguiente vencimiento.
+4. **Historial:** busca cualquier ingreso, gasto o retiro. **Pagos → Pagados** muestra los pagos programados confirmados, con su fecha de vencimiento y registro.
+5. **Más:** entra a Revisar gastos de Gmail, Metas, Reportes o Conexiones. Administración solo aparece para el propietario.
+
+No confirmes otra vez un gasto que ya registraste manualmente o desde Gmail: la protección contra duplicados de pagos se aplica al mismo vencimiento, no a registros creados por vías distintas. Los registros anteriores se conservan en Historial; no se inventan comprobantes ni estados de pago para ellos. Las fechas del historial corresponden a Perú.
 
 ## Desarrollo y comprobaciones
 

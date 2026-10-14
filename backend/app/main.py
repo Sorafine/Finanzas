@@ -5,7 +5,7 @@ import sqlite3
 import os
 from typing import Literal
 from fastapi import FastAPI, HTTPException
-from .auth import current_database, init_auth_db, PrivateAppMiddleware, router as auth_router
+from .auth import current_database, init_auth_db, registry, user_database, PrivateAppMiddleware, router as auth_router
 from pydantic import BaseModel, Field
 
 DB = Path(os.environ.get('FINANZAS_DB_PATH', str(Path(__file__).resolve().parents[1] / 'finanzas.db')))
@@ -73,6 +73,18 @@ def init_finance_db():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_auth_db()
+    # Apply additive schema upgrades to existing private profiles on restart.
+    # Never touch the old single-user database shipped in the checkout.
+    with registry() as db:
+        users = [row['id'] for row in db.execute('SELECT id FROM users')]
+    for user_id in users:
+        path = user_database(user_id)
+        if path.is_file():
+            token = current_database.set(path)
+            try:
+                init_finance_db()
+            finally:
+                current_database.reset(token)
     yield
 
 app = FastAPI(title='FinanzasApp API', lifespan=lifespan)
@@ -125,7 +137,18 @@ def summary():
         income = db.execute("SELECT COALESCE(SUM(amount_cents),0) AS total FROM movements WHERE kind='income'").fetchone()['total']
         expense = db.execute("SELECT COALESCE(SUM(amount_cents),0) AS total FROM movements WHERE kind='expense'").fetchone()['total']
         fees = db.execute("SELECT COALESCE(SUM(fee_cents),0) AS total FROM movements WHERE kind='withdrawal'").fetchone()['total']
-        return {'balance_cents':balances,'income_cents':income,'expense_cents':expense+fees}
+        from zoneinfo import ZoneInfo
+        from datetime import timedelta
+        today = datetime.now(ZoneInfo('America/Lima'))
+        start = today.replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+        following = (start.replace(day=28)+timedelta(days=4)).replace(day=1)
+        monthly = db.execute('''SELECT
+            COALESCE(SUM(CASE WHEN kind='income' THEN amount_cents ELSE 0 END),0) AS income,
+            COALESCE(SUM(CASE WHEN kind='expense' THEN amount_cents WHEN kind='withdrawal' THEN fee_cents ELSE 0 END),0) AS expense
+            FROM movements WHERE created_at>=? AND created_at<?''',
+            (start.astimezone(timezone.utc).isoformat(),following.astimezone(timezone.utc).isoformat())).fetchone()
+        return {'balance_cents':balances,'income_cents':income,'expense_cents':expense+fees,
+                'month_income_cents':monthly['income'],'month_expense_cents':monthly['expense']}
 
 @app.post('/movements', status_code=201)
 def add_movement(m: MovementIn):
@@ -294,6 +317,13 @@ def init_extra():
         CREATE INDEX IF NOT EXISTS idx_movements_date ON movements(created_at);
         CREATE INDEX IF NOT EXISTS idx_movements_category ON movements(category);
         CREATE INDEX IF NOT EXISTS idx_movements_account ON movements(account_id);
+        CREATE TABLE IF NOT EXISTS payment_receipts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scheduled_id INTEGER NOT NULL REFERENCES scheduled_payments(id),
+            due_date TEXT NOT NULL,
+            movement_id INTEGER NOT NULL UNIQUE REFERENCES movements(id),
+            UNIQUE(scheduled_id,due_date)
+        );
         ''')
 
 class ScheduledIn(BaseModel):
@@ -315,7 +345,9 @@ class GoalContribution(BaseModel):
 @app.get('/scheduled')
 def get_scheduled():
     with connection() as db:
-        return [dict(r) for r in db.execute('SELECT * FROM scheduled_payments ORDER BY active DESC,due_date,id')]
+        return [dict(r) for r in db.execute('''SELECT s.*,
+            EXISTS(SELECT 1 FROM payment_receipts p WHERE p.scheduled_id=s.id AND s.frequency='once') AS completed
+            FROM scheduled_payments s ORDER BY active DESC,due_date,id''')]
 
 @app.post('/scheduled',status_code=201)
 def add_scheduled(item:ScheduledIn):
@@ -329,6 +361,9 @@ def add_scheduled(item:ScheduledIn):
 @app.patch('/scheduled/{item_id}/toggle')
 def toggle_scheduled(item_id:int):
     with connection() as db:
+        if db.execute('''SELECT 1 FROM scheduled_payments s JOIN payment_receipts p ON p.scheduled_id=s.id
+                         WHERE s.id=? AND s.frequency='once' ''',(item_id,)).fetchone():
+            raise HTTPException(400,'Este pago ya se completó. Crea otro si lo necesitas.')
         c=db.execute('UPDATE scheduled_payments SET active=1-active WHERE id=?',(item_id,))
         if not c.rowcount: raise HTTPException(404,'Plan no encontrado')
         return dict(db.execute('SELECT * FROM scheduled_payments WHERE id=?',(item_id,)).fetchone())
@@ -403,6 +438,8 @@ def export_csv(year:int | None=None):
 # Import al final para evitar dependencias circulares al registrar el router.
 from .google_routes import router as google_router
 app.include_router(google_router)
+from .history_routes import router as history_router
+app.include_router(history_router)
 
 # One production origin: compiled frontend and authenticated /api routes.
 from fastapi.staticfiles import StaticFiles

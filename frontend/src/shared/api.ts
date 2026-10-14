@@ -60,3 +60,52 @@ export async function req<T>(route: string, options?: RequestInit): Promise<T> {
   }
   return res.json();
 }
+
+export type Scheduled = {
+  id: number;
+  name: string;
+  amount_cents: number;
+  due_date: string;
+  frequency: "once" | "weekly" | "monthly" | "yearly";
+  account_id: number;
+  category: string;
+  active: number;
+};
+export type HistoryItem = Movement & {
+  account_name: string;
+  destination_name: string | null;
+  scheduled_id: number | null;
+  payment_due_date: string | null;
+  source: "manual" | "gmail" | "payment";
+};
+export type HistoryResult = {
+  items: HistoryItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  totals: { count: number; income_cents: number; expense_cents: number };
+};
+export const dateLabel = (value: string) =>
+  new Intl.DateTimeFormat("es-PE", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "America/Lima",
+  }).format(new Date(value.length === 10 ? value + "T12:00:00-05:00" : value));
+export const localToday = () => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Lima",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const value = (type: string) =>
+    parts.find((p) => p.type === type)?.value || "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+};
+export const frequencyLabel = {
+  once: "Una vez",
+  weekly: "Semanal",
+  monthly: "Mensual",
+  yearly: "Anual",
+};

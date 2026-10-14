@@ -124,3 +124,14 @@ La cuenta administradora ve **Administración** en la navegación de escritorio 
 **Conexiones** permite a cada persona conectar o desconectar su propia cuenta Google. **Revisar gastos** tiene los comprobantes, la confirmación de importe/cuenta y la opción de descartar. El aviso de Inicio lleva a esa pantalla. La revisión requiere una cuenta Google conectada y el servicio habilitado; no registra consumos automáticamente.
 
 Crear una cuenta en FinanzasApp no añade su Gmail a los usuarios de prueba de Google. Mientras OAuth esté en modo de prueba, agrega en Google Cloud el correo que cada persona usará al conectar. Para ampliar el acceso fuera de esos usuarios, Google puede requerir verificación y otros cambios en su consentimiento.
+
+
+## Navegación y pagos realizados
+
+La barra principal tiene Inicio, Mi dinero, Pagos, Historial y Más, igual en escritorio y móvil. Gmail, metas, reportes, conexiones y administración están dentro de Más.
+
+Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago** guarda el vencimiento; cuando hayas pagado, **Ya pagué → Confirmar y registrar pago** descuenta el importe de la cuenta seleccionada y lo guarda en **Pagos → Pagados** y en **Historial**. Un pago mensual avanza al mes siguiente conservando su día habitual (los días 29–31 se ajustan al último día cuando sea necesario). Un pago único queda completado.
+
+Historial permite buscar conceptos, filtrar por cuenta/tipo/fechas y consultar registros antiguos mediante páginas. Toca un movimiento para ver sus datos y origen. No vuelvas a confirmar un pago cuyo gasto ya ingresaste desde Gmail o manualmente.
+
+Al actualizar, detén la app, ejecuta `git pull --ff-only origin codex/iphone-scripts`, vuelve a ejecutar `install` e inicia `serve` (o tu túnel habitual). Los datos existentes se conservan; el arranque añade la tabla del historial de pagos a los perfiles existentes.

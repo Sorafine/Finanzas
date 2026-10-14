@@ -87,7 +87,10 @@ class RegistrationAdministration(unittest.TestCase):
         with self.assertRaises(ValueError):auth.grant_admin('member')
         self.assertTrue(self.client.get('/api/auth/me').json()['is_admin'])
         self.assertFalse(self.member.get('/api/auth/me').json()['is_admin'])
-        self.assertEqual(self.member.post('/api/admin/grant',headers=self.member_headers,json={'username':'member'}).status_code,404)
+        # Compiled static-file fallback returns405 for an unknown POST; API-only
+        # development returns404. Neither exposes a public promotion endpoint.
+        self.assertIn(self.member.post('/api/admin/grant',headers=self.member_headers,json={'username':'member'}).status_code,(404,405))
+        self.assertFalse(self.member.get('/api/auth/me').json()['is_admin'])
 
     def test_admin_overview_shows_only_access_and_connection_metadata(self):
         result=self.client.get('/api/admin/overview')

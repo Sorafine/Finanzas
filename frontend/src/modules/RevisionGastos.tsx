@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Account, req, money, cents } from "../shared/api";
+import Modal from "../shared/Modal";
 type Status = { configured: boolean; connected: boolean; enabled?: boolean };
 type Suggestion = {
   gmail_id: string;
@@ -170,7 +171,10 @@ export default function RevisionGastos({
           <article key={x.gmail_id} className="gmail-suggestion">
             <strong>{x.subject || "Sin asunto"}</strong>
             <small>{x.sender}</small>
-            <p>{x.snippet}</p>
+            <details className="receipt-preview">
+              <summary>Ver comprobante</summary>
+              <p>{x.snippet}</p>
+            </details>
             <b>
               {x.amount_cents
                 ? `Importe sugerido: ${money(x.amount_cents)}`
@@ -214,79 +218,66 @@ export default function RevisionGastos({
         </p>
       </section>
       {selected && (
-        <div className="modal-overlay">
-          <section
-            className="modal-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="gmail-confirm"
+        <Modal
+          title="Revisa tu gasto"
+          onClose={() => {
+            if (!busy) setSelected(null);
+          }}
+        >
+          <p className="hint">Se descontará de la cuenta que elijas.</p>
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+          <form
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void execute(confirm);
+            }}
           >
-            <div className="modal-heading">
-              <h2 id="gmail-confirm">Revisa tu gasto</h2>
-              <button
-                className="icon-button"
-                aria-label="Cerrar"
-                disabled={busy}
-                onClick={() => setSelected(null)}
+            <label>
+              Importe (S/)
+              <input
+                autoFocus
+                required
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </label>
+            <label>
+              ¿En qué gastaste?
+              <input
+                required
+                maxLength={150}
+                value={concept}
+                onChange={(e) => setConcept(e.target.value)}
+              />
+            </label>
+            <label>
+              Cuenta
+              <select
+                required
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
               >
-                ×
-              </button>
-            </div>
-            <p className="hint">Se descontará de la cuenta que elijas.</p>
-            {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            )}
-            <form
-              className="form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void execute(confirm);
-              }}
-            >
-              <label>
-                Importe (S/)
-                <input
-                  autoFocus
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  inputMode="decimal"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </label>
-              <label>
-                ¿En qué gastaste?
-                <input
-                  required
-                  maxLength={150}
-                  value={concept}
-                  onChange={(e) => setConcept(e.target.value)}
-                />
-              </label>
-              <label>
-                Cuenta
-                <select
-                  required
-                  value={account}
-                  onChange={(e) => setAccount(e.target.value)}
-                >
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name} · {money(a.balance_cents)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button className="primary" disabled={busy || !account}>
-                {busy ? "Guardando…" : "Confirmar gasto"}
-              </button>
-            </form>
-          </section>
-        </div>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} · {money(a.balance_cents)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="primary" disabled={busy || !account}>
+              {busy ? "Guardando…" : "Confirmar gasto"}
+            </button>
+          </form>
+        </Modal>
       )}
     </div>
   );

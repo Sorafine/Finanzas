@@ -314,13 +314,19 @@ def reminder(payload:ReminderIn):
         plan=db.execute('SELECT * FROM scheduled_payments WHERE id=?',(payload.scheduled_id,)).fetchone()
         if not plan: raise HTTPException(404,'Pago programado no encontrado')
         if not plan['active']: raise HTTPException(400,'Activa el pago antes de sincronizarlo')
+        first = db.execute('SELECT MIN(due_date) FROM payment_receipts WHERE scheduled_id=?',(payload.scheduled_id,)).fetchone()[0]
     try: day=date.fromisoformat(plan['due_date'])
     except ValueError: raise HTTPException(400,'Fecha inválida')
     event={'summary':'Pagar: '+plan['name'],'description':f"Importe registrado: S/ {plan['amount_cents']/100:.2f}. Recordatorio, no confirmación bancaria.", 'start':{'date':day.isoformat()},'end':{'date':(day+timedelta(days=1)).isoformat()},'reminders':{'useDefault':False,'overrides':[{'method':'popup','minutes':1440}]}}
     rule={'weekly':'FREQ=WEEKLY','monthly':'FREQ=MONTHLY','yearly':'FREQ=YEARLY'}.get(plan['frequency'])
     if rule:
-        if plan['frequency']=='monthly' and day.day>=29:
-            rule+=f';BYMONTHDAY={day.day},-1;BYSETPOS=1'
+        anchor = date.fromisoformat(first or plan['due_date'])
+        if plan['frequency']=='monthly':
+            rule+=f';BYMONTHDAY={anchor.day}'
+            if anchor.day>=29: rule+=',-1;BYSETPOS=1'
+        if plan['frequency']=='yearly':
+            rule+=f';BYMONTH={anchor.month};BYMONTHDAY={anchor.day}'
+            if anchor.day>=29: rule+=',-1;BYSETPOS=1'
         event['recurrence']=['RRULE:'+rule]
     service=build('calendar','v3',credentials=credentials(),cache_discovery=False)
     # Reserve a stable Google-compatible ID before the request: retrying a

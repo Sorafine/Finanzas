@@ -1,63 +1,128 @@
-import RevisionGastos from "./modules/RevisionGastos";
-import Administracion from "./modules/Administracion";
-import AuthGate from "./shared/AuthGate";
-import GmailNotice from "./modules/GmailNotice";
-import Reportes from "./modules/Reportes";
-import Planes from "./modules/Planes";
-import MiDinero from "./modules/MiDinero";
-import Conexiones from "./modules/Conexiones";
-import { Card, req } from "./shared/api";
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Wallet,
   Home,
-  PlusCircle,
   CalendarDays,
-  BarChart3,
-  RefreshCw,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Banknote,
+  History,
+  MoreHorizontal,
   Mail,
   Settings,
+  Target,
+  BarChart3,
+  ChevronRight,
+  Plus,
+  ArrowLeft,
+  LogOut,
+  RefreshCw,
 } from "lucide-react";
+import AuthGate from "./shared/AuthGate";
+import {
+  Account,
+  Card,
+  HistoryItem,
+  Scheduled,
+  req,
+  money,
+  dateLabel,
+  localToday,
+} from "./shared/api";
+import MovementRow from "./shared/MovementRow";
+import MiDinero from "./modules/MiDinero";
+import Planes from "./modules/Planes";
+import Historial from "./modules/Historial";
+import Registrar from "./modules/Registrar";
+import Metas from "./modules/Metas";
+import GmailNotice from "./modules/GmailNotice";
+import Conexiones from "./modules/Conexiones";
+import RevisionGastos from "./modules/RevisionGastos";
+import Administracion from "./modules/Administracion";
+import Reportes from "./modules/Reportes";
 import "./styles.css";
-
-type Account = {
-  id: number;
-  name: string;
-  kind: "bank" | "cash" | "wallet";
-  balance_cents: number;
+const pages = {
+  inicio: {
+    title: "Tu dinero, de un vistazo",
+    subtitle: "Tu saldo, próximos pagos y últimos movimientos.",
+  },
+  dinero: {
+    title: "Mi dinero",
+    subtitle: "Consulta tus cuentas y el dinero disponible en cada una.",
+  },
+  pagos: {
+    title: "Pagos",
+    subtitle: "Organiza vencimientos y registra los pagos que ya realizaste.",
+  },
+  historial: {
+    title: "Historial",
+    subtitle: "Consulta tus ingresos, gastos y pagos en un solo lugar.",
+  },
+  mas: {
+    title: "Más opciones",
+    subtitle: "Tu correo, objetivos y ajustes, cuando los necesites.",
+  },
+  registrar: {
+    title: "Registrar movimiento",
+    subtitle: "Guarda un gasto, ingreso o retiro de efectivo.",
+  },
+  revisar: {
+    title: "Revisar gastos de Gmail",
+    subtitle: "Confirma los consumos que quieras registrar.",
+  },
+  conexiones: {
+    title: "Conexiones",
+    subtitle: "Conecta tu propia cuenta Google para Gmail y Calendar.",
+  },
+  metas: {
+    title: "Metas de ahorro",
+    subtitle: "Haz seguimiento de lo que quieres conseguir.",
+  },
+  reportes: {
+    title: "Reportes",
+    subtitle: "Entiende cómo cambian tus ingresos y gastos.",
+  },
+  admin: {
+    title: "Administración",
+    subtitle: "Control de usuarios y conexiones, solo para ti.",
+  },
 };
-type Move = {
-  id: number;
-  kind: string;
-  amount_cents: number;
-  concept: string;
-  created_at: string;
-  classification: string | null;
-  category: string | null;
-};
+type View = keyof typeof pages;
+const navigation = [
+  { id: "inicio", name: "Inicio", icon: Home },
+  { id: "dinero", name: "Mi dinero", icon: Wallet },
+  { id: "pagos", name: "Pagos", icon: CalendarDays },
+  { id: "historial", name: "Historial", icon: History },
+  { id: "mas", name: "Más", icon: MoreHorizontal },
+] as const;
+const extras = [
+  {
+    id: "revisar",
+    name: "Revisar gastos de Gmail",
+    text: "Revisa comprobantes antes de registrarlos.",
+    icon: Mail,
+  },
+  {
+    id: "metas",
+    name: "Metas de ahorro",
+    text: "Sigue el progreso de tus objetivos.",
+    icon: Target,
+  },
+  {
+    id: "reportes",
+    name: "Reportes",
+    text: "Compara ingresos y gastos por mes.",
+    icon: BarChart3,
+  },
+  {
+    id: "conexiones",
+    name: "Conexiones",
+    text: "Conecta tu cuenta Google.",
+    icon: Settings,
+  },
+] as const;
 type Summary = {
   balance_cents: number;
-  income_cents: number;
-  expense_cents: number;
-};
-const money = (c: number) =>
-  new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(
-    c / 100,
-  );
-const concepts: Record<string, string[]> = {
-  fijo: [
-    "Vivienda",
-    "Servicios",
-    "Internet",
-    "Suscripciones",
-    "Educación",
-    "Transporte",
-  ],
-  variable: ["Comida", "Compras", "Salidas", "Salud", "Movilidad", "Otros"],
+  month_income_cents: number;
+  month_expense_cents: number;
 };
 function App({
   username,
@@ -68,551 +133,462 @@ function App({
   onLogout: () => void;
   isAdmin: boolean;
 }) {
-  const [saving, setSaving] = useState(false);
-  const [due, setDue] = useState("");
-  const [calendar, setCalendar] = useState(true);
-  const [cards, setCards] = useState<Card[]>([]);
-  const [notice, setNotice] = useState("");
-  const [view, setView] = useState("Inicio");
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [moves, setMoves] = useState<Move[]>([]);
-  const [summary, setSummary] = useState<Summary>({
-    balance_cents: 0,
-    income_cents: 0,
-    expense_cents: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [kind, setKind] = useState<"income" | "expense" | "withdrawal">(
-    "expense",
-  );
-  const [amount, setAmount] = useState("");
-  const [concept, setConcept] = useState("");
-  const [accountId, setAccountId] = useState("");
-  const [destId, setDestId] = useState("");
-  const [fee, setFee] = useState("0");
-  const [classification, setClassification] = useState("variable");
-  const [category, setCategory] = useState("Comida");
-  const [frequency, setFrequency] = useState("mensual");
-  const [expanded, setExpanded] = useState(false);
-  const load = async () => {
+  const route = (): View => {
+    const id = location.hash.slice(1);
+    return Object.prototype.hasOwnProperty.call(pages, id) &&
+      (id !== "admin" || isAdmin)
+      ? (id as View)
+      : "inicio";
+  };
+  const [view, setView] = useState<View>(route),
+    [accounts, setAccounts] = useState<Account[]>([]),
+    [cards, setCards] = useState<Card[]>([]),
+    [moves, setMoves] = useState<HistoryItem[]>([]),
+    [plans, setPlans] = useState<Scheduled[]>([]),
+    [summary, setSummary] = useState<Summary>({
+      balance_cents: 0,
+      month_income_cents: 0,
+      month_expense_cents: 0,
+    }),
+    [loading, setLoading] = useState(true),
+    [refreshing, setRefreshing] = useState(false),
+    [error, setError] = useState(""),
+    [notice, setNotice] = useState(""),
+    [recordKind, setRecordKind] = useState<"expense" | "income" | "withdrawal">(
+      "expense",
+    ),
+    [historyAccount, setHistoryAccount] = useState("");
+  const [pageVersion, setPageVersion] = useState(0);
+  const heading = useRef<HTMLHeadingElement>(null);
+  async function load() {
+    setRefreshing(true);
     try {
-      setError("");
-      const [a, m, s, c] = await Promise.all([
+      const [a, c, h, p, s] = await Promise.all([
         req<Account[]>("/accounts"),
-        req<Move[]>("/movements"),
-        req<Summary>("/summary"),
         req<Card[]>("/cards"),
+        req<{ items: HistoryItem[] }>("/history?page_size=5"),
+        req<Scheduled[]>("/scheduled"),
+        req<Summary>("/summary"),
       ]);
       setAccounts(a);
-      setMoves(m);
-      setSummary(s);
       setCards(c);
-      setAccountId((x) => x || String(a[0]?.id ?? ""));
-      setDestId((x) => x || String(a.find((v) => v.kind === "cash")?.id ?? ""));
-    } catch (e) {
-      setError(
-        (e as Error).message +
-          " — No pudimos cargar tus datos. Intenta actualizar.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    void load();
-  }, []);
-  const cents = (n: string) => Math.round(Number(n.replace(",", ".")) * 100);
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (saving) return;
-    setSaving(true);
-    try {
+      setMoves(h.items);
+      setPlans(p);
+      setSummary(s);
       setError("");
-      const value = cents(amount);
-      if (!Number.isFinite(value) || value <= 0)
-        throw new Error("Ingresa un importe válido");
-      const result = await req<{ scheduled_id: number | null }>("/movements", {
-        method: "POST",
-        body: JSON.stringify({
-          kind,
-          amount_cents: value,
-          concept:
-            concept.trim() ||
-            {
-              expense: "Gasto",
-              income: "Ingreso",
-              withdrawal: "Retiro de efectivo",
-            }[kind],
-          account_id: Number(accountId),
-          destination_id: kind === "withdrawal" ? Number(destId) : null,
-          fee_cents: kind === "withdrawal" ? cents(fee) : 0,
-          classification: kind === "expense" ? classification : null,
-          category: kind === "expense" ? category : null,
-          frequency:
-            kind === "expense" && classification === "fijo" ? frequency : null,
-          recurring_due_date:
-            kind === "expense" && classification === "fijo"
-              ? due || null
-              : null,
-        }),
-      });
-      setAmount("");
-      setConcept("");
-      setFee("0");
-      setDue("");
-      setView("Inicio");
-      setNotice("Movimiento guardado. Tu saldo está al día.");
-      if (result.scheduled_id && calendar) {
-        try {
-          await req("/google/calendar/reminder", {
-            method: "POST",
-            body: JSON.stringify({ scheduled_id: result.scheduled_id }),
-          });
-          setNotice(
-            "Gasto guardado y recordatorio recurrente añadido a Calendar.",
-          );
-        } catch {
-          setNotice(
-            "Gasto y próximo pago guardados. Conecta Google y sincroniza el recordatorio desde Pagos.",
-          );
-        }
-      }
-      await load();
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setSaving(false);
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
-  const menus = [
-    { name: "Inicio", icon: Home },
-    { name: "Mi dinero", icon: Wallet },
-    { name: "Pagos", icon: CalendarDays },
-    { name: "Reportes", icon: BarChart3 },
-    { name: "Revisar gastos", icon: Mail },
-    { name: "Conexiones", icon: RefreshCw },
-  ];
-  if (isAdmin) menus.push({ name: "Administración", icon: Settings });
-  const kindText = (k: string) =>
-    k === "income" ? "Ingreso" : k === "expense" ? "Gasto" : "Retiro";
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+  useEffect(() => {
+    const update = () => setView(route());
+    window.addEventListener("hashchange", update);
+    return () => window.removeEventListener("hashchange", update);
+  }, [isAdmin]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    heading.current?.focus({ preventScroll: true });
+  }, [view]);
+  function go(id: View, keepNotice = false) {
+    if (!keepNotice) setNotice("");
+    location.hash = id;
+    setView(id);
+  }
+  function register(kind: "expense" | "income" | "withdrawal" = "expense") {
+    setRecordKind(kind);
+    go("registrar");
+  }
+  const extraView =
+    !navigation.some((x) => x.id === view) && view !== "registrar";
+  const current = extraView ? "mas" : view;
+  const upcoming = plans.filter((p) => p.active).slice(0, 3);
+  const month = new Intl.DateTimeFormat("es-PE", {
+    month: "long",
+    year: "numeric",
+    timeZone: "America/Lima",
+  }).format(new Date());
   return (
     <div className="layout">
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(e) => {
+          e.preventDefault();
+          heading.current?.focus();
+        }}
+      >
+        Ir al contenido
+      </a>
       <aside className="sidebar">
         <div className="brand">
           <div className="logo">
-            <Wallet size={22} />
+            <Wallet size={23} />
           </div>
           <div>
             finanzas<span>app</span>
             <small>Tu dinero, más claro</small>
           </div>
         </div>
-        <nav>
-          {menus.map((m) => (
+        <nav aria-label="Navegación principal">
+          {navigation.map((m) => (
             <button
-              key={m.name}
-              className={view === m.name ? "active" : ""}
-              onClick={() => setView(m.name)}
+              key={m.id}
+              className={current === m.id ? "active" : ""}
+              aria-current={current === m.id ? "page" : undefined}
+              onClick={() => {
+                if (m.id === "historial") setHistoryAccount("");
+                go(m.id);
+              }}
             >
               <m.icon size={20} />
               {m.name}
             </button>
           ))}
         </nav>
-        <div className="aside-note">
-          Empieza con pequeños pasos. Cada sol cuenta. 🌱
-        </div>
-      </aside>
-      <main>
-        <header>
-          <div>
-            <div className="eyebrow">FINANZAS DE {username}</div>
-            <h1>{view === "Inicio" ? "Hola, ¿cómo va tu dinero? 👋" : view}</h1>
-            <p className="muted">
-              {view === "Inicio"
-                ? "Este es tu panorama financiero."
-                : view === "Mi dinero"
-                  ? "Tus cuentas, billeteras y efectivo en un lugar."
-                  : "Organiza tu dinero sin complicaciones."}
-            </p>
+        <button className="primary sidebar-register" onClick={() => register()}>
+          <Plus size={18} /> Registrar movimiento
+        </button>
+        <div className="sidebar-footer">
+          <span className="user-avatar">
+            {username.charAt(0).toUpperCase()}
+          </span>
+          <div className="grow">
+            <strong>{username}</strong>
+            <small>{isAdmin ? "Administrador" : "Mi espacio personal"}</small>
           </div>
           <button
-            className="refresh"
-            onClick={() => void load()}
-            title="Actualizar"
-            aria-label="Actualizar datos"
+            className="icon-button"
+            onClick={onLogout}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
           >
-            <RefreshCw size={19} />
+            <LogOut size={18} />
           </button>
-          <button className="secondary logout-button" onClick={onLogout}>
-            Salir
-          </button>
+        </div>
+      </aside>
+      <main id="main-content">
+        <header className="app-header">
+          <div>
+            {extraView || view === "registrar" ? (
+              <button
+                className="back-link"
+                onClick={() => go(view === "registrar" ? "inicio" : "mas")}
+              >
+                <ArrowLeft size={15} />{" "}
+                {view === "registrar" ? "Volver al inicio" : "Más opciones"}
+              </button>
+            ) : (
+              <div className="eyebrow">Hola, {username}</div>
+            )}
+            <h1 ref={heading} tabIndex={-1}>
+              {pages[view].title}
+            </h1>
+            <p className="muted">{pages[view].subtitle}</p>
+          </div>
+          <div className="header-actions">
+            {view !== "registrar" && (
+              <button
+                className="refresh"
+                disabled={refreshing}
+                onClick={() => {
+                  void load().then(() => setPageVersion((x) => x + 1));
+                }}
+                aria-label="Actualizar datos"
+                title="Actualizar"
+              >
+                <RefreshCw size={18} />
+              </button>
+            )}
+            {view !== "registrar" && (
+              <button
+                className="primary header-register"
+                onClick={() => register()}
+                aria-label="Registrar movimiento"
+              >
+                <Plus size={18} />
+                <span>Registrar</span>
+              </button>
+            )}
+          </div>
         </header>
         {notice && (
           <div className="success-msg" role="status">
             {notice}
-            <button onClick={() => setNotice("")}>×</button>
+            <button onClick={() => setNotice("")} aria-label="Cerrar aviso">
+              ×
+            </button>
           </div>
         )}
         {error && (
           <div className="error" role="alert">
             {error}
-            <button onClick={() => setError("")}>×</button>
+            <button className="link" onClick={() => void load()}>
+              Reintentar
+            </button>
           </div>
         )}
         {loading ? (
-          <p>Cargando tus datos...</p>
-        ) : view === "Inicio" ? (
-          <>
+          <div className="panel empty" role="status">
+            Cargando tu espacio…
+          </div>
+        ) : view === "inicio" ? (
+          <div className="stack dashboard">
             <section className="hero">
               <div>
-                <div className="overline">SALDO TOTAL DISPONIBLE</div>
+                <div className="overline">DINERO DISPONIBLE</div>
                 <div className="total">{money(summary.balance_cents)}</div>
-                <p>El dinero registrado en todas tus cuentas</p>
+                <p>Saldo registrado en tus {accounts.length} cuentas</p>
               </div>
-              <Wallet size={54} opacity={0.25} />
+              <Wallet size={48} opacity={0.3} />
             </section>
             <div className="home-actions">
-              <button
-                className="primary"
-                onClick={() => {
-                  setKind("expense");
-                  setView("Registrar");
-                }}
-              >
-                + Registrar gasto
+              <button className="primary" onClick={() => register("expense")}>
+                <Plus size={17} /> Registrar gasto
               </button>
-              <button
-                className="secondary"
-                onClick={() => {
-                  setKind("income");
-                  setView("Registrar");
-                }}
-              >
-                + Añadir ingreso
+              <button className="secondary" onClick={() => register("income")}>
+                <Plus size={17} /> Añadir ingreso
               </button>
             </div>
-            <section className="two">
-              <article className="stat">
-                <div className="stat-label">
-                  <ArrowDownLeft color="#11996c" />
-                  Ingresos registrados
-                </div>
-                <strong>{money(summary.income_cents)}</strong>
-              </article>
-              <article className="stat">
-                <div className="stat-label">
-                  <ArrowUpRight color="#e07660" />
-                  Gastos registrados
-                </div>
-                <strong>{money(summary.expense_cents)}</strong>
-              </article>
+            {!moves.length && summary.balance_cents === 0 && (
+              <section className="panel welcome-panel">
+                <h2>Empieza con el dinero que tienes</h2>
+                <p>
+                  Ya tienes una cuenta de banco y otra de efectivo. Registra tu
+                  saldo actual como ingreso y después añade tus gastos.
+                </p>
+                <button className="link" onClick={() => register("income")}>
+                  Añadir mi saldo inicial →
+                </button>
+              </section>
+            )}
+            <section className="month-summary" aria-label="Resumen de este mes">
+              <div className="section-head">
+                <h2>Este mes</h2>
+                <span className="muted">{month}</span>
+              </div>
+              <div className="two">
+                <article className="stat">
+                  <small>Ingresos del mes</small>
+                  <strong className="positive">
+                    {money(summary.month_income_cents)}
+                  </strong>
+                </article>
+                <article className="stat">
+                  <small>Gastos del mes</small>
+                  <strong>{money(summary.month_expense_cents)}</strong>
+                </article>
+              </div>
             </section>
-            <GmailNotice onOpen={() => setView("Revisar gastos")} />
-            <button
-              className="link report-shortcut"
-              onClick={() => setView("Reportes")}
-            >
-              Ver mis reportes
-            </button>
-            <div className="section-head">
-              <h2>Últimos movimientos</h2>
-              <button className="link" onClick={() => setView("Registrar")}>
-                + Registrar
-              </button>
-            </div>
-            <div className="panel">
-              {moves.length ? (
-                moves.slice(0, 6).map((m) => (
-                  <div className="movement" key={m.id}>
-                    <span className={"mov-icon " + m.kind}>
-                      {m.kind === "income" ? (
-                        <ArrowDownLeft />
-                      ) : m.kind === "expense" ? (
-                        <ArrowUpRight />
-                      ) : (
-                        <Banknote />
-                      )}
-                    </span>
-                    <div className="grow">
-                      <strong>{m.concept}</strong>
-                      <small>
-                        {kindText(m.kind)} ·{" "}
-                        {new Date(m.created_at).toLocaleDateString("es-PE")}
-                      </small>
-                    </div>
-                    <b>
-                      {m.kind === "income"
-                        ? "+"
-                        : m.kind === "expense"
-                          ? "-"
-                          : "↔ "}
-                      {money(m.amount_cents)}
-                    </b>
-                  </div>
-                ))
-              ) : (
-                <div className="empty">
-                  Todavía no registras movimientos. ¡Empieza con tu primer
-                  ingreso!
+            <div className="dashboard-grid">
+              <section className="panel">
+                <div className="section-head">
+                  <h2>Próximos pagos</h2>
+                  <button className="link" onClick={() => go("pagos")}>
+                    Ver pagos →
+                  </button>
                 </div>
-              )}
+                {upcoming.length ? (
+                  upcoming.map((p) => (
+                    <button
+                      className="movement movement-button"
+                      key={p.id}
+                      onClick={() => go("pagos")}
+                    >
+                      <span className="account-icon">
+                        <CalendarDays size={20} />
+                      </span>
+                      <span className="grow">
+                        <strong>{p.name}</strong>
+                        <small
+                          className={
+                            p.due_date < localToday() ? "overdue-text" : ""
+                          }
+                        >
+                          {dateLabel(p.due_date)}
+                          {p.due_date < localToday() ? " · Vencido" : ""}
+                        </small>
+                      </span>
+                      <b>{money(p.amount_cents)}</b>
+                    </button>
+                  ))
+                ) : (
+                  <div className="empty compact">
+                    <p>No tienes pagos pendientes.</p>
+                    <button className="link" onClick={() => go("pagos")}>
+                      Programar un pago
+                    </button>
+                  </div>
+                )}
+              </section>
+              <section className="panel">
+                <div className="section-head">
+                  <h2>Últimos movimientos</h2>
+                  <button
+                    className="link"
+                    onClick={() => {
+                      setHistoryAccount("");
+                      go("historial");
+                    }}
+                  >
+                    Ver historial →
+                  </button>
+                </div>
+                {moves.length ? (
+                  moves.map((m) => (
+                    <MovementRow
+                      key={m.id}
+                      item={m}
+                      onOpen={() => {
+                        setHistoryAccount("");
+                        go("historial");
+                      }}
+                    />
+                  ))
+                ) : (
+                  <div className="empty compact">
+                    <p>Tus movimientos aparecerán aquí.</p>
+                  </div>
+                )}
+              </section>
             </div>
-          </>
-        ) : view === "Mi dinero" ? (
+            <GmailNotice onOpen={() => go("revisar")} />
+          </div>
+        ) : view === "dinero" ? (
           <MiDinero
             accounts={accounts}
             cards={cards}
             reload={load}
             notify={setNotice}
-            onWithdraw={() => {
-              setKind("withdrawal");
-              setView("Registrar");
-            }}
-            onIncome={() => {
-              setKind("income");
-              setView("Registrar");
+            onWithdraw={() => register("withdrawal")}
+            onIncome={() => register("income")}
+            onHistory={(id) => {
+              setHistoryAccount(String(id));
+              go("historial");
             }}
           />
-        ) : view === "Registrar" ? (
-          <>
-            <div className="panel form-panel">
-              <div className="tabs">
-                <button
-                  className={kind === "expense" ? "chosen" : ""}
-                  onClick={() => setKind("expense")}
-                >
-                  Gasté
-                </button>
-                <button
-                  className={kind === "income" ? "chosen" : ""}
-                  onClick={() => setKind("income")}
-                >
-                  Recibí
-                </button>
-                <button
-                  className={kind === "withdrawal" ? "chosen" : ""}
-                  onClick={() => setKind("withdrawal")}
-                >
-                  Retiré
-                </button>
-              </div>
-              <form onSubmit={save} className="form">
-                <label>
-                  ¿Cuánto? (S/)
-                  <input
-                    className="amount"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    min="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    required
-                  />
-                </label>
-                <label>
-                  Concepto
-                  <input
-                    value={concept}
-                    onChange={(e) => setConcept(e.target.value)}
-                    placeholder={
-                      kind === "withdrawal"
-                        ? "Retiro de cajero"
-                        : kind === "income"
-                          ? "Sueldo, propina..."
-                          : "Almuerzo, transporte..."
-                    }
-                  />
-                </label>
-                <label>
-                  {kind === "withdrawal"
-                    ? "Desde la cuenta"
-                    : "Cuenta o medio de pago"}
-                  <select
-                    value={accountId}
-                    onChange={(e) => setAccountId(e.target.value)}
-                  >
-                    {accounts
-                      .filter((a) => kind !== "withdrawal" || a.kind !== "cash")
-                      .map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name} · {money(a.balance_cents)}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-                {kind === "withdrawal" ? (
-                  <>
-                    <label>
-                      Destino
-                      <select
-                        value={destId}
-                        onChange={(e) => setDestId(e.target.value)}
-                      >
-                        {accounts
-                          .filter((a) => a.kind === "cash")
-                          .map((a) => (
-                            <option value={a.id} key={a.id}>
-                              {a.name}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
-                    <label>
-                      Comisión bancaria (S/)
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={fee}
-                        onChange={(e) => setFee(e.target.value)}
-                      />
-                    </label>
-                    <p className="hint">
-                      El retiro mueve dinero hacia efectivo: no cuenta como
-                      gasto, salvo la comisión.
-                    </p>
-                  </>
-                ) : kind === "expense" ? (
-                  <>
-                    <button
-                      type="button"
-                      className="details"
-                      onClick={() => setExpanded((v) => !v)}
-                    >
-                      {expanded
-                        ? "Ocultar clasificación"
-                        : "Clasificar gasto (opcional)"}{" "}
-                      <span>{expanded ? "−" : "+"}</span>
-                    </button>
-                    {expanded && (
-                      <>
-                        <label>
-                          Tipo de gasto
-                          <select
-                            value={classification}
-                            onChange={(e) => {
-                              setClassification(e.target.value);
-                              setCategory(concepts[e.target.value][0]);
-                            }}
-                          >
-                            <option value="variable">Variable</option>
-                            <option value="fijo">Fijo</option>
-                          </select>
-                        </label>
-                        <label>
-                          Categoría
-                          <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                          >
-                            {concepts[classification].map((c) => (
-                              <option key={c}>{c}</option>
-                            ))}
-                          </select>
-                        </label>
-                        {classification === "fijo" && (
-                          <>
-                            <label>
-                              Frecuencia
-                              <select
-                                value={frequency}
-                                onChange={(e) => setFrequency(e.target.value)}
-                              >
-                                <option value="mensual">Mensual</option>
-                                <option value="semanal">Semanal</option>
-                                <option value="anual">Anual</option>
-                              </select>
-                            </label>
-                            <label>
-                              ¿Cuándo será el próximo pago?
-                              <input
-                                required
-                                type="date"
-                                value={due}
-                                onChange={(e) => setDue(e.target.value)}
-                              />
-                            </label>
-                            <label className="checkbox-label">
-                              <input
-                                type="checkbox"
-                                checked={calendar}
-                                onChange={(e) => setCalendar(e.target.checked)}
-                              />{" "}
-                              Recordármelo en Google Calendar
-                            </label>
-                            <p className="hint">
-                              Registras el gasto de hoy y preparas el siguiente
-                              pago. Calendar te recordará cada vencimiento.
-                            </p>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </>
-                ) : null}
-                <button
-                  className="primary submit"
-                  disabled={saving}
-                  type="submit"
-                >
-                  {saving ? "Guardando…" : "Guardar movimiento"}
-                </button>
-              </form>
-            </div>
-          </>
-        ) : view === "Pagos" ? (
-          <Planes accounts={accounts} />
-        ) : view === "Conexiones" ? (
-          <Conexiones
-            onReview={() => setView("Revisar gastos")}
-            onAdmin={() => setView("Administración")}
-            isAdmin={isAdmin}
+        ) : view === "registrar" ? (
+          <Registrar
+            key={recordKind}
+            accounts={accounts}
+            initialKind={recordKind}
+            onCancel={() => go("inicio")}
+            onSaved={async (message) => {
+              setNotice(message);
+              await load();
+              go("inicio", true);
+            }}
           />
-        ) : view === "Revisar gastos" ? (
-          <RevisionGastos
+        ) : view === "pagos" ? (
+          <Planes
+            key={pageVersion}
             accounts={accounts}
             reload={load}
-            onConnect={() => setView("Conexiones")}
+            onRegister={() => register()}
           />
-        ) : view === "Administración" && isAdmin ? (
-          <Administracion />
+        ) : view === "historial" ? (
+          <Historial
+            key={`${historyAccount}-${pageVersion}`}
+            accounts={accounts}
+            initialAccount={historyAccount}
+          />
+        ) : view === "revisar" ? (
+          <RevisionGastos
+            key={pageVersion}
+            accounts={accounts}
+            reload={load}
+            onConnect={() => go("conexiones")}
+          />
+        ) : view === "conexiones" ? (
+          <Conexiones
+            key={pageVersion}
+            onReview={() => go("revisar")}
+            onAdmin={() => go("admin")}
+            isAdmin={isAdmin}
+          />
+        ) : view === "metas" ? (
+          <Metas key={pageVersion} />
+        ) : view === "reportes" ? (
+          <Reportes key={pageVersion} />
+        ) : view === "admin" && isAdmin ? (
+          <Administracion key={pageVersion} />
         ) : (
-          <Reportes />
+          <div className="stack">
+            <div className="panel more-options">
+              {extras.map((x) => (
+                <button
+                  className="option-row"
+                  key={x.id}
+                  onClick={() => go(x.id)}
+                >
+                  <span className="account-icon">
+                    <x.icon size={22} />
+                  </span>
+                  <span className="grow">
+                    <strong>{x.name}</strong>
+                    <small>{x.text}</small>
+                  </span>
+                  <ChevronRight size={19} />
+                </button>
+              ))}
+              {isAdmin && (
+                <button className="option-row" onClick={() => go("admin")}>
+                  <span className="account-icon">
+                    <Settings size={22} />
+                  </span>
+                  <span className="grow">
+                    <strong>Administración</strong>
+                    <small>Usuarios y conexiones de la app.</small>
+                  </span>
+                  <ChevronRight size={19} />
+                </button>
+              )}
+            </div>
+            <div className="panel profile-summary">
+              <div className="grow">
+                <strong>{username}</strong>
+                <small>Tu espacio personal</small>
+              </div>
+              <button className="secondary" onClick={onLogout}>
+                <LogOut size={17} /> Cerrar sesión
+              </button>
+            </div>
+          </div>
         )}
       </main>
-      <div className="mobile-nav">
-        {menus
-          .filter((m) => m.name !== "Reportes" && m.name !== "Administración")
-          .map((m) => (
-            <button
-              key={m.name}
-              className={view === m.name ? "active" : ""}
-              onClick={() => setView(m.name)}
-            >
-              <m.icon size={20} />
-              <small>{m.name}</small>
-            </button>
-          ))}
-      </div>
+      <nav className="mobile-nav" aria-label="Navegación móvil">
+        {navigation.map((m) => (
+          <button
+            key={m.id}
+            className={current === m.id ? "active" : ""}
+            aria-current={current === m.id ? "page" : undefined}
+            onClick={() => {
+              if (m.id === "historial") setHistoryAccount("");
+              go(m.id);
+            }}
+          >
+            <m.icon size={20} />
+            <small>{m.name}</small>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
-
 createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <AuthGate>
-      {(username, logout, isAdmin) => (
-        <App
-          key={username}
-          username={username}
-          onLogout={logout}
-          isAdmin={isAdmin}
-        />
-      )}
-    </AuthGate>
-  </React.StrictMode>,
+  <AuthGate>
+    {(username, logout, isAdmin) => (
+      <App
+        key={username}
+        username={username}
+        onLogout={logout}
+        isAdmin={isAdmin}
+      />
+    )}
+  </AuthGate>,
 );
