@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Wallet,
   Plus,
   PenLine,
   CreditCard,
+  BarChart3,
+  Coins,
   Landmark,
   Smartphone,
   ArrowLeftRight,
@@ -11,6 +13,9 @@ import {
 import { Account, Card, money } from "../shared/api";
 import CardModal from "./mi-dinero/CardModal";
 import AccountModal from "./mi-dinero/AccountModal";
+import CardVisual from "./mi-dinero/CardVisual";
+import CardReport from "./mi-dinero/CardReport";
+import { banks, detectBank } from "../shared/banks";
 type Props = {
   accounts: Account[];
   cards: Card[];
@@ -30,16 +35,30 @@ export default function MiDinero({
   notify,
 }: Props) {
   const [accountForm, setAccountForm] = useState<Account | null | undefined>(),
-    [cardForm, setCardForm] = useState<Card | null | undefined>();
+    [cardForm, setCardForm] = useState<Card | null | undefined>(),
+    [reportId, setReportId] = useState<number | null>(null);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [reportId]);
   async function saved() {
     await reload();
     notify("Cambios guardados correctamente.");
   }
+  if (reportId !== null)
+    return (
+      <CardReport
+        cardId={reportId}
+        onBack={() => setReportId(null)}
+        onHistory={onHistory}
+      />
+    );
   return (
     <div className="stack">
       <div className="money-balance">
         <div>
-          <small>Saldo en tus cuentas</small>
+          <small>
+            <Coins size={16} /> Saldo en tus cuentas
+          </small>
           <strong>
             {money(accounts.reduce((n, a) => n + a.balance_cents, 0))}
           </strong>
@@ -62,11 +81,18 @@ export default function MiDinero({
               : a.kind === "wallet"
                 ? Smartphone
                 : Landmark;
+          const bank = detectBank("", a.name);
           return (
             <article className="panel account-tile" key={a.id}>
               <div className="account-heading">
                 <span className="account-icon">
-                  <Icon size={23} />
+                  {a.kind === "bank" && bank !== "other" ? (
+                    <b className={"bank-badge bank-" + bank}>
+                      {banks[bank].short}
+                    </b>
+                  ) : (
+                    <Icon size={23} />
+                  )}
                 </span>
                 <div className="grow">
                   <h3>{a.name}</h3>
@@ -101,43 +127,93 @@ export default function MiDinero({
       <button className="secondary withdrawal-action" onClick={onWithdraw}>
         <ArrowLeftRight size={17} /> Pasar dinero a efectivo
       </button>
-      <details className="panel cards-section">
-        <summary>
-          Mis tarjetas <span className="badge">{cards.length}</span>
-        </summary>
-        <p className="hint">
-          Las tarjetas de débito usan el saldo de su cuenta. Las de crédito
-          muestran la deuda que registres.
-        </p>
-        {cards.map((c) => (
-          <div className="movement" key={c.id}>
-            <CreditCard size={22} />
-            <div className="grow">
-              <strong>{c.name}</strong>
-              <small>
-                {c.brand} · ···· {c.last_four} ·{" "}
-                {c.card_type === "credit" ? "Crédito" : "Débito"}
-              </small>
-              <small>
-                {c.card_type === "credit"
-                  ? `Deuda: ${money(c.debt_cents)} · Límite: ${money(c.credit_limit_cents)}`
-                  : accounts.find((a) => a.id === c.account_id)?.name}
-              </small>
-            </div>
-            <button className="secondary" onClick={() => setCardForm(c)}>
-              Editar
+      <section className="my-cards" aria-labelledby="my-cards-title">
+        <div className="section-head">
+          <div>
+            <h2 id="my-cards-title">Mis tarjetas</h2>
+            <p className="muted">
+              Tu crédito y tus cuentas, con una cara más familiar.
+            </p>
+          </div>
+          <button className="secondary" onClick={() => setCardForm(null)}>
+            <Plus size={16} /> Agregar tarjeta
+          </button>
+        </div>
+        <div className="bank-card-grid">
+          {cards.map((c) => {
+            const account = accounts.find((a) => a.id === c.account_id);
+            const usage = c.credit_limit_cents
+              ? (c.debt_cents / c.credit_limit_cents) * 100
+              : 0;
+            return (
+              <article className="card-tile" key={c.id}>
+                <CardVisual card={c} account={account} />
+                <div className="card-tile-body">
+                  {c.card_type === "credit" ? (
+                    <>
+                      <div className="card-mini-stats">
+                        <span>
+                          <small>Disponible</small>
+                          <b>
+                            {money(
+                              Math.max(0, c.credit_limit_cents - c.debt_cents),
+                            )}
+                          </b>
+                        </span>
+                        <span>
+                          <small>Límite utilizado</small>
+                          <b>
+                            {c.credit_limit_cents
+                              ? `${Math.round(usage)}%`
+                              : "Sin límite"}
+                          </b>
+                        </span>
+                      </div>
+                      <div className="progress">
+                        <i style={{ width: Math.min(100, usage) + "%" }} />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="hint">Vinculada a {account?.name}</p>
+                  )}
+                  <div className="card-tile-actions">
+                    <button
+                      className="primary"
+                      onClick={() => setReportId(c.id)}
+                    >
+                      <BarChart3 size={17} /> Ver informe
+                    </button>
+                    <button
+                      className="secondary"
+                      onClick={() => setCardForm(c)}
+                      aria-label={`Editar tarjeta ${c.name}`}
+                    >
+                      Editar
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+        {!cards.length && (
+          <div className="panel empty empty-cards">
+            <CreditCard size={36} />
+            <h3>Dale un lugar a tus tarjetas</h3>
+            <p>
+              Agrega una tarjeta de débito o crédito para consultar su estado y
+              ver el informe de su cuenta.
+            </p>
+            <button className="primary" onClick={() => setCardForm(null)}>
+              Agregar mi primera tarjeta
             </button>
           </div>
-        ))}
-        {!cards.length && (
-          <p className="muted">
-            Puedes añadir una tarjeta para tener sus datos a mano.
-          </p>
         )}
-        <button className="secondary" onClick={() => setCardForm(null)}>
-          <Plus size={16} /> Agregar tarjeta
-        </button>
-      </details>
+        <p className="hint">
+          Ilustraciones referenciales según el banco; el modelo físico puede
+          variar. Los datos se registran manualmente.
+        </p>
+      </section>
       {accountForm !== undefined && (
         <AccountModal
           account={accountForm ?? undefined}

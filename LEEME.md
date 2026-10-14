@@ -22,6 +22,8 @@ La computadora debe permanecer encendida. La web y la API compiladas se sirven j
 ## Funciones
 
 - Registrar ingresos, gastos y retiros, con saldos por cuenta y tarjetas.
+- Diseño con monedas e ilustraciones locales de tarjetas BCP, BBVA, Interbank, Scotiabank, Falabella y Ripley. Detección por nombre y selección manual del banco.
+- Informe de cada tarjeta: estado del crédito, deuda, límite, disponible y fechas; actividad de la cuenta vinculada por mes, categoría e historial.
 - Programar pagos, confirmar los que ya realizaste y consultar sus comprobantes en Pagados. Los vencimientos recurrentes avanzan al confirmar y cada vencimiento solo se descuenta una vez.
 - Historial completo con búsqueda, filtros de tipo/cuenta/fechas, paginación y detalle del origen de cada movimiento.
 - Recordatorios recurrentes opcionales en Google Calendar.
@@ -41,6 +43,8 @@ Los recordatorios no realizan pagos; los aportes a metas solo reflejan progreso 
 3. **Pagos:** programa un vencimiento sin descontar dinero. Cuando ya lo hayas pagado, pulsa **Ya pagué**, revisa importe y cuenta y confirma. Se guarda un gasto; un pago recurrente prepara el siguiente vencimiento.
 4. **Historial:** busca cualquier ingreso, gasto o retiro. **Pagos → Pagados** muestra los pagos programados confirmados, con su fecha de vencimiento y registro.
 5. **Más:** entra a Revisar gastos de Gmail, Metas, Reportes o Conexiones. Administración solo aparece para el propietario.
+
+**Tarjetas:** en Mi dinero pulsa Agregar tarjeta, escribe un nombre como BCP Visa clásica y mira la vista previa. Puedes seleccionar el banco si la detección no coincide. Solo se guardan los últimos cuatro dígitos. Las ilustraciones son referenciales; no identifican el modelo físico exacto. Ver informe muestra la deuda y el límite que registres, con su porcentaje utilizado y próximas fechas. Los gastos del informe pertenecen a la cuenta vinculada y se comparten entre tarjetas de esa misma cuenta; no se atribuyen automáticamente a una tarjeta. Las compras de la cuenta no actualizan la deuda de crédito: edita la tarjeta para reflejar su estado actual.
 
 No confirmes otra vez un gasto que ya registraste manualmente o desde Gmail: la protección contra duplicados de pagos se aplica al mismo vencimiento, no a registros creados por vías distintas. Los registros anteriores se conservan en Historial; no se inventan comprobantes ni estados de pago para ellos. Las fechas del historial corresponden a Perú.
 

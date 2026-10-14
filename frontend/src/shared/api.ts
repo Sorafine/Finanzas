@@ -16,6 +16,15 @@ export type Card = {
   debt_cents: number;
   closing_day: number | null;
   due_day: number | null;
+  issuer:
+    | "auto"
+    | "bcp"
+    | "bbva"
+    | "interbank"
+    | "scotiabank"
+    | "falabella"
+    | "ripley"
+    | "other";
 };
 export type Movement = {
   id: number;

@@ -135,3 +135,10 @@ Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago*
 Historial permite buscar conceptos, filtrar por cuenta/tipo/fechas y consultar registros antiguos mediante páginas. Toca un movimiento para ver sus datos y origen. No vuelvas a confirmar un pago cuyo gasto ya ingresaste desde Gmail o manualmente.
 
 Al actualizar, detén la app, ejecuta `git pull --ff-only origin codex/iphone-scripts`, vuelve a ejecutar `install` e inicia `serve` (o tu túnel habitual). Los datos existentes se conservan; el arranque añade la tabla del historial de pagos a los perfiles existentes.
+
+
+## Tarjetas e informes
+
+En **Mi dinero → Agregar tarjeta**, escribe el nombre de la tarjeta (por ejemplo, BCP Visa clásica), elige crédito o débito y guarda los últimos cuatro dígitos. La vista previa reconoce BCP, BBVA, Interbank, Scotiabank, Falabella y Ripley por el nombre de la tarjeta o de su cuenta; puedes cambiar el banco manualmente. Si no reconoce la entidad, muestra una ilustración genérica. Las ilustraciones se cargan desde la propia app y funcionan sin pedir imágenes a servicios externos.
+
+**Ver informe** muestra deuda/límite/disponible de crédito y las próximas fechas de cierre/pago según los datos que registres. En débito muestra el saldo de la cuenta. El mes y año seleccionados filtran gastos, ingresos, categorías y movimientos de la cuenta vinculada. Si dos tarjetas usan la misma cuenta, el informe muestra la misma actividad de esa cuenta; la app no identifica automáticamente cuál se usó ni actualiza por sí sola la deuda del crédito.

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Wallet,
+  Coins,
+  Sparkles,
   Home,
   CalendarDays,
   History,
@@ -41,7 +43,7 @@ import Reportes from "./modules/Reportes";
 import "./styles.css";
 const pages = {
   inicio: {
-    title: "Tu dinero, de un vistazo",
+    title: "Tu dinero, con más calma",
     subtitle: "Tu saldo, próximos pagos y últimos movimientos.",
   },
   dinero: {
@@ -228,7 +230,7 @@ function App({
       <aside className="sidebar">
         <div className="brand">
           <div className="logo">
-            <Wallet size={23} />
+            <Coins size={23} />
           </div>
           <div>
             finanzas<span>app</span>
@@ -345,7 +347,11 @@ function App({
                 <div className="total">{money(summary.balance_cents)}</div>
                 <p>Saldo registrado en tus {accounts.length} cuentas</p>
               </div>
-              <Wallet size={48} opacity={0.3} />
+              <div className="coin-scene" aria-hidden="true">
+                <span className="coin coin-back">S/</span>
+                <span className="coin coin-front">S/</span>
+                <Sparkles className="coin-sparkle" size={25} />
+              </div>
             </section>
             <div className="home-actions">
               <button className="primary" onClick={() => register("expense")}>
@@ -374,13 +380,23 @@ function App({
               </div>
               <div className="two">
                 <article className="stat">
-                  <small>Ingresos del mes</small>
+                  <small className="stat-caption">
+                    <span className="stat-coin income">
+                      <Coins size={17} />
+                    </span>
+                    Ingresos del mes
+                  </small>
                   <strong className="positive">
                     {money(summary.month_income_cents)}
                   </strong>
                 </article>
                 <article className="stat">
-                  <small>Gastos del mes</small>
+                  <small className="stat-caption">
+                    <span className="stat-coin expense">
+                      <Wallet size={17} />
+                    </span>
+                    Gastos del mes
+                  </small>
                   <strong>{money(summary.month_expense_cents)}</strong>
                 </article>
               </div>

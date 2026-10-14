@@ -217,6 +217,9 @@ def init_cards():
             closing_day INTEGER,
             due_day INTEGER
         );''')
+        db.execute('BEGIN IMMEDIATE')
+        if 'issuer' not in {row['name'] for row in db.execute('PRAGMA table_info(cards)')}:
+            db.execute("ALTER TABLE cards ADD COLUMN issuer TEXT NOT NULL DEFAULT 'auto'")
 
 class AccountUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=80)
@@ -231,6 +234,7 @@ class CardIn(BaseModel):
     debt_cents: int = Field(default=0, ge=0)
     closing_day: int | None = Field(default=None, ge=1, le=31)
     due_day: int | None = Field(default=None, ge=1, le=31)
+    issuer: Literal['auto','bcp','bbva','interbank','scotiabank','falabella','ripley','other'] = 'auto'
 
 class CardUpdate(CardIn):
     pass
@@ -440,6 +444,8 @@ from .google_routes import router as google_router
 app.include_router(google_router)
 from .history_routes import router as history_router
 app.include_router(history_router)
+from .card_reports import router as card_reports_router
+app.include_router(card_reports_router)
 
 # One production origin: compiled frontend and authenticated /api routes.
 from fastapi.staticfiles import StaticFiles

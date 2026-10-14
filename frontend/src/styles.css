@@ -1522,3 +1522,683 @@ select {
     display: none;
   }
 }
+/* A warm, quiet palette with original coin and bank-card illustrations. */
+:root {
+  background: #faf8fc;
+  --primary: #7650aa;
+  --text-soft: #6d6983;
+  --line: #e9e3ef;
+  color: #30294a;
+}
+.sidebar {
+  background: #fffdfd;
+}
+.brand {
+  color: #53407e;
+}
+.brand span {
+  color: #ae71b7;
+}
+.logo {
+  background: #f4eaf8;
+  color: #9463b0;
+}
+.sidebar nav button.active,
+.mobile-nav button.active {
+  background: #f1eaf8;
+  color: #714b9e;
+}
+.primary:hover:not(:disabled) {
+  background: #674294;
+}
+.secondary {
+  background: #f2eaf7;
+  color: #73509a;
+}
+.secondary:hover:not(:disabled) {
+  background: #e9dcf3;
+}
+.icon-button {
+  background: #f6effa;
+  color: #7c56a5;
+}
+.account-icon {
+  background: #f4eafa;
+  color: #8659ae;
+}
+.eyebrow,
+.link,
+.back-link {
+  color: #7955a0;
+}
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(112deg, #654595, #9668b0);
+  box-shadow: 0 10px 28px #75508e17;
+  min-height: 190px;
+}
+.hero:after {
+  content: "";
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border: 50px solid #ffffff09;
+  border-radius: 50%;
+  right: -120px;
+  top: -130px;
+  pointer-events: none;
+}
+.hero > div:first-child {
+  position: relative;
+  z-index: 1;
+}
+.hero .overline {
+  color: #f0e2fa;
+}
+.hero p {
+  color: #f0e4f8;
+}
+.coin-scene {
+  width: 156px;
+  height: 130px;
+  position: relative;
+  flex-shrink: 0;
+  margin-right: 15px;
+  z-index: 1;
+}
+.coin {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  position: absolute;
+  font-weight: 800;
+  font-size: 32px;
+  color: #9c6520;
+  background: linear-gradient(135deg, #fff2b8, #e8b34f);
+  border: 5px solid #f6d684;
+  box-shadow:
+    inset 0 0 0 3px #cf91334a,
+    3px 7px 0 #c89143,
+    0 15px 28px #51327420;
+}
+.coin-front {
+  width: 88px;
+  height: 88px;
+  right: 4px;
+  top: 37px;
+  transform: rotate(14deg);
+}
+.coin-back {
+  width: 74px;
+  height: 74px;
+  left: 2px;
+  top: 10px;
+  transform: rotate(-19deg);
+  font-size: 26px;
+}
+.coin-sparkle {
+  position: absolute;
+  right: 2px;
+  top: 8px;
+  color: #fff1c5;
+}
+.stat-caption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stat-coin {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #e9f6ed;
+  color: #3b8867;
+}
+.stat-coin.expense {
+  background: #fff0e5;
+  color: #c28150;
+}
+.stat strong.positive,
+.positive,
+.movement-value.income {
+  color: #2a8466;
+}
+.stat {
+  box-shadow: 0 5px 16px #4b355205;
+}
+.welcome-panel {
+  background: #fff6e9;
+}
+.gmail-notice {
+  background: #f4eff9;
+  border-color: #e7ddf0;
+}
+.gmail-notice > svg {
+  color: #8d63b1;
+}
+.payment-overview {
+  background: #f5effb;
+  border-color: #e8def2;
+}
+.badge {
+  background: #f2eafa;
+  color: #7953a3;
+}
+.scope-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #706880;
+  background: #f8f4fb;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin: 12px 0 0;
+}
+.bank-card {
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 680/420;
+  min-width: 0;
+  border-radius: 20px;
+  background-color: #7055b7;
+  background-size: cover;
+  background-position: center;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: white;
+  box-shadow: 0 9px 22px #38314c17;
+  overflow: hidden;
+}
+.bank-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.bank-card-top > strong {
+  font-size: 24px;
+  letter-spacing: -0.7px;
+}
+.bank-card-top > span {
+  font-size: 11px;
+  padding: 5px 10px;
+  border: 1px solid #ffffff50;
+  border-radius: 30px;
+  background: #ffffff10;
+}
+.bank-card-middle {
+  display: grid;
+  gap: 8px;
+  margin-top: 35px;
+  min-width: 0;
+}
+.bank-card-middle strong {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.95;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bank-card-number {
+  font-size: 18px;
+  letter-spacing: 2.5px;
+  white-space: nowrap;
+}
+.bank-card-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bank-card-bottom small {
+  display: block;
+  color: #fff;
+  opacity: 0.8;
+  font-size: 10px;
+}
+.bank-card-bottom b {
+  display: block;
+  font-size: 25px;
+  font-weight: 650;
+  margin-top: 2px;
+}
+.card-network {
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 750;
+}
+.bank-card.compact {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 18px 21px;
+}
+.bank-card.compact .bank-card-top > strong {
+  font-size: 22px;
+}
+.bank-card.compact .bank-card-bottom b {
+  font-size: 21px;
+}
+.bank-card.compact .bank-card-number {
+  font-size: 16px;
+}
+.card-preview-caption {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-soft);
+  margin: 12px 0 18px;
+}
+.bank-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.my-cards {
+  margin-top: 12px;
+}
+.my-cards > .section-head {
+  margin-bottom: 20px;
+}
+.my-cards .section-head h2 {
+  margin-bottom: 7px;
+}
+.card-tile {
+  padding: 10px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: white;
+  min-width: 0;
+}
+.card-tile-body {
+  padding: 13px 10px 8px;
+}
+.card-mini-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.card-mini-stats small {
+  display: block;
+  color: var(--text-soft);
+  font-size: 11px;
+}
+.card-mini-stats b {
+  font-size: 16px;
+  display: block;
+  margin-top: 3px;
+}
+.card-mini-stats > span:last-child {
+  text-align: right;
+}
+.card-tile .progress {
+  margin: 12px 0 16px;
+  background: #f1ebf7;
+}
+.card-tile .progress i,
+.credit-progress i {
+  background: linear-gradient(90deg, #9c75c0, #7050a5);
+}
+.card-tile-actions {
+  display: flex;
+  gap: 8px;
+}
+.card-tile-actions > .primary {
+  flex: 1;
+}
+.empty-cards {
+  background: linear-gradient(120deg, #f9f3ff, #fff8ee);
+}
+.money-balance small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bank-badge {
+  font-size: 11px;
+  letter-spacing: -0.3px;
+  color: white;
+  background: #7055b7;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.bank-bcp {
+  background: #073aa0;
+}
+.bank-bbva {
+  background: #073568;
+}
+.bank-interbank {
+  background: #00865e;
+  font-size: 8px;
+}
+.bank-scotiabank {
+  background: #c93642;
+  font-size: 7px;
+}
+.bank-falabella {
+  background: #39783d;
+  font-size: 7px;
+}
+.bank-ripley {
+  background: #5e326f;
+}
+.card-report-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 22px;
+  align-items: center;
+}
+.credit-snapshot {
+  padding: 22px;
+}
+.credit-numbers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.credit-numbers small {
+  color: var(--text-soft);
+  display: block;
+  font-size: 11px;
+}
+.credit-numbers strong {
+  font-size: 25px;
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.utilization-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 18px;
+}
+.utilization-line b {
+  color: #7953a3;
+}
+.credit-progress {
+  background: #eee7f5;
+  margin: 9px 0 18px;
+}
+.card-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding-top: 4px;
+}
+.card-dates > span {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+.card-dates svg {
+  margin-top: 3px;
+  color: #8c61ae;
+}
+.card-dates small {
+  display: block;
+  color: var(--text-soft);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.card-report-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.card-report-kpis .stat > svg {
+  color: #9b74b8;
+  margin-bottom: 8px;
+}
+.card-report-kpis small {
+  display: block;
+}
+.card-report-kpis strong {
+  font-size: 24px;
+}
+.period-selector {
+  display: flex;
+  gap: 8px;
+}
+.period-selector label {
+  font-size: 11px;
+  display: grid;
+  gap: 5px;
+  color: var(--text-soft);
+}
+.period-selector select {
+  width: auto;
+  min-width: 100px;
+  padding: 10px;
+  font-size: 13px;
+}
+.card-report .section-head {
+  flex-wrap: wrap;
+}
+.account-report-intro h2 {
+  margin-bottom: 6px;
+}
+.card-report-details {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 18px;
+}
+.card-month-chart {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  height: 185px;
+}
+.card-month-chart > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+.card-chart-track {
+  width: 100%;
+  height: 145px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: #faf7fc;
+  border-radius: 8px;
+}
+.card-chart-track > span {
+  width: 60%;
+  max-width: 27px;
+  display: block;
+  background: #c6addd;
+  border-radius: 6px 6px 0 0;
+}
+.card-month-chart > div.selected .card-chart-track > span {
+  background: #8b61af;
+}
+.card-month-chart small {
+  font-size: 10px;
+  color: var(--text-soft);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 1100px) {
+  .card-report-overview,
+  .card-report-details {
+    grid-template-columns: 1fr;
+  }
+  .card-report-overview > .bank-card {
+    max-width: 440px;
+    width: 100%;
+    justify-self: center;
+  }
+}
+@media (max-width: 540px) {
+  .coin-scene {
+    width: 90px;
+    height: 110px;
+    margin-right: 0;
+  }
+  .coin-front {
+    width: 61px;
+    height: 61px;
+    font-size: 24px;
+    top: 42px;
+    border-width: 4px;
+  }
+  .coin-back {
+    width: 51px;
+    height: 51px;
+    font-size: 19px;
+    top: 9px;
+    border-width: 4px;
+  }
+  .coin-sparkle {
+    width: 20px;
+  }
+  .hero .total {
+    font-size: clamp(28px, 8.2vw, 36px);
+  }
+  .hero .overline {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .hero {
+    min-height: 178px;
+    padding: 24px 20px;
+  }
+  .bank-card-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .my-cards .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .my-cards .section-head > .secondary {
+    width: 100%;
+  }
+  .bank-card {
+    padding: 21px 22px;
+  }
+  .bank-card-number {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .bank-card-top > strong {
+    font-size: 24px;
+  }
+  .bank-card-middle {
+    margin-top: 29px;
+  }
+  .bank-card-bottom b {
+    font-size: 24px;
+  }
+  .bank-card-top > span {
+    padding: 4px 9px;
+  }
+  .card-report-kpis {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .card-report-kpis .stat {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 16px;
+  }
+  .card-report-kpis .stat svg {
+    margin: 0;
+  }
+  .card-report-kpis .stat strong {
+    font-size: 21px;
+    margin: 0;
+  }
+  .card-report-kpis .stat small {
+    font-size: 12px;
+  }
+  .credit-numbers strong {
+    font-size: 23px;
+  }
+  .card-month-chart {
+    gap: 4px;
+  }
+  .card-chart-track {
+    border-radius: 5px;
+  }
+  .card-month-chart small {
+    font-size: 9px;
+  }
+  .period-selector {
+    width: 100%;
+  }
+  .period-selector label {
+    flex: 1;
+  }
+  .period-selector select {
+    width: 100%;
+    font-size: 16px;
+  }
+  .account-report-intro > .section-head {
+    gap: 15px;
+  }
+  .bank-card.compact {
+    padding: 17px 19px;
+  }
+  .bank-card.compact .bank-card-middle {
+    margin-top: 25px;
+  }
+  .bank-card.compact .bank-card-number {
+    font-size: 14px;
+    letter-spacing: 1.7px;
+  }
+  .stat strong {
+    font-size: 22px;
+  }
+}
+.hero > div:first-child {
+  min-width: 0;
+}
+.bank-card-top > strong.long-bank {
+  font-size: 20px;
+}
+.bank-card-bottom > div {
+  min-width: 0;
+}
+.bank-card-bottom b {
+  overflow-wrap: anywhere;
+}
+.card-network {
+  flex-shrink: 0;
+}
+@media (max-width: 540px) {
+  .bank-card-top > strong.long-bank {
+    font-size: 18px;
+  }
+  .bank-card.compact .bank-card-top > strong.long-bank {
+    font-size: 18px;
+  }
+}
