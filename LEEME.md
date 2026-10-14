@@ -1,4 +1,4 @@
-# FinanzasApp
+# Balance
 
 Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Navegación: Inicio, Mi dinero, Pagos, Historial, Reportes y Metas y más. Con diseño móvil y acceso desde Safari.
 
@@ -19,10 +19,12 @@ Para acceso por Internet, detén `serve`, instala cloudflared y ejecuta `py -3 s
 
 La computadora debe permanecer encendida. La web y la API compiladas se sirven juntas; no se publica Vite. Cada usuario tiene sus datos y su sesión Google. El administrador se asigna desde la terminal con `admin-grant`. Una vez asignado, las personas pueden crear cuentas desde la pantalla de entrada. Solo ese administrador puede entrar a Administración, pausar registros o accesos y retirar conexiones Google. El registro web nunca asigna permisos de administrador. Un túnel no sustituye las credenciales OAuth: debes configurarlas y autorizar el callback HTTPS exacto en Google Cloud.
 
+Consulta [el inventario completo y la revisión para compartir](docs/ESTADO_PARA_COMPARTIR.md). Describe qué está implementado, los límites y la prueba privada recomendada antes de invitar usuarios.
+
 ## Funciones
 
 - Registrar ingresos, gastos y transferencias entre cualquier par de cuentas, incluido efectivo al banco, con comisión opcional. Las transferencias no son gastos, salvo su comisión.
-- Diseño en verde oscuro y menta, menú lateral compacto y registro lateral con categorías por iconos.
+- Diseño en azul y menta con escarabajo ahorrador, menú lateral compacto y registro lateral con categorías por iconos.
 - Tarjetas con deuda y fechas a la vista; se conserva la detección de banco y la vista previa al editarlas.
 - Informe de cada tarjeta: estado del crédito, deuda, límite, disponible y fechas; actividad de la cuenta vinculada por mes, categoría e historial.
 - Programar pagos, confirmar los que ya realizaste y consultar sus comprobantes en Pagados. Los vencimientos recurrentes avanzan al confirmar y cada vencimiento solo se descuenta una vez.

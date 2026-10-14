@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RefreshCw, ArrowLeft } from "lucide-react";
 import AuthGate from "./shared/AuthGate";
 import Modal from "./shared/Modal";
+import BrandMark from "./shared/BrandMark";
 import { Account, Card, Scheduled, req, localToday } from "./shared/api";
 import MiDinero from "./modules/MiDinero";
 import Dashboard from "./modules/Dashboard";
@@ -167,7 +168,8 @@ function App({
       </a>
       <aside className="sidebar">
         <div className="brand">
-          finanzas<span>app</span>
+          <BrandMark decorative />
+          <span>Balance</span>
         </div>
         <nav aria-label="Navegación principal">
           {navigation.map((m) => (

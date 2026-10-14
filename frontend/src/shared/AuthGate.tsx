@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useState } from "react";
-import { Wallet, LockKeyhole } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
 import { req } from "./api";
+import BrandMark from "./BrandMark";
 import { setCsrfToken } from "./session";
 type Session = { username: string; csrf_token: string; is_admin: boolean };
 export default function AuthGate({
@@ -112,10 +113,8 @@ export default function AuthGate({
     <main className="login-page">
       <section className="login-card">
         <div className="login-brand">
-          <Wallet size={30} />
-          <strong>
-            finanzas<span>app</span>
-          </strong>
+          <BrandMark decorative />
+          <strong>Balance</strong>
         </div>
         <h1>{registering ? "Crea tu espacio" : "Tu dinero, a tu ritmo"}</h1>
         <p className="muted">

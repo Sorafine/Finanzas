@@ -11,6 +11,7 @@ import {
 } from "../shared/api";
 import { DateBadge } from "../shared/FinanceUI";
 import GmailNotice from "./GmailNotice";
+import BrandMark from "../shared/BrandMark";
 export default function Dashboard({
   accounts,
   plans,
@@ -60,6 +61,7 @@ export default function Dashboard({
     <div className="stack home-reference">
       <div className="home-top-grid">
         <section className="spend-card">
+          <BrandMark className="spend-mascot" decorative transparent />
           <div className="overline">LIBRE PARA GASTAR</div>
           <strong className="spend-value">{money(free)}</strong>
           <div

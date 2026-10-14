@@ -1,1 +1,25 @@
-{"id":"/","name":"FinanzasApp","short_name":"Finanzas","description":"Tus cuentas, gastos y próximos pagos","lang":"es","start_url":"/","scope":"/","display":"standalone","background_color":"#f4f7fa","theme_color":"#14748b","icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"}]}
+{
+  "id": "/",
+  "name": "Balance · Finanzas personales",
+  "short_name": "Balance",
+  "description": "Tus cuentas, gastos y próximos pagos, con más calma.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f8fd",
+  "theme_color": "#1e4f89",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

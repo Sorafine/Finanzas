@@ -351,7 +351,7 @@ class PrivateAppMiddleware:
             scope['raw_path'] = scope['path'].encode()
         path = scope['path']
         request = Request(scope)
-        public_files = ('/', '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon.ico')
+        public_files = ('/', '/manifest.webmanifest', '/icon.svg', '/beetle.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon.ico')
         public = path in ('/auth/login', '/auth/register', '/auth/options', '/health') or (not is_api and (path in public_files or path.startswith('/assets/')))
         expected_host = urlsplit(PUBLIC_URL).hostname
         host = urlsplit('http://' + request.headers.get('host', '')).hostname

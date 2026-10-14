@@ -87,7 +87,7 @@ async def lifespan(app: FastAPI):
                 current_database.reset(token)
     yield
 
-app = FastAPI(title='FinanzasApp API', lifespan=lifespan)
+app = FastAPI(title='Balance API', lifespan=lifespan)
 app.add_middleware(PrivateAppMiddleware)
 app.include_router(auth_router)
 from .admin_routes import router as admin_router

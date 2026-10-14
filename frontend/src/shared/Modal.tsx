@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import BrandMark from "./BrandMark";
 export default function Modal({
   title,
   onClose,
@@ -82,7 +83,10 @@ export default function Modal({
         tabIndex={-1}
       >
         <div className="modal-heading">
-          <h2>{title}</h2>
+          <h2>
+            {variant === "drawer" && <BrandMark decorative />}
+            {title}
+          </h2>
           <button
             type="button"
             className="icon-button"

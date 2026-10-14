@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BrandMark from "../shared/BrandMark";
 import { Insights, req, money, monthName } from "../shared/api";
 export default function Reportes() {
   const [months, setMonths] = useState(6),
@@ -82,7 +83,7 @@ export default function Reportes() {
                 </div>
               ))}
             </div>
-            <p className="hint">Verde claro: ingresos · Verde oscuro: gastos</p>
+            <p className="hint">Verde: ingresos · Azul: gastos</p>
           </section>
           <div className="report-bottom-grid">
             <section className="panel">
@@ -104,6 +105,7 @@ export default function Reportes() {
               )}
             </section>
             <section className="panel margin-card">
+              <BrandMark decorative className="report-mascot" transparent />
               <small>
                 {data.margin_percent !== null && data.margin_percent < 0
                   ? "Gastaste más de lo que ingresó"

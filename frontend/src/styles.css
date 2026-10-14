@@ -7,12 +7,12 @@
     "Segoe UI",
     Arial,
     sans-serif;
-  color: #17392f;
+  color: #0e294a;
   background: #ffffff;
   font-synthesis: none;
-  --primary: #205e49;
-  --text-soft: #62786c;
-  --line: #dce7e0;
+  --primary: #1e4f89;
+  --text-soft: #627991;
+  --line: #d6e2f5;
   --radius: 18px;
 }
 * {
@@ -46,7 +46,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 3px solid #488e69;
+  outline: 3px solid #3f8fe0;
   outline-offset: 3px;
 }
 h1:focus {
@@ -283,11 +283,11 @@ main {
   color: #fff;
 }
 .primary:hover:not(:disabled) {
-  background: #174b3a;
+  background: #173f71;
 }
 .secondary {
-  background: #e4eee8;
-  color: #205e49;
+  background: #e4edf9;
+  color: #1e4f89;
 }
 .secondary:hover:not(:disabled) {
   background: #d9e7df;
@@ -1666,7 +1666,7 @@ select {
 }
 .card-tile .progress i,
 .credit-progress i {
-  background: linear-gradient(90deg, #73cba8, #205e49);
+  background: linear-gradient(90deg, #73cba8, #1e4f89);
 }
 .card-tile-actions {
   display: flex;
@@ -1752,7 +1752,7 @@ select {
   margin-top: 18px;
 }
 .utilization-line b {
-  color: #205e49;
+  color: #1e4f89;
 }
 .credit-progress {
   background: #eee7f5;
@@ -1852,7 +1852,7 @@ select {
   border-radius: 6px 6px 0 0;
 }
 .card-month-chart > div.selected .card-chart-track > span {
-  background: #205e49;
+  background: #1e4f89;
 }
 .card-month-chart small {
   font-size: 10px;
@@ -2028,14 +2028,14 @@ select {
     font-size: 18px;
   }
 }
-/* Reference layout: forest, mint, compact navigation and quiet panels. */
+/* Balance: blue savings beetle, mint income and compact navigation. */
 :root {
   font-family: Georgia, "Times New Roman", serif;
-  --primary: #205e49;
-  --text-soft: #62786c;
-  --line: #dce7e0;
+  --primary: #1e4f89;
+  --text-soft: #627991;
+  --line: #d6e2f5;
   background: #fff;
-  color: #102f24;
+  color: #0e294a;
 }
 h1,
 h2,
@@ -2073,27 +2073,27 @@ select {
   font-weight: 400;
 }
 .primary {
-  background: #205e49;
+  background: #1e4f89;
 }
 .primary:hover:not(:disabled) {
-  background: #163e31;
+  background: #173f71;
 }
 .secondary {
-  background: #e4eee8;
-  color: #205e49;
+  background: #e4edf9;
+  color: #1e4f89;
 }
 .secondary:hover:not(:disabled) {
-  background: #d7e6dc;
+  background: #d8e5f8;
 }
 .link,
 .back-link {
-  color: #205e49;
+  color: #1e4f89;
   font-weight: 400;
   font-size: 12px;
 }
 .panel,
 .stat {
-  border: 1px solid #dce7e0;
+  border: 1px solid #d6e2f5;
   border-radius: 18px;
   padding: 20px;
   box-shadow: none;
@@ -2110,7 +2110,7 @@ select {
 .sidebar {
   width: 207px;
   padding: 24px 14px 20px;
-  background: #e7efea;
+  background: #e6eef8;
   border: 0;
 }
 .brand {
@@ -2118,10 +2118,10 @@ select {
   margin: 0 13px 24px;
   font-family: Georgia, serif;
   font-size: 18px;
-  color: #0e2c21;
+  color: #102c4d;
 }
 .brand span {
-  color: #35a77b;
+  color: #1e4f89;
 }
 .sidebar nav {
   gap: 5px;
@@ -2133,12 +2133,12 @@ select {
   min-height: 36px;
   padding: 10px 13px;
   border-radius: 13px;
-  color: #244c3b;
+  color: #244c76;
   gap: 10px;
 }
 .sidebar nav button.active {
   background: white;
-  color: #113d2a;
+  color: #163c6e;
   box-shadow: 0 1px 3px #2347320d;
   font-weight: 700;
 }
@@ -2147,11 +2147,11 @@ select {
   height: 7px;
   flex-shrink: 0;
   border-radius: 3px;
-  background: #a8bfb1;
+  background: #a9bdd7;
   display: inline-block;
 }
 .active > .nav-dot {
-  background: #205e49;
+  background: #1e4f89;
 }
 .sidebar-register {
   margin-top: auto;
@@ -2179,7 +2179,7 @@ main {
 }
 .today-label {
   font-size: 11px;
-  color: #4f6859;
+  color: #627991;
 }
 .header-actions {
   gap: 12px;
@@ -2208,23 +2208,23 @@ main {
   font-size: 13px;
 }
 .badge {
-  background: #e5efe9;
-  color: #205e49;
+  background: #e3edf9;
+  color: #1e4f89;
 }
 .account-icon,
 .icon-button {
-  color: #205e49;
-  background: #e5efe9;
+  color: #1e4f89;
+  background: #e3edf9;
 }
 .positive,
 .movement-value.income {
   color: #228166;
 }
 .progress i {
-  background: #205e49;
+  background: #1e4f89;
 }
 .progress {
-  background: #e7efea;
+  background: #e6eef8;
 }
 .align-end {
   justify-content: flex-end;
@@ -2243,15 +2243,15 @@ main {
 .filter-chips button {
   border: 0;
   border-radius: 30px;
-  background: #e5efe9;
-  color: #205e49;
+  background: #e3edf9;
+  color: #1e4f89;
   padding: 9px 14px;
   min-height: 34px;
   font-weight: 400;
   font-size: 12px;
 }
 .filter-chips button.selected {
-  background: #205e49;
+  background: #1e4f89;
   color: #fff;
 }
 .page-actions .filter-chips {
@@ -2264,7 +2264,7 @@ main {
 }
 .spend-card {
   border-radius: 20px;
-  background: #123e2f;
+  background: #102c4d;
   color: #fff;
   padding: 24px 26px;
   min-width: 0;
@@ -2410,7 +2410,7 @@ main {
   max-height: 46px;
 }
 .mini-chart i.current {
-  background: #205e49;
+  background: #1e4f89;
 }
 .mini-chart small {
   position: absolute;
@@ -2422,7 +2422,7 @@ main {
 }
 .gmail-notice {
   background: #eaf2ed;
-  border: 1px solid #dce7e0;
+  border: 1px solid #d6e2f5;
   padding: 18px;
   border-radius: 18px;
   gap: 14px;
@@ -2438,7 +2438,7 @@ main {
   font-size: 11px;
 }
 .gmail-notice .secondary {
-  background: #205e49;
+  background: #1e4f89;
   color: #fff;
   padding: 10px 18px;
 }
@@ -2451,7 +2451,7 @@ main {
 .account-total > small {
   display: block;
   font-size: 12px;
-  color: #375647;
+  color: #35577e;
 }
 .account-total > strong {
   display: block;
@@ -2468,7 +2468,7 @@ main {
   background: #edf3ef;
 }
 .account-distribution i:nth-child(1) {
-  background: #205e49;
+  background: #1e4f89;
 }
 .account-distribution i:nth-child(2) {
   background: #8edfc0;
@@ -2517,7 +2517,7 @@ main {
   border-radius: 19px;
   min-height: 171px;
   padding: 20px;
-  background: linear-gradient(120deg, #133f2f, #399d73);
+  background: linear-gradient(120deg, #102c4d, #3f8fe0);
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -2583,15 +2583,15 @@ main {
 }
 .segmented button {
   border-radius: 12px;
-  background: #e5efe9;
+  background: #e3edf9;
   padding: 11px 16px;
-  color: #205e49;
+  color: #1e4f89;
   font-family: Georgia, serif;
   font-weight: 400;
   font-size: 12px;
 }
 .segmented button.chosen {
-  background: #102e23;
+  background: #102c4d;
   color: white;
   box-shadow: none;
 }
@@ -2617,7 +2617,7 @@ main {
 }
 .upcoming-caption {
   font-size: 11px;
-  color: #496150;
+  color: #476383;
 }
 .payment-list {
   padding: 0;
@@ -2630,7 +2630,7 @@ main {
   position: relative;
   grid-template-columns: 46px minmax(0, 1fr) auto;
   padding: 18px;
-  border: 1px solid #dce7e0 !important;
+  border: 1px solid #d6e2f5 !important;
   border-radius: 17px;
   gap: 13px;
   align-items: center;
@@ -2641,8 +2641,8 @@ main {
   padding: 18px;
 }
 .payment-entry.selected {
-  border-color: #205e49 !important;
-  box-shadow: 0 0 0 1px #205e4920;
+  border-color: #1e4f89 !important;
+  box-shadow: 0 0 0 1px #1e4f8920;
 }
 .payment-info h3 {
   margin: 0 0 4px;
@@ -2693,7 +2693,7 @@ main {
   max-height: calc(100dvh - 104px);
   padding: 20px;
   box-shadow: 0 8px 30px #193f2a0d;
-  border: 1px solid #dce7e0;
+  border: 1px solid #d6e2f5;
   border-radius: 18px;
 }
 .modal-payment .modal-heading h2 {
@@ -2751,7 +2751,7 @@ main {
 }
 .history-summary > div {
   background: white;
-  border: 1px solid #dce7e0;
+  border: 1px solid #d6e2f5;
   border-radius: 17px;
   padding: 16px 18px;
   display: block;
@@ -2768,8 +2768,8 @@ main {
 }
 .history-day > h2 {
   font-size: 11px;
-  color: #496150;
-  border-bottom: 1px solid #e3ece6;
+  color: #476383;
+  border-bottom: 1px solid #e1e9f5;
   margin: 0;
   padding: 0 0 7px;
   text-transform: uppercase;
@@ -2840,7 +2840,7 @@ main {
   background: #8edfc0;
 }
 .report-bar-pair .expense {
-  background: #205e49;
+  background: #1e4f89;
 }
 .reference-report-month small {
   font-size: 11px;
@@ -2857,7 +2857,7 @@ main {
   gap: 12px;
   align-items: center;
   padding: 14px 0;
-  border-top: 1px solid #e3ece6;
+  border-top: 1px solid #e1e9f5;
   font-size: 13px;
 }
 .reference-category .progress {
@@ -2875,7 +2875,7 @@ main {
 .margin-card > strong {
   font-size: 36px;
   display: block;
-  color: #205e49;
+  color: #1e4f89;
   line-height: 1.2;
 }
 .margin-card p {
@@ -2898,7 +2898,7 @@ main {
   width: 37px;
   height: 37px;
   border-radius: 12px;
-  background: #205e49;
+  background: #1e4f89;
   color: white;
 }
 .goal-icon-grid {
@@ -2914,7 +2914,7 @@ main {
   gap: 7px;
   border: 0;
   background: none;
-  color: #205e49;
+  color: #1e4f89;
   min-width: 0;
   padding: 0;
 }
@@ -2924,10 +2924,10 @@ main {
   border-radius: 16px;
   display: grid;
   place-items: center;
-  background: #e4eee8;
+  background: #e4edf9;
 }
 .goal-icon-grid .selected > span {
-  background: #205e49;
+  background: #1e4f89;
   color: white;
 }
 .goal-icon-grid small {
@@ -2945,8 +2945,8 @@ main {
   border-bottom: 1px solid #e0eae3;
 }
 .more-settings .gmail-notice .secondary {
-  background: #e4eee8;
-  color: #205e49;
+  background: #e4edf9;
+  color: #1e4f89;
 }
 .settings-line {
   display: flex;
@@ -3023,7 +3023,7 @@ main {
 .movement-editor .tabs {
   border-radius: 14px;
   padding: 4px;
-  background: #e4eee8;
+  background: #e4edf9;
 }
 .movement-editor .tabs button {
   font-family: Inter, system-ui, sans-serif;
@@ -3042,7 +3042,7 @@ main {
 }
 .big-amount > span {
   display: block;
-  color: #62786c;
+  color: #627991;
   font-size: 12px;
 }
 .big-amount > div {
@@ -3086,7 +3086,7 @@ main {
 }
 .category-picker > small {
   font-size: 11px;
-  color: #62786c;
+  color: #627991;
   display: block;
   margin-bottom: 10px;
 }
@@ -3103,7 +3103,7 @@ main {
   align-items: center;
   flex-direction: column;
   gap: 5px;
-  color: #205e49;
+  color: #1e4f89;
 }
 .category-picker button > span {
   display: grid;
@@ -3114,7 +3114,7 @@ main {
   background: #e5eee8;
 }
 .category-picker button.selected > span {
-  background: #205e49;
+  background: #1e4f89;
   color: white;
 }
 .category-picker small {
@@ -3128,9 +3128,9 @@ main {
 }
 .editor-fields > label {
   font-size: 11px;
-  color: #62786c;
+  color: #627991;
   padding: 11px 12px;
-  border: 1px solid #dce7e0;
+  border: 1px solid #d6e2f5;
   border-radius: 16px;
   background: #fff;
   display: block;
@@ -3157,7 +3157,7 @@ main {
   font-size: 11px;
   background: none;
   border: 0;
-  color: #205e49;
+  color: #1e4f89;
   padding: 0;
   min-height: 20px;
 }
@@ -3167,7 +3167,7 @@ main {
   justify-content: space-between;
   position: relative;
   background: white;
-  border: 1px solid #dce7e0;
+  border: 1px solid #d6e2f5;
   border-radius: 16px;
   padding: 15px;
   font-size: 12px;
@@ -3201,7 +3201,7 @@ main {
   transition: transform 0.15s;
 }
 .repeat-switch input:checked + span {
-  background: #205e49;
+  background: #1e4f89;
 }
 .repeat-switch input:checked + span:after {
   transform: translateX(15px);
@@ -3217,7 +3217,7 @@ main {
 }
 .editor-footer p {
   font-size: 11px;
-  color: #62786c;
+  color: #627991;
   line-height: 1.5;
   margin: 0 0 12px;
 }
@@ -3243,19 +3243,19 @@ main {
 }
 .login-brand,
 .login-brand span {
-  color: #205e49;
+  color: #1e4f89;
 }
 .register-switch {
-  color: #205e49;
+  color: #1e4f89;
 }
 .modal-default .modal-heading h2 {
   font-size: 20px;
 }
 .credit-progress i {
-  background: #205e49;
+  background: #1e4f89;
 }
 .credit-snapshot .utilization-line b {
-  color: #205e49;
+  color: #1e4f89;
 }
 .card-chart-track {
   background: #f1f6f3;
@@ -3264,11 +3264,11 @@ main {
   background: #8edfc0;
 }
 .card-month-chart > div.selected .card-chart-track > span {
-  background: #205e49;
+  background: #1e4f89;
 }
 .scope-note {
   background: #eef5f0;
-  color: #62786c;
+  color: #627991;
 }
 @media (min-width: 1600px) {
   main {
@@ -3322,7 +3322,7 @@ main {
   .mobile-nav {
     font-family: Inter, system-ui, sans-serif;
     background: #fff;
-    border-color: #dce7e0;
+    border-color: #d6e2f5;
   }
   .mobile-nav button {
     font-family: Inter, system-ui, sans-serif;
@@ -3331,8 +3331,8 @@ main {
     gap: 6px;
   }
   .mobile-nav button.active {
-    background: #e4eee8;
-    color: #205e49;
+    background: #e4edf9;
+    color: #1e4f89;
   }
   .mobile-nav .nav-dot {
     width: 6px;
@@ -3773,7 +3773,7 @@ main {
 }
 .pay-summary {
   font-size: 11px;
-  color: #62786c;
+  color: #627991;
   margin: 0;
 }
 .modal-payment .modal-heading {
@@ -3805,5 +3805,197 @@ main {
   }
   .goal-amounts strong {
     font-size: 14px;
+  }
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 22px;
+  font-weight: 700;
+  color: #102c4d;
+  min-height: 43px;
+}
+.brand > span {
+  color: #102c4d;
+  font-size: 18px;
+}
+.brand-mark {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+.brand > .brand-mark {
+  background: white;
+  border-radius: 13px;
+  box-shadow: 0 1px 3px #1e4f8910;
+  padding: 2px;
+  width: 44px;
+  height: 44px;
+}
+.login-brand {
+  color: #102c4d;
+  font-family: Georgia, serif;
+  gap: 12px;
+}
+.login-brand > .brand-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 15px;
+  border: 1px solid #d6e2f5;
+}
+.spend-card {
+  position: relative;
+  padding-right: 120px;
+}
+.spend-card .spend-mascot {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  width: 105px;
+  height: 105px;
+}
+.spend-card .balance-track,
+.spend-card .spend-breakdown,
+.spend-card .spend-hint {
+  position: relative;
+  margin-right: -94px;
+}
+.spend-card .spend-value {
+  position: relative;
+  z-index: 1;
+}
+.margin-card {
+  position: relative;
+  padding-right: 75px;
+}
+.report-mascot {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 54px;
+  height: 54px;
+}
+.modal-drawer .modal-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.modal-drawer .modal-heading h2 > .brand-mark {
+  width: 28px;
+  height: 28px;
+}
+.modal-drawer .modal-card {
+  background: #f5f8fd;
+}
+.movement-editor .tabs {
+  background: #e4edf9;
+}
+.movement-editor .tabs button {
+  color: #123f72;
+}
+.movement-editor .tabs button.chosen {
+  color: #0e294a;
+}
+.category-picker button {
+  color: #1e4f89;
+}
+.category-picker button > span {
+  background: #e4edf9;
+}
+.category-picker button.selected > span {
+  background: #1e4f89;
+  color: white;
+}
+.big-amount b,
+.big-amount input {
+  color: #0e294a;
+}
+.editor-fields > label {
+  border-color: #d6e2f5;
+}
+.editor-fields input,
+.editor-fields select {
+  color: #16365d;
+}
+.repeat-switch {
+  border-color: #d6e2f5;
+  color: #244a78;
+}
+.repeat-switch > span {
+  background: #c4d3e8;
+}
+.repeat-switch input:checked + span {
+  background: #1e4f89;
+}
+.repeat-switch input:focus-visible + span {
+  outline-color: #3f8fe0;
+}
+.reference-report-chart .income {
+  background: #8edfc0;
+}
+.reference-report-chart .expense {
+  background: #1e4f89;
+}
+.spend-card .overline {
+  color: #d7e5fa;
+}
+.spend-hint {
+  color: #d7e5fa;
+}
+.margin-card strong {
+  color: #164d3e;
+}
+.login-card {
+  border-color: #d6e2f5;
+}
+.scope-note {
+  background: #f0f5fc;
+  color: #627991;
+}
+.credit-progress i {
+  background: #1e4f89;
+}
+.card-chart-track {
+  background: #f1f5fc;
+}
+.card-month-chart > div.selected .card-chart-track > span {
+  background: #1e4f89;
+}
+@media (max-width: 540px) {
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+  .spend-card {
+    padding-right: 100px;
+  }
+  .spend-card .spend-mascot {
+    width: 80px;
+    height: 80px;
+    right: 10px;
+    top: 27px;
+  }
+  .spend-card .balance-track,
+  .spend-card .spend-breakdown,
+  .spend-card .spend-hint {
+    margin-right: -77px;
+  }
+  .spend-card .spend-value {
+    font-size: clamp(26px, 8vw, 39px);
+  }
+  .modal-drawer .modal-heading h2 {
+    font-size: 18px;
+    gap: 7px;
+  }
+  .modal-drawer .modal-heading h2 > .brand-mark {
+    width: 27px;
+    height: 27px;
+  }
+  .report-mascot {
+    width: 45px;
+    height: 45px;
   }
 }

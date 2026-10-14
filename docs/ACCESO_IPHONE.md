@@ -54,7 +54,7 @@ Los Quick Tunnels son para pruebas, sin garantía de disponibilidad y con límit
 
 ## 3. Alternativa para un enlace estable sin comprar dominio
 
-Para Google y acceso cotidiano conviene conservar la misma dirección. También se incluye un comando para **Tailscale Funnel**, usando el hostname `*.ts.net` de tu computadora. Requiere instalar Tailscale, iniciar sesión y habilitar MagicDNS, HTTPS y Funnel para ese dispositivo. Consulta las condiciones actuales del plan personal y de Funnel; la disponibilidad y los límites dependen del servicio. Los visitantes de la web no necesitan instalar Tailscale, pero sí el usuario de FinanzasApp.
+Para Google y acceso cotidiano conviene conservar la misma dirección. También se incluye un comando para **Tailscale Funnel**, usando el hostname `*.ts.net` de tu computadora. Requiere instalar Tailscale, iniciar sesión y habilitar MagicDNS, HTTPS y Funnel para ese dispositivo. Consulta las condiciones actuales del plan personal y de Funnel; la disponibilidad y los límites dependen del servicio. Los visitantes de la web no necesitan instalar Tailscale, pero sí su cuenta de Balance.
 
 Windows: instala Tailscale desde su sitio oficial o `winget install --exact --id Tailscale.Tailscale`, abre Tailscale e inicia sesión. Después:
 
@@ -119,18 +119,18 @@ Instalación y compilación en Linux, pruebas de aislamiento de datos, cookies/C
 
 ## Administración y revisión de Gmail
 
-La cuenta administradora ve **Administración** en la navegación de escritorio y dentro de Conexiones en móvil. Puede habilitar o pausar el registro web y el servicio Google, ver el estado de los usuarios, pausar/reactivar accesos y retirar una conexión Google. El panel no muestra contraseñas, tokens ni los gastos de otras personas. Pausar un usuario invalida sus sesiones y conserva sus datos; la cuenta administradora no se puede pausar desde el panel. Un segundo `admin-grant` para otra persona se rechaza.
+La cuenta administradora accede a **Usuarios y permisos** desde **Metas y más**, tanto en escritorio como en móvil. Puede habilitar o pausar el registro web y el servicio Google, ver el estado de los usuarios, pausar/reactivar accesos y retirar una conexión Google. El panel no muestra contraseñas, tokens ni los gastos de otras personas. Pausar un usuario invalida sus sesiones y conserva sus datos; la cuenta administradora no se puede pausar desde el panel. Un segundo `admin-grant` para otra persona se rechaza.
 
 **Conexiones** permite a cada persona conectar o desconectar su propia cuenta Google. **Revisar gastos** tiene los comprobantes, la confirmación de importe/cuenta y la opción de descartar. El aviso de Inicio lleva a esa pantalla. La revisión requiere una cuenta Google conectada y el servicio habilitado; no registra consumos automáticamente.
 
-Crear una cuenta en FinanzasApp no añade su Gmail a los usuarios de prueba de Google. Mientras OAuth esté en modo de prueba, agrega en Google Cloud el correo que cada persona usará al conectar. Para ampliar el acceso fuera de esos usuarios, Google puede requerir verificación y otros cambios en su consentimiento.
+Crear una cuenta en Balance no añade su Gmail a los usuarios de prueba de Google. Mientras OAuth esté en modo de prueba, agrega en Google Cloud el correo que cada persona usará al conectar. Para ampliar el acceso fuera de esos usuarios, Google puede requerir verificación y otros cambios en su consentimiento.
 
 
 ## Navegación y pagos realizados
 
 En escritorio el menú contiene Inicio, Mi dinero, Pagos, Historial, Reportes y Metas y más. En móvil la barra inferior agrupa Reportes y las opciones de Google/administración dentro de Más. El botón + Nuevo abre el formulario lateral adaptado a la pantalla.
 
-Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago** guarda el vencimiento; cuando hayas pagado, **Ya pagué → Confirmar y registrar pago** descuenta el importe de la cuenta seleccionada y lo guarda en **Pagos → Pagados** y en **Historial**. Un pago mensual avanza al mes siguiente conservando su día habitual (los días 29–31 se ajustan al último día cuando sea necesario). Un pago único queda completado.
+Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago** guarda el vencimiento; cuando hayas pagado, **Ya pagué → Confirmar** descuenta el importe de la cuenta seleccionada y lo guarda en **Pagos → Pagados** y en **Historial**. Un pago mensual avanza al mes siguiente conservando su día habitual (los días 29–31 se ajustan al último día cuando sea necesario). Un pago único queda completado.
 
 Historial permite buscar conceptos, filtrar por cuenta/tipo/fechas y consultar registros antiguos mediante páginas. Toca un movimiento para ver sus datos y origen. No vuelvas a confirmar un pago cuyo gasto ya ingresaste desde Gmail o manualmente.
 
@@ -153,3 +153,6 @@ En **+ Nuevo → Transferir** elige origen, destino e importe. Puedes mover efec
 **Libre para gastar** reserva los pagos activos cuyo próximo vencimiento cae hasta el fin de mes, incluidos vencidos. No descuenta metas informativas ni deudas de tarjetas no programadas como pago. Puede ser negativo si los compromisos superan el saldo.
 
 En **Historial**, los filtros rápidos y la búsqueda también se aplican a **Exportar**. El CSV incluye toda la selección, con fecha de Perú, cuenta, destino, categoría, importe y comisión. **Reportes** compara los últimos 3, 6 o 12 meses, incluidos cambios de año; el margen del mes es ingresos menos gastos y comisiones, no un aporte automático a una meta.
+
+
+La marca visible ahora es **Balance**, con el escarabajo ahorrador. Las carpetas de datos y los comandos conservan sus nombres para mantener los perfiles existentes. Consulta [funciones y estado para compartir](ESTADO_PARA_COMPARTIR.md) antes de invitar a otras personas.
