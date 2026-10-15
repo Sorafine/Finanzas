@@ -91,6 +91,8 @@ def init_auth_db():
             db.execute('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0')
         if 'is_active' not in columns:
             db.execute('ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1')
+        if 'recovery_hash' not in columns:
+            db.execute('ALTER TABLE users ADD COLUMN recovery_hash TEXT')
         db.execute('CREATE UNIQUE INDEX IF NOT EXISTS one_administrator ON users(is_admin) WHERE is_admin=1')
         db.execute('DELETE FROM sessions WHERE expires_at <= ?', (int(time.time()),))
         db.execute('DELETE FROM oauth_states WHERE expires_at <= ?', (int(time.time()),))
@@ -334,6 +336,79 @@ def logout():
     return response
 
 
+class SecurityIn(BaseModel):
+    current_password:str=Field(min_length=1,max_length=128)
+
+class PasswordChange(SecurityIn):
+    new_password:str=Field(min_length=12,max_length=128)
+
+class RecoveryIn(LoginIn):
+    password:str=Field(min_length=12,max_length=128)
+    recovery_code:str=Field(min_length=1,max_length=200)
+
+
+def security_limit(name,request):
+    now=int(time.time());peer=request.client.host if request.client else 'unknown'
+    with registry() as db:
+        db.execute('BEGIN IMMEDIATE')
+        buckets=[('security-user:'+name,8),('security-peer:'+peer,40)]
+        for bucket,maximum in buckets:
+            row=db.execute('SELECT * FROM login_attempts WHERE bucket=?',(bucket,)).fetchone()
+            if row and row['resets_at']>now and row['count']>=maximum:raise HTTPException(429,'Demasiados intentos. Espera cinco minutos.')
+        for bucket,_ in buckets:
+            db.execute('''INSERT INTO login_attempts VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET
+                count=CASE WHEN resets_at<=? THEN 1 ELSE count+1 END,
+                resets_at=CASE WHEN resets_at<=? THEN excluded.resets_at ELSE resets_at END''',(bucket,now+300,now,now))
+
+
+def verified_password(payload,request):
+    user=identity();security_limit(user.username,request)
+    with registry() as db:row=db.execute('SELECT * FROM users WHERE id=?',(user.user_id,)).fetchone()
+    if not row or not password_matches(payload.current_password,row['password_hash']):raise HTTPException(401,'Contraseña actual incorrecta')
+    return user,row
+
+
+@router.get('/security')
+def security_status():
+    with registry() as db:
+        row=db.execute('SELECT recovery_hash FROM users WHERE id=?',(identity().user_id,)).fetchone()
+        return {'recovery_enabled':bool(row[0])}
+
+
+@router.post('/security/recovery-code')
+def recovery_code(payload:SecurityIn,request:Request):
+    user,row=verified_password(payload,request);code=secrets.token_urlsafe(32)
+    with registry() as db:
+        changed=db.execute('UPDATE users SET recovery_hash=? WHERE id=? AND password_hash=?',(hashlib.sha256(code.encode()).hexdigest(),user.user_id,row['password_hash']))
+        if not changed.rowcount:raise HTTPException(409,'La contraseña cambió. Vuelve a entrar.')
+    return {'recovery_code':code}
+
+
+@router.post('/security/password')
+def change_password(payload:PasswordChange,request:Request):
+    user,row=verified_password(payload,request);encoded=password_hash(payload.new_password)
+    with registry() as db:
+        db.execute('BEGIN IMMEDIATE')
+        changed=db.execute('UPDATE users SET password_hash=?,recovery_hash=NULL WHERE id=? AND password_hash=?',(encoded,user.user_id,row['password_hash']))
+        if not changed.rowcount:raise HTTPException(409,'La contraseña cambió. Vuelve a entrar.')
+        db.execute('DELETE FROM sessions WHERE user_id=?',(user.user_id,));db.execute('DELETE FROM oauth_states WHERE user_id=?',(user.user_id,))
+    return {'changed':True}
+
+
+@router.post('/recover')
+def recover(payload:RecoveryIn,request:Request):
+    name=payload.username.strip().lower();security_limit(name,request)
+    digest=hashlib.sha256(payload.recovery_code.strip().encode()).hexdigest()
+    encoded=password_hash(payload.password)
+    with registry() as db:
+        db.execute('BEGIN IMMEDIATE');row=db.execute('SELECT * FROM users WHERE username=?',(name,)).fetchone()
+        valid=hmac.compare_digest(digest,row['recovery_hash'] if row and row['recovery_hash'] else '0'*64)
+        if not row or not valid or not row['is_active']:raise HTTPException(401,'Usuario o código de recuperación incorrectos')
+        db.execute('UPDATE users SET password_hash=?,recovery_hash=NULL WHERE id=?',(encoded,row['id']))
+        db.execute('DELETE FROM sessions WHERE user_id=?',(row['id'],));db.execute('DELETE FROM oauth_states WHERE user_id=?',(row['id'],))
+    return session_response(row['id'])
+
+
 class PrivateAppMiddleware:
     """Authenticates both /api and legacy routes, binds each request to its DB."""
     def __init__(self, app):
@@ -352,7 +427,7 @@ class PrivateAppMiddleware:
         path = scope['path']
         request = Request(scope)
         public_files = ('/', '/manifest.webmanifest', '/icon.svg', '/beetle.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon.ico')
-        public = path in ('/auth/login', '/auth/register', '/auth/options', '/health') or (not is_api and (path in public_files or path.startswith('/assets/')))
+        public = path in ('/auth/login', '/auth/register', '/auth/recover', '/auth/options', '/health') or (not is_api and (path in public_files or path.startswith('/assets/')))
         expected_host = urlsplit(PUBLIC_URL).hostname
         host = urlsplit('http://' + request.headers.get('host', '')).hostname
         if host not in {'localhost', '127.0.0.1', 'testserver', expected_host}:

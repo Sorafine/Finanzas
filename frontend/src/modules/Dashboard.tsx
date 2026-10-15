@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   Account,
+  Availability,
+  Card,
   Scheduled,
   Insights,
   req,
@@ -14,7 +16,9 @@ import GmailNotice from "./GmailNotice";
 import BrandMark from "../shared/BrandMark";
 export default function Dashboard({
   accounts,
+  cards,
   plans,
+  availability,
   onRegister,
   onMoney,
   onPayments,
@@ -22,7 +26,9 @@ export default function Dashboard({
   onReports,
 }: {
   accounts: Account[];
+  cards: Card[];
   plans: Scheduled[];
+  availability: Availability | null;
   onRegister: (kind: "expense" | "income" | "transfer") => void;
   onMoney: () => void;
   onPayments: () => void;
@@ -47,11 +53,15 @@ export default function Dashboard({
   const today = localToday(),
     monthEnd = today.slice(0, 7) + "-31",
     pending = plans.filter((p) => p.active),
-    committed = pending
-      .filter((p) => p.due_date <= monthEnd)
-      .reduce((n, p) => n + p.amount_cents, 0),
+    committed =
+      pending
+        .filter((p) => !p.card_id && p.due_date <= monthEnd)
+        .reduce((n, p) => n + p.amount_cents, 0) +
+      cards
+        .filter((c) => c.card_type === "credit")
+        .reduce((n, c) => n + c.debt_cents, 0),
     total = accounts.reduce((n, a) => n + a.balance_cents, 0),
-    free = total - committed,
+    free = availability?.available_cents ?? total - committed,
     next = pending[0];
   const max = Math.max(
     1,
@@ -67,7 +77,7 @@ export default function Dashboard({
           <div
             className="balance-track"
             role="img"
-            aria-label={`Total ${money(total)}, comprometido ${money(committed)}`}
+            aria-label={`Total ${money(total)}, comprometido ${money(availability?.committed_cents ?? committed)}`}
           >
             <i
               style={{
@@ -83,12 +93,24 @@ export default function Dashboard({
               Total en cuentas <b>{money(total)}</b>
             </span>
             <span>
-              Comprometido <b>{money(committed)}</b>
+              Comprometido{" "}
+              <b>{money(availability?.committed_cents ?? committed)}</b>
             </span>
           </div>
           <p className="spend-hint">
-            Saldo menos pagos pendientes hasta fin de mes, incluidos vencidos.
+            Saldo menos pagos del mes, deuda de crédito y metas que decidiste
+            reservar. No duplica los pagos de tarjeta vinculados.
           </p>
+          {availability && (
+            <details className="spend-hint">
+              <summary>Ver cálculo</summary>
+              <p>
+                Pagos: {money(availability.scheduled_cents)} · Crédito:{" "}
+                {money(availability.credit_debt_cents)} · Metas reservadas:{" "}
+                {money(availability.reserved_cents)}
+              </p>
+            </details>
+          )}
         </section>
         <section className="panel home-accounts">
           <h2>Mis cuentas</h2>

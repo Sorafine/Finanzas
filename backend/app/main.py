@@ -67,6 +67,8 @@ def init_finance_db():
             movement_id INTEGER NOT NULL UNIQUE REFERENCES movements(id)
         );
         """)
+    from .ledger_routes import init_ledger
+    with connection() as db: init_ledger(db)
     path = current_database.get() or DB
     path.chmod(0o600)
 
@@ -111,6 +113,9 @@ class MovementIn(BaseModel):
     recurring_due_date: str | None = None
     gmail_id: str | None = Field(default=None, min_length=1, max_length=300)
     occurred_on: date | None = None
+    card_id: int | None = None
+    request_id: str | None = Field(default=None,min_length=16,max_length=100)
+    allow_duplicate: bool = False
 
 @app.get('/health')
 def health(): return {'status':'ok'}
@@ -158,10 +163,21 @@ def add_movement(m: MovementIn):
             db.execute('BEGIN IMMEDIATE')
             from .finance_dates import financial_timestamp
             occurred_at = financial_timestamp(m.occurred_on)
+            if m.request_id:
+                import json
+                payload=json.dumps(m.model_dump(mode='json'),sort_keys=True)
+                prior=db.execute('SELECT * FROM movement_requests WHERE request_id=?',(m.request_id,)).fetchone()
+                if prior:
+                    if prior['payload']!=payload or not prior['movement_id']:raise HTTPException(409,'Este intento cambió o fue anulado. Revisa el historial.')
+                    return {'id':prior['movement_id'],'already_imported':True,'scheduled_id':None}
             if m.gmail_id:
-                imported = db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=?', (m.gmail_id,)).fetchone()
+                imported = db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=? UNION SELECT movement_id FROM gmail_links WHERE gmail_id=?', (m.gmail_id,m.gmail_id)).fetchone()
                 if imported:
                     return {'id': imported['movement_id'], 'message': 'Este correo ya está registrado', 'already_imported': True}
+            if m.gmail_id and not m.allow_duplicate:
+                from .ledger_routes import expense_matches
+                candidates=expense_matches(amount_cents=m.amount_cents,account_id=m.account_id,occurred_on=m.occurred_on,days=3,card_id=m.card_id)
+                if candidates:raise HTTPException(409,'Hay un consumo parecido en el historial. Vincula el comprobante a ese movimiento o confirma que es otra compra.')
             if m.recurring_due_date:
                 from datetime import date
                 try: date.fromisoformat(m.recurring_due_date)
@@ -182,14 +198,13 @@ def add_movement(m: MovementIn):
             elif m.destination_id is not None or m.fee_cents:
                 raise HTTPException(400, 'Destino y comisión solo se admiten para retiros')
             debit = (m.amount_cents + m.fee_cents) if m.kind == 'withdrawal' else (m.amount_cents if m.kind == 'expense' else 0)
-            if account['balance_cents'] < debit:
+            if m.card_id and (m.kind!='expense' or m.recurring_due_date):raise HTTPException(400,'La tarjeta se usa en consumos sin crear un gasto recurrente; programa su deuda desde Mi dinero')
+            if not m.card_id and account['balance_cents'] < debit:
                 raise HTTPException(400, 'Saldo insuficiente en la cuenta de origen')
-            change = m.amount_cents if m.kind == 'income' else -debit
-            db.execute('UPDATE accounts SET balance_cents=balance_cents+? WHERE id=?',(change,m.account_id))
-            if dest:
-                db.execute('UPDATE accounts SET balance_cents=balance_cents+? WHERE id=?',(m.amount_cents,m.destination_id))
-            cursor = db.execute('''INSERT INTO movements(kind,amount_cents,concept,account_id,destination_id,fee_cents,frequency,classification,category,created_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?)''',(m.kind,m.amount_cents,m.concept,m.account_id,m.destination_id,m.fee_cents,m.frequency,m.classification,m.category,occurred_at))
+            from .ledger_routes import apply_effects
+            apply_effects(db,after=m.model_dump())
+            cursor = db.execute('''INSERT INTO movements(kind,amount_cents,concept,account_id,destination_id,fee_cents,frequency,classification,category,created_at,card_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)''',(m.kind,m.amount_cents,m.concept,m.account_id,m.destination_id,m.fee_cents,m.frequency,m.classification,m.category,occurred_at,m.card_id))
             scheduled_id = None
             if m.recurring_due_date:
                 plan = db.execute('INSERT INTO scheduled_payments(name,amount_cents,due_date,frequency,account_id,category,created_at) VALUES(?,?,?,?,?,?,?)',
@@ -198,6 +213,7 @@ def add_movement(m: MovementIn):
             if m.gmail_id:
                 db.execute('INSERT INTO gmail_imports(gmail_id,movement_id) VALUES(?,?)', (m.gmail_id, cursor.lastrowid))
                 db.execute("INSERT INTO gmail_reviews(gmail_id,status) VALUES(?,'reviewed') ON CONFLICT(gmail_id) DO UPDATE SET status='reviewed'", (m.gmail_id,))
+            if m.request_id:db.execute('INSERT INTO movement_requests VALUES(?,?,?)',(m.request_id,cursor.lastrowid,payload))
             db.commit()
             return {'id':cursor.lastrowid,'message':'Registrado','scheduled_id':scheduled_id}
         except Exception:
@@ -240,7 +256,7 @@ class CardIn(BaseModel):
     issuer: Literal['auto','bcp','bbva','interbank','scotiabank','falabella','ripley','other'] = 'auto'
 
 class CardUpdate(CardIn):
-    pass
+    expected_debt_cents: int | None = None
 
 @app.patch('/accounts/{account_id}')
 def update_account(account_id:int, account:AccountUpdate):
@@ -260,7 +276,7 @@ def account_movements(account_id:int):
 def get_cards():
     init_cards()
     with connection() as db:
-        return [dict(x) for x in db.execute('SELECT * FROM cards ORDER BY id DESC')]
+        return [dict(x) for x in db.execute('SELECT c.*, (SELECT s.id FROM scheduled_payments s WHERE s.card_id=c.id AND s.active=1) AS scheduled_id FROM cards c ORDER BY id DESC')]
 
 @app.post('/cards',status_code=201)
 def add_card(card:CardIn):
@@ -286,11 +302,17 @@ def update_card(card_id:int,card:CardUpdate):
     if card.card_type=='credit' and card.debt_cents>card.credit_limit_cents:
         raise HTTPException(400,'La deuda no puede superar el límite')
     with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        old=db.execute('SELECT * FROM cards WHERE id=?',(card_id,)).fetchone()
+        if not old:raise HTTPException(404,'Tarjeta no encontrada')
+        if card.expected_debt_cents is not None and old['debt_cents']!=card.expected_debt_cents:raise HTTPException(409,'La deuda cambió mientras editabas. Cierra y actualiza antes de guardar.')
+        if (old['card_type']!=card.card_type or old['account_id']!=card.account_id) and db.execute('SELECT 1 FROM movements WHERE card_id=? UNION SELECT 1 FROM scheduled_payments WHERE card_id=?',(card_id,card_id)).fetchone():raise HTTPException(409,'Esta tarjeta tiene movimientos o un pago vinculado. Conserva su tipo y cuenta; crea otra tarjeta si cambió.')
         if not db.execute('SELECT 1 FROM accounts WHERE id=?',(card.account_id,)).fetchone():
             raise HTTPException(404,'Cuenta asociada no encontrada')
-        fields=card.model_dump()
+        fields=card.model_dump(exclude={'expected_debt_cents'})
         cur=db.execute('UPDATE cards SET '+','.join(f'{k}=?' for k in fields)+' WHERE id=?',(*fields.values(),card_id))
         if not cur.rowcount: raise HTTPException(404,'Tarjeta no encontrada')
+        db.execute('UPDATE scheduled_payments SET amount_cents=? WHERE card_id=?',(max(1,card.debt_cents),card_id))
         return dict(db.execute('SELECT * FROM cards WHERE id=?',(card_id,)).fetchone())
 
 # Módulos adicionales: reportes, pagos futuros y metas. No descuentan dinero al programarlos.
@@ -363,13 +385,17 @@ def get_scheduled():
         rows = [dict(r) for r in db.execute('''SELECT s.*,
             EXISTS(SELECT 1 FROM payment_receipts p WHERE p.scheduled_id=s.id AND s.frequency='once') AS completed
             FROM scheduled_payments s ORDER BY active DESC,due_date,id''')]
-        from .history_routes import next_due
+        from .history_routes import next_due, recurrence_anchor
         for row in rows:
-            first = db.execute('SELECT MIN(due_date) FROM payment_receipts WHERE scheduled_id=?',(row['id'],)).fetchone()[0]
             try:
-                following = next_due(date.fromisoformat(row['due_date']),row['frequency'],date.fromisoformat(first or row['due_date']))
+                following = next_due(date.fromisoformat(row['due_date']),row['frequency'],recurrence_anchor(db,row))
                 row['next_due_date'] = following.isoformat() if following else None
             except (ValueError,OverflowError): row['next_due_date'] = None
+        debts={r['id']:r['debt_cents'] for r in db.execute('SELECT id,debt_cents FROM cards')}
+        for row in rows:
+            if row.get('card_id'):
+                row['amount_cents']=debts.get(row['card_id'],0)
+                if not row['amount_cents']:row.update(active=0,completed=1)
         return rows
 
 @app.post('/scheduled',status_code=201)
@@ -467,6 +493,8 @@ from .card_reports import router as card_reports_router
 app.include_router(card_reports_router)
 from .design_routes import router as design_router
 app.include_router(design_router)
+from .ledger_routes import router as ledger_router
+app.include_router(ledger_router)
 
 # One production origin: compiled frontend and authenticated /api routes.
 from fastapi.staticfiles import StaticFiles

@@ -21,36 +21,41 @@ La computadora debe permanecer encendida. La web y la API compiladas se sirven j
 
 Consulta [el inventario completo y la revisión para compartir](docs/ESTADO_PARA_COMPARTIR.md). Describe qué está implementado, los límites y la prueba privada recomendada antes de invitar usuarios.
 
+Consulta también [las mejoras para uso local](docs/MEJORAS_USO_LOCAL.md), con instrucciones para corregir movimientos, gestionar crédito, evitar duplicados y recuperar tu cuenta sin correo.
+
 ## Funciones
 
 - Registrar ingresos, gastos y transferencias entre cualquier par de cuentas, incluido efectivo al banco, con comisión opcional. Las transferencias no son gastos, salvo su comisión.
 - Diseño en azul y menta con escarabajo ahorrador, menú lateral compacto y registro lateral con categorías por iconos.
 - Tarjetas con deuda y fechas a la vista; se conserva la detección de banco y la vista previa al editarlas.
-- Informe de cada tarjeta: estado del crédito, deuda, límite, disponible y fechas; actividad de la cuenta vinculada por mes, categoría e historial.
+- Consumos por tarjeta: débito descuenta saldo; crédito aumenta deuda. Pagar tarjeta reduce deuda y saldo sin duplicar gastos. Informe por tarjeta y programación mensual de deuda vinculada.
 - Programar pagos, confirmar los que ya realizaste y consultar sus comprobantes en Pagados. Los vencimientos recurrentes avanzan al confirmar y cada vencimiento solo se descuenta una vez.
 - Historial agrupado por día, búsqueda, filtros rápidos, paginación, detalle del movimiento y exportación CSV de la misma selección.
 - Recordatorios recurrentes opcionales en Google Calendar.
 - Revisar comprobantes de consumos realizados en soles desde Gmail, excluyendo promociones, transferencias, retiros y recordatorios. Confirmar importe y cuenta y registrar cada consumo una sola vez por buzón e ID.
-- Metas de ahorro informativas, reportes por categoría y exportación CSV.
+- Metas con reserva opcional del disponible, reportes por categoría y exportación CSV.
+- Editar/anular movimientos desde Historial, con recálculo de saldos/deuda y traza de correcciones.
+- Vincular comprobantes de Gmail y pagos programados a movimientos existentes para evitar descontarlos otra vez.
+- Cambio de contraseña y recuperación mediante código de un solo uso, sin servicios de correo.
 - Registro de cuentas normales y panel privado para un único administrador.
 - Pantalla Revisar gastos separada de las conexiones personales.
 - Inicio de sesión, sesiones con cookie HttpOnly y CSRF, datos aislados, tokens Google cifrados y respaldo cifrado.
 - Manifest e iconos para Añadir a pantalla de inicio en Safari. Requiere conexión; no ofrece finanzas sin conexión.
 
-Los recordatorios no realizan pagos; los aportes a metas solo reflejan progreso y no trasladan fondos. Gmail busca cada minuto mientras Inicio o Revisar gastos estén visibles; no envía notificaciones push. Desconectar elimina los tokens locales; puedes revocar permisos desde tu cuenta Google.
+Los recordatorios no realizan pagos; los aportes a metas no trasladan fondos. Reservar una meta reduce el disponible calculado. Gmail busca cada minuto mientras Inicio o Revisar gastos estén visibles; no envía notificaciones push. Desconectar elimina los tokens locales; puedes revocar permisos desde tu cuenta Google.
 
 ## Cómo usarla
 
-1. **Inicio:** Libre para gastar es el total de cuentas menos los pagos activos con vencimiento hasta fin de mes, incluidos vencidos. Las metas informativas y la deuda manual de tarjetas no se descuentan de ese cálculo. Los gráficos usan movimientos reales.
+1. **Inicio:** Libre para gastar resta de las cuentas los pagos ordinarios activos hasta fin de mes, deuda de crédito y metas reservadas. No duplica pagos vinculados a tarjetas; las metas no reservadas son informativas. Los gráficos usan movimientos reales.
 2. **Mi dinero:** consulta la distribución del saldo, añade o edita cuentas, pasa efectivo al banco o transfiere dinero, y revisa tarjetas e informes.
 3. **Pagos:** programa un vencimiento sin descontar dinero. Cuando ya lo hayas pagado, pulsa **Ya pagué**, revisa importe y cuenta y confirma. Se guarda un gasto; un pago recurrente prepara el siguiente vencimiento.
 4. **Historial:** usa Este mes, Hoy, Semana o Todo, combina un tipo de movimiento y busca conceptos. Exportar descarga toda la selección filtrada, no solo la página visible. **Pagos → Pagados** conserva los comprobantes confirmados.
 5. **Reportes:** compara 3, 6 o 12 meses, categorías del mes actual y el margen entre ingresos y gastos. **Metas y más** permite elegir iconos y acceder a Gmail, Google, administración (solo propietario) y cerrar sesión.
 6. **+ Nuevo:** abre el panel de gasto, ingreso o transferencia. Puedes elegir fecha, usar Hoy/Ayer y revisar el saldo previsto antes de guardar. Programar un futuro pago se hace en Pagos.
 
-**Tarjetas:** en Mi dinero pulsa Agregar tarjeta, escribe un nombre como BCP Visa clásica y mira la vista previa. Puedes seleccionar el banco si la detección no coincide. Solo se guardan los últimos cuatro dígitos. Las ilustraciones son referenciales; no identifican el modelo físico exacto. Ver informe muestra la deuda y el límite que registres, con su porcentaje utilizado y próximas fechas. Los gastos del informe pertenecen a la cuenta vinculada y se comparten entre tarjetas de esa misma cuenta; no se atribuyen automáticamente a una tarjeta. Las compras de la cuenta no actualizan la deuda de crédito: edita la tarjeta para reflejar su estado actual.
+**Tarjetas:** en Mi dinero pulsa Agregar tarjeta, escribe un nombre como BCP Visa clásica y mira la vista previa. Puedes seleccionar el banco si la detección no coincide. Solo se guardan los últimos cuatro dígitos. Las ilustraciones son referenciales; no identifican el modelo físico exacto. Ver informe muestra la deuda y el límite que registres, con su porcentaje utilizado y próximas fechas. El informe muestra compras y pagos asignados a esa tarjeta. Los movimientos antiguos sin asignación permanecen en el historial de la cuenta. Seleccionar crédito al registrar aumenta la deuda sin descontar efectivo; Pagar tarjeta la reduce sin volver a contar el gasto. Editar la deuda permite conciliar el saldo inicial y ajustes externos.
 
-No confirmes otra vez un gasto que ya registraste manualmente o desde Gmail: la protección contra duplicados de pagos se aplica al mismo vencimiento, no a registros creados por vías distintas. Los registros anteriores se conservan en Historial; no se inventan comprobantes ni estados de pago para ellos. Las fechas del historial corresponden a Perú.
+Si ya registraste un consumo, vincula el comprobante de Gmail o el pago programado a ese movimiento cuando aparezca la coincidencia. No crees otro gasto salvo que sea una operación diferente. Los registros anteriores se conservan en Historial; no se inventan comprobantes ni estados de pago para ellos. Las fechas del historial corresponden a Perú.
 
 ## Desarrollo y comprobaciones
 

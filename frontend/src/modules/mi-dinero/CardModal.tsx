@@ -66,6 +66,7 @@ export default function CardModal({
       )
         throw Error("Revisa el límite y la deuda.");
       const body = {
+        ...(card ? { expected_debt_cents: card.debt_cents } : {}),
         name: form.name.trim(),
         card_type: form.card_type,
         account_id: Number(form.account_id),
@@ -258,8 +259,9 @@ export default function CardModal({
               </label>
             </div>
             <p className="hint">
-              Actualiza la deuda cuando cambie. Estos datos describen tu tarjeta
-              y no modifican el saldo de la cuenta.
+              Registra aquí la deuda inicial o un ajuste de conciliación. Los
+              consumos y pagos asignados a la tarjeta la actualizan
+              automáticamente. Este ajuste no crea un movimiento bancario.
             </p>
           </div>
         )}

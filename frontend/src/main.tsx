@@ -4,7 +4,14 @@ import { RefreshCw, ArrowLeft } from "lucide-react";
 import AuthGate from "./shared/AuthGate";
 import Modal from "./shared/Modal";
 import BrandMark from "./shared/BrandMark";
-import { Account, Card, Scheduled, req, localToday } from "./shared/api";
+import {
+  Account,
+  Card,
+  Scheduled,
+  Availability,
+  req,
+  localToday,
+} from "./shared/api";
 import MiDinero from "./modules/MiDinero";
 import Dashboard from "./modules/Dashboard";
 import Planes from "./modules/Planes";
@@ -59,6 +66,7 @@ function App({
     [accounts, setAccounts] = useState<Account[]>([]),
     [cards, setCards] = useState<Card[]>([]),
     [plans, setPlans] = useState<Scheduled[]>([]),
+    [availability, setAvailability] = useState<Availability | null>(null),
     [loading, setLoading] = useState(true),
     [refreshing, setRefreshing] = useState(false),
     [error, setError] = useState(""),
@@ -75,11 +83,13 @@ function App({
   async function load() {
     setRefreshing(true);
     try {
-      const [a, c, p] = await Promise.all([
+      const [a, c, p, available] = await Promise.all([
         req<Account[]>("/accounts"),
         req<Card[]>("/cards"),
         req<Scheduled[]>("/scheduled"),
+        req<Availability>("/availability"),
       ]);
+      setAvailability(available);
       setAccounts(a);
       setCards(c);
       setPlans(p);
@@ -143,6 +153,7 @@ function App({
   const movement = (
     <Registrar
       accounts={accounts}
+      cards={cards}
       initialKind={recordKind}
       initialAccount={recordAccount}
       initialDestination={recordDestination}
@@ -261,7 +272,9 @@ function App({
           <Dashboard
             key={version}
             accounts={accounts}
+            cards={cards}
             plans={plans}
+            availability={availability}
             onRegister={register}
             onMoney={() => go("dinero")}
             onPayments={() => go("pagos")}
@@ -296,6 +309,7 @@ function App({
             key={`${historyAccount}-${version}`}
             accounts={accounts}
             initialAccount={historyAccount}
+            reload={load}
           />
         ) : view === "reportes" ? (
           <Reportes key={version} />
@@ -303,6 +317,7 @@ function App({
           <RevisionGastos
             key={version}
             accounts={accounts}
+            cards={cards}
             reload={load}
             onConnect={() => go("conexiones")}
           />
@@ -321,6 +336,7 @@ function App({
           <Metas
             key={version}
             username={username}
+            onChanged={load}
             isAdmin={isAdmin}
             onReview={() => go("revisar")}
             onConnect={() => go("conexiones")}

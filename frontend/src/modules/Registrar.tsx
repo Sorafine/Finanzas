@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Account,
+  Card,
   req,
   money,
   cents,
@@ -11,6 +12,7 @@ import { expenseCategories } from "../shared/FinanceUI";
 type Kind = "expense" | "income" | "transfer";
 export default function Registrar({
   accounts,
+  cards = [],
   initialKind,
   initialAccount = "",
   initialDestination = "",
@@ -19,6 +21,7 @@ export default function Registrar({
   onBusyChange,
 }: {
   accounts: Account[];
+  cards?: Card[];
   initialKind: Kind;
   initialAccount?: string;
   initialDestination?: string;
@@ -50,6 +53,10 @@ export default function Registrar({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [requestId] = useState(() => crypto.randomUUID());
+  const [cardId, setCardId] = useState("");
+  const chosenCard =
+    kind === "expense" ? cards.find((c) => String(c.id) === cardId) : undefined;
+  const credit = chosenCard?.card_type === "credit";
   const source = accounts.find((a) => String(a.id) === account),
     target = accounts.find((a) => String(a.id) === destination),
     value = cents(amount),
@@ -76,6 +83,7 @@ export default function Registrar({
   function changeKind(k: Kind) {
     setKind(k);
     setRepeat(false);
+    setCardId("");
     setError("");
   }
   async function save(e: React.FormEvent) {
@@ -114,6 +122,8 @@ export default function Registrar({
             method: "POST",
             body: JSON.stringify({
               kind,
+              card_id: chosenCard?.id || null,
+              request_id: requestId,
               account_id: Number(account),
               amount_cents: value,
               concept: concept.trim(),
@@ -232,12 +242,36 @@ export default function Registrar({
           </div>
         </div>
       )}
+      {kind === "expense" && cards.length > 0 && (
+        <label className="form">
+          Medio de pago
+          <select
+            aria-label="Medio de pago"
+            value={cardId}
+            onChange={(e) => {
+              setCardId(e.target.value);
+              setRepeat(false);
+              const c = cards.find((c) => String(c.id) === e.target.value);
+              if (c) setAccount(String(c.account_id));
+            }}
+          >
+            <option value="">Sin tarjeta · usar saldo de cuenta</option>
+            {cards.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} · {c.card_type === "credit" ? "crédito" : "débito"} ·{" "}
+                {c.last_four}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <div className="editor-fields">
         <label>
           {kind === "transfer" ? "Desde" : "Cuenta"}
           <select
             aria-label={kind === "transfer" ? "Cuenta de origen" : "Cuenta"}
             required
+            disabled={!!chosenCard}
             value={account}
             onChange={(e) => {
               setAccount(e.target.value);
@@ -317,7 +351,7 @@ export default function Registrar({
           </label>
         </div>
       )}
-      {kind === "expense" && (
+      {kind === "expense" && !chosenCard && (
         <>
           <label className="repeat-switch">
             Se repite cada mes
@@ -354,9 +388,11 @@ export default function Registrar({
       )}
       <div className="editor-footer">
         <p role="status">
-          {charge > 0 && source
-            ? `Tras guardar, ${source.name} quedará en ${money(remaining)}`
-            : "Tu saldo se actualizará al guardar."}
+          {credit && chosenCard
+            ? `La deuda de ${chosenCard.name} quedará en ${money(chosenCard.debt_cents + charge)}. Tu saldo de cuenta no cambia.`
+            : charge > 0 && source
+              ? `Tras guardar, ${source.name} quedará en ${money(remaining)}`
+              : "Tu saldo se actualizará al guardar."}
           {kind === "transfer" && charge > 0 && target ? (
             <>
               <br />
@@ -364,7 +400,7 @@ export default function Registrar({
             </>
           ) : null}
         </p>
-        {remaining < 0 && (
+        {!credit && remaining < 0 && (
           <p className="overdue-text">
             El saldo no alcanza para este movimiento.
           </p>

@@ -229,7 +229,7 @@ def suggestions():
     try:
         out=[]
         with connection() as db:
-            existing={x[0] for x in db.execute("SELECT gmail_id FROM gmail_reviews UNION SELECT gmail_id FROM gmail_imports")}
+            existing={x[0] for x in db.execute("SELECT gmail_id FROM gmail_reviews UNION SELECT gmail_id FROM gmail_imports UNION SELECT gmail_id FROM gmail_links")}
         page = None
         for _ in range(3):  # Bounded scan; irrelevant first-page mail cannot crowd out receipts.
             args = {'userId':'me', 'q':CONSUMPTION_QUERY, 'maxResults':50}
@@ -274,13 +274,17 @@ class GmailImportIn(BaseModel):
     amount_cents: int = Field(gt=0)
     concept: str = Field(min_length=1, max_length=150)
     category: str = Field(default='Otros', max_length=80)
+    existing_movement_id: int | None = None
+    card_id: int | None = None
+    occurred_on: date | None = None
+    allow_duplicate: bool = False
 
 @router.post('/gmail/import')
 def import_expense(item:GmailImportIn):
     from googleapiclient.discovery import build
     key = gmail_key(item.gmail_id)
     with connection() as db:
-        existing = db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=?',(key,)).fetchone()
+        existing = db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=? UNION SELECT movement_id FROM gmail_links WHERE gmail_id=?',(key,key)).fetchone()
     if existing:
         return {'id':existing['movement_id'], 'message':'Este correo ya está registrado', 'already_imported':True}
     service = build('gmail','v1',credentials=credentials(),cache_discovery=False)
@@ -290,9 +294,19 @@ def import_expense(item:GmailImportIn):
         raise HTTPException(502,'No se pudo comprobar el consumo en Gmail. Vuelve a intentarlo.') from None
     if not consumption(record):
         raise HTTPException(400,'Este correo no contiene un comprobante de consumo realizado con importe en soles')
+    if item.existing_movement_id:
+        with connection() as db:
+            db.execute('BEGIN IMMEDIATE')
+            movement=db.execute('SELECT * FROM movements WHERE id=?',(item.existing_movement_id,)).fetchone()
+            if not movement or movement['kind']!='expense' or movement['amount_cents']!=item.amount_cents or movement['account_id']!=item.account_id or movement['card_id']!=item.card_id:
+                raise HTTPException(409,'El consumo no coincide con el importe, cuenta o tarjeta seleccionados')
+            previous=db.execute('SELECT movement_id FROM gmail_imports WHERE gmail_id=? UNION SELECT movement_id FROM gmail_links WHERE gmail_id=?',(key,key)).fetchone()
+            if previous:return {'id':previous[0],'already_imported':True}
+            db.execute('INSERT INTO gmail_links VALUES(?,?)',(key,item.existing_movement_id))
+            return {'id':item.existing_movement_id,'linked_existing':True}
     return add_movement(MovementIn(kind='expense', amount_cents=item.amount_cents,
         concept=item.concept, account_id=item.account_id, category=item.category,
-        classification='variable', gmail_id=key))
+        classification='variable', gmail_id=key,card_id=item.card_id,occurred_on=item.occurred_on,allow_duplicate=item.allow_duplicate))
 
 class ReviewIn(BaseModel):
     gmail_id:str=Field(min_length=1,max_length=200)
@@ -314,13 +328,13 @@ def reminder(payload:ReminderIn):
         plan=db.execute('SELECT * FROM scheduled_payments WHERE id=?',(payload.scheduled_id,)).fetchone()
         if not plan: raise HTTPException(404,'Pago programado no encontrado')
         if not plan['active']: raise HTTPException(400,'Activa el pago antes de sincronizarlo')
-        first = db.execute('SELECT MIN(due_date) FROM payment_receipts WHERE scheduled_id=?',(payload.scheduled_id,)).fetchone()[0]
+        from .history_routes import recurrence_anchor
+        anchor=recurrence_anchor(db,plan)
     try: day=date.fromisoformat(plan['due_date'])
     except ValueError: raise HTTPException(400,'Fecha inválida')
     event={'summary':'Pagar: '+plan['name'],'description':f"Importe registrado: S/ {plan['amount_cents']/100:.2f}. Recordatorio, no confirmación bancaria.", 'start':{'date':day.isoformat()},'end':{'date':(day+timedelta(days=1)).isoformat()},'reminders':{'useDefault':False,'overrides':[{'method':'popup','minutes':1440}]}}
     rule={'weekly':'FREQ=WEEKLY','monthly':'FREQ=MONTHLY','yearly':'FREQ=YEARLY'}.get(plan['frequency'])
     if rule:
-        anchor = date.fromisoformat(first or plan['due_date'])
         if plan['frequency']=='monthly':
             rule+=f';BYMONTHDAY={anchor.day}'
             if anchor.day>=29: rule+=',-1;BYSETPOS=1'

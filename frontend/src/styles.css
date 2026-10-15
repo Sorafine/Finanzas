@@ -3999,3 +3999,27 @@ main {
     height: 45px;
   }
 }
+
+/* Forms introduced by local corrections and account recovery. */
+.form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c7d8ee;
+  border-radius: 12px;
+  padding: 12px;
+  color: #102b4c;
+  background: #fff;
+  font: inherit;
+  overflow-wrap: anywhere;
+  resize: vertical;
+}
+.account-report-intro .scope-note {
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 10px;
+  border-radius: 10px;
+}
+.metas-reference .account-grid .checkbox-label {
+  font-size: 12px;
+  line-height: 1.5;
+}

@@ -1,4 +1,4 @@
-"""Card credit snapshot and explicitly scoped activity of its linked account."""
+"""Credit snapshots and separate, explicit scopes for card and account activity."""
 import re
 import unicodedata
 from calendar import monthrange
@@ -71,6 +71,23 @@ def card_report(card_id: int, year: int | None = Query(default=None,ge=2000,le=2
             FROM movements m JOIN accounts a ON a.id=m.account_id
             WHERE (m.account_id=? OR m.destination_id=?) AND m.created_at>=? AND m.created_at<?
             ORDER BY m.id DESC LIMIT 6''',(account['id'],account['id'],boundary(start),boundary(end)))]
+        card_activity=dict(db.execute('''SELECT COALESCE(SUM(CASE WHEN kind='expense' THEN amount_cents ELSE 0 END),0) AS expense_cents,
+            COALESCE(SUM(CASE WHEN is_card_payment=1 THEN amount_cents ELSE 0 END),0) AS income_cents,
+            0 AS withdrawal_cents,0 AS fee_cents,COALESCE(SUM(kind='expense'),0) AS expense_count,COUNT(*) AS movement_count
+            FROM movements WHERE card_id=? AND created_at>=? AND created_at<?''',(card_id,boundary(start),boundary(end))).fetchone())
+        card_categories=[dict(r) for r in db.execute('''SELECT COALESCE(NULLIF(trim(category),''),'Otros') AS category,SUM(amount_cents) AS amount_cents
+            FROM movements WHERE card_id=? AND kind='expense' AND created_at>=? AND created_at<? GROUP BY COALESCE(NULLIF(trim(category),''),'Otros') ORDER BY amount_cents DESC''',(card_id,boundary(start),boundary(end)))]
+        card_monthly=[]
+        for m in range(1,13):
+            first=date(y,m,1);following=date(y+(m==12),m%12+1,1)
+            totals=db.execute('''SELECT COALESCE(SUM(CASE WHEN kind='expense' THEN amount_cents ELSE 0 END),0) AS expense_cents,
+                COALESCE(SUM(CASE WHEN is_card_payment=1 THEN amount_cents ELSE 0 END),0) AS income_cents
+                FROM movements WHERE card_id=? AND created_at>=? AND created_at<?''',(card_id,boundary(first),boundary(following))).fetchone()
+            card_monthly.append({'month':m,**dict(totals)})
+        card_recent=[dict(r) for r in db.execute('''SELECT m.*,a.name AS account_name FROM movements m JOIN accounts a ON a.id=m.account_id
+            WHERE card_id=? AND created_at>=? AND created_at<? ORDER BY created_at DESC,id DESC LIMIT 10''',(card_id,boundary(start),boundary(end)))]
+        for r in card_recent:
+            if r['is_card_payment']:r['kind']='card_payment'
         credit = None
         if card['card_type']=='credit':
             limit,debt=card['credit_limit_cents'],card['debt_cents']
@@ -79,4 +96,5 @@ def card_report(card_id: int, year: int | None = Query(default=None,ge=2000,le=2
                     'next_closing_date':next_calendar_day(today,card['closing_day']),
                     'next_due_date':next_calendar_day(today,card['due_day'])}
         return {'card':card,'issuer':issuer,'account':account,'year':y,'month':mo,
+                'card_activity':card_activity,'card_monthly':card_monthly,'card_categories':card_categories,'card_recent':card_recent,
                 'credit':credit,'account_activity':activity,'monthly':monthly,'categories':categories,'recent':recent}

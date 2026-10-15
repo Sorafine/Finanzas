@@ -26,6 +26,7 @@ def transfer(item:TransferIn):
     stamp=financial_timestamp(item.occurred_on)
     with connection() as db:
         db.execute('BEGIN IMMEDIATE')
+        if db.execute('SELECT 1 FROM movement_requests WHERE request_id=?',(item.request_id,)).fetchone():raise HTTPException(409,'Esta transferencia fue anulada. Inicia una nueva operación.')
         existing=db.execute('''SELECT m.* FROM account_transfers t JOIN movements m ON m.id=t.movement_id
                                WHERE t.request_id=?''',(item.request_id,)).fetchone()
         if existing:

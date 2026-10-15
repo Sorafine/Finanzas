@@ -16,6 +16,7 @@ export type Card = {
   debt_cents: number;
   closing_day: number | null;
   due_day: number | null;
+  scheduled_id?: number | null;
   issuer:
     | "auto"
     | "bcp"
@@ -37,6 +38,10 @@ export type Movement = {
   classification: string | null;
   category: string | null;
   fee_cents: number;
+  revision: number;
+  card_id?: number | null;
+  card_name?: string | null;
+  is_card_payment?: number;
 };
 export const money = (c: number) =>
   new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(
@@ -79,6 +84,7 @@ export type Scheduled = {
   account_id: number;
   category: string;
   active: number;
+  card_id?: number | null;
   next_due_date?: string | null;
 };
 export type HistoryItem = Movement & {
@@ -151,3 +157,12 @@ export function dueLabel(day: string) {
         ? "Vence mañana"
         : `Vence en ${n} días`;
 }
+
+export type Availability = {
+  balance_cents: number;
+  scheduled_cents: number;
+  credit_debt_cents: number;
+  reserved_cents: number;
+  committed_cents: number;
+  available_cents: number;
+};

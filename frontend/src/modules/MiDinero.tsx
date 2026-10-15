@@ -3,6 +3,8 @@ import { Account, Card, money, dateLabel, localToday } from "../shared/api";
 import { banks, detectBank } from "../shared/banks";
 import CardModal from "./mi-dinero/CardModal";
 import AccountModal from "./mi-dinero/AccountModal";
+import CardPayment from "./mi-dinero/CardPayment";
+import { req } from "../shared/api";
 import CardReport from "./mi-dinero/CardReport";
 type Props = {
   accounts: Account[];
@@ -34,6 +36,9 @@ export default function MiDinero({
 }: Props) {
   const [accountForm, setAccountForm] = useState<Account | null | undefined>(),
     [cardForm, setCardForm] = useState<Card | null | undefined>(),
+    [payCard, setPayCard] = useState<Card | null>(null),
+    [cardBusy, setCardBusy] = useState(false),
+    [cardError, setCardError] = useState(""),
     [reportId, setReportId] = useState<number | null>(null);
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -137,6 +142,11 @@ export default function MiDinero({
           );
         })}
       </div>
+      {cardError && (
+        <p className="error" role="alert">
+          {cardError}
+        </p>
+      )}
       <section className="my-cards">
         <div className="section-head">
           <h2>Mis tarjetas</h2>
@@ -191,8 +201,8 @@ export default function MiDinero({
                         <b>{due ? dateLabel(due) : "Sin configurar"}</b>
                       </div>
                       <p className="hint">
-                        La deuda no se suma a tu saldo disponible. Se actualiza
-                        al editar la tarjeta.
+                        Los consumos asignados a esta tarjeta aumentan su deuda.
+                        Los pagos registrados la reducen.
                       </p>
                     </>
                   ) : (
@@ -204,6 +214,44 @@ export default function MiDinero({
                     </>
                   )}
                   <div className="connection-actions">
+                    {c.card_type === "credit" && (
+                      <>
+                        <button
+                          className="secondary"
+                          disabled={!c.debt_cents}
+                          onClick={() => {
+                            if (c.scheduled_id) location.hash = "pagos";
+                            else setPayCard(c);
+                          }}
+                        >
+                          {c.scheduled_id
+                            ? "Ver pago programado"
+                            : "Pagar tarjeta"}
+                        </button>
+                        <button
+                          className="secondary"
+                          disabled={cardBusy || !c.debt_cents || !c.due_day}
+                          onClick={() => {
+                            setCardBusy(true);
+                            setCardError("");
+                            void req(`/cards/${c.id}/schedule`, {
+                              method: "POST",
+                            })
+                              .then(async () => {
+                                await reload();
+                                notify(
+                                  "Deuda vinculada a Pagos. El importe se ajustará a la deuda registrada; puedes añadir Calendar desde Pagos.",
+                                );
+                              })
+                              .catch((e) => setCardError(e.message))
+                              .finally(() => setCardBusy(false));
+                          }}
+                        >
+                          Programar deuda
+                        </button>
+                      </>
+                    )}
+
                     <button
                       className="secondary"
                       onClick={() => {
@@ -237,6 +285,14 @@ export default function MiDinero({
           </div>
         )}
       </section>
+      {payCard && (
+        <CardPayment
+          card={payCard}
+          accounts={accounts}
+          onClose={() => setPayCard(null)}
+          onSaved={saved}
+        />
+      )}
       {accountForm !== undefined && (
         <AccountModal
           account={accountForm ?? undefined}

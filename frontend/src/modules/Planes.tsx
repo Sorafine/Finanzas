@@ -42,6 +42,50 @@ export default function Planes({
   const [paidAmount, setPaidAmount] = useState(""),
     [paidAccount, setPaidAccount] = useState(""),
     [paidOn, setPaidOn] = useState(localToday());
+  const [createOther, setCreateOther] = useState(false);
+  const [existing, setExisting] = useState(""),
+    [matches, setMatches] = useState<
+      {
+        id: number;
+        concept: string;
+        created_at: string;
+        linked_payment: number;
+        is_card_payment: number;
+      }[]
+    >([]);
+  useEffect(() => {
+    let active = true;
+    setExisting("");
+    setCreateOther(false);
+    setMatches([]);
+    if (pay && cents(paidAmount) > 0 && paidAccount) {
+      const q = new URLSearchParams({
+        amount_cents: String(cents(paidAmount)),
+        account_id: paidAccount,
+        occurred_on: paidOn,
+        days: "31",
+      });
+      if (pay.card_id) q.set("card_id", String(pay.card_id));
+      else q.set("any_card", "true");
+      void req<typeof matches>("/expense-matches?" + q)
+        .then((r) => {
+          if (active)
+            setMatches(
+              r.filter(
+                (m) =>
+                  !m.linked_payment &&
+                  Boolean(m.is_card_payment) === Boolean(pay.card_id),
+              ),
+            );
+        })
+        .catch((e) => {
+          if (active) setFormError(e.message);
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [pay?.id, paidAmount, paidAccount, paidOn]);
   async function refresh() {
     setPlans(await req<Plan[]>("/scheduled"));
   }
@@ -87,11 +131,15 @@ export default function Planes({
         account_id: Number(paidAccount),
         amount_cents: cents(paidAmount),
         paid_on: paidOn,
+        existing_movement_id: existing ? Number(existing) : null,
+        allow_duplicate: createOther,
       }),
     });
     let text = result.already_paid
       ? "Este vencimiento ya estaba registrado. No se descontó otra vez."
-      : "Pago registrado. El gasto ya aparece en tu historial.";
+      : existing
+        ? "Pago vinculado. No se descontó dinero otra vez."
+        : "Pago registrado. Puedes consultarlo en tu historial.";
     if (result.next_due_date)
       text += ` Próximo vencimiento: ${dateLabel(result.next_due_date)}.`;
     if (pay.frequency === "once" && !result.already_paid) {
@@ -200,7 +248,7 @@ export default function Planes({
         </div>
       )}
       {tab === "history" ? (
-        <Historial accounts={accounts} initialKind="payment" />
+        <Historial accounts={accounts} initialKind="payment" reload={reload} />
       ) : loading ? (
         <p role="status">Cargando pagos…</p>
       ) : (
@@ -543,6 +591,38 @@ export default function Planes({
                 />
               </label>
             </div>
+            {matches.length > 0 && (
+              <label>
+                ¿Ya registraste este pago?
+                <select
+                  aria-label="Usar movimiento existente"
+                  value={existing}
+                  onChange={(e) => setExisting(e.target.value)}
+                >
+                  <option value="">Crear un registro nuevo</option>
+                  {matches.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      #{m.id} · {m.concept} · {dateLabel(m.created_at)}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  Vincular uno existente evita descontarlo otra vez.
+                  Coincidencias por importe y cuenta en ±31 días; comprueba el
+                  concepto.
+                </small>
+              </label>
+            )}
+            {matches.length > 0 && !existing && (
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={createOther}
+                  onChange={(e) => setCreateOther(e.target.checked)}
+                />
+                Es otro pago: crear un movimiento nuevo
+              </label>
+            )}
             <div className="payment-balance-preview" role="status">
               {selectedAccount && (
                 <>
@@ -551,15 +631,21 @@ export default function Planes({
                   <b>
                     {money(
                       selectedAccount.balance_cents -
-                        (Number.isFinite(cents(paidAmount))
-                          ? cents(paidAmount)
-                          : 0),
+                        (existing
+                          ? 0
+                          : Number.isFinite(cents(paidAmount))
+                            ? cents(paidAmount)
+                            : 0),
                     )}
                   </b>
                   <br />
                 </>
               )}
-              Se creará el gasto
+              {existing
+                ? "Se vinculará el movimiento existente sin descontar dinero"
+                : pay.card_id
+                  ? "Se reducirá la deuda de tarjeta sin duplicar el gasto"
+                  : "Se creará el gasto"}
               {pay.next_due_date
                 ? ` y el próximo pago (${dateLabel(pay.next_due_date)})`
                 : " y este pago quedará completado"}
@@ -574,7 +660,12 @@ export default function Planes({
               >
                 Cancelar
               </button>
-              <button className="primary" disabled={busy}>
+              <button
+                className="primary"
+                disabled={
+                  busy || (matches.length > 0 && !existing && !createOther)
+                }
+              >
                 {busy ? "Registrando…" : "Confirmar"}
               </button>
             </div>

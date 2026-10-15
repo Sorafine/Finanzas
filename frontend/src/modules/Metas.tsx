@@ -3,6 +3,7 @@ import { Target, Plus } from "lucide-react";
 import { goalIcons } from "../shared/FinanceUI";
 import GmailNotice from "./GmailNotice";
 import { req, money, cents, dateLabel } from "../shared/api";
+import SecuritySettings from "../shared/SecuritySettings";
 import Modal from "../shared/Modal";
 type Goal = {
   id: number;
@@ -11,6 +12,7 @@ type Goal = {
   saved_cents: number;
   target_date: string | null;
   icon: string;
+  reserve: number;
 };
 export default function Metas({
   username,
@@ -19,6 +21,7 @@ export default function Metas({
   onConnect,
   onAdmin,
   onLogout,
+  onChanged,
 }: {
   username: string;
   isAdmin: boolean;
@@ -26,6 +29,7 @@ export default function Metas({
   onConnect: () => void;
   onAdmin: () => void;
   onLogout: () => void;
+  onChanged?: () => Promise<void>;
 }) {
   const [goals, setGoals] = useState<Goal[]>([]),
     [error, setError] = useState(""),
@@ -38,6 +42,7 @@ export default function Metas({
     [amount, setAmount] = useState(""),
     [due, setDue] = useState(""),
     [formError, setFormError] = useState("");
+  const [security, setSecurity] = useState(false);
   const [icon, setIcon] = useState("travel");
   const refresh = async () => setGoals(await req<Goal[]>("/goals"));
   useEffect(() => {
@@ -75,6 +80,7 @@ export default function Metas({
       setName("");
       setDue("");
       await refresh();
+      await onChanged?.();
     } catch (e) {
       setFormError((e as Error).message);
     } finally {
@@ -156,6 +162,45 @@ export default function Metas({
             >
               Actualizar progreso
             </button>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={!!g.reserve}
+                disabled={busy}
+                onChange={(e) => {
+                  setBusy(true);
+                  setError("");
+                  const reserve = e.target.checked;
+                  setGoals((current) =>
+                    current.map((goal) =>
+                      goal.id === g.id
+                        ? { ...goal, reserve: Number(reserve) }
+                        : goal,
+                    ),
+                  );
+                  void req(`/goals/${g.id}/reserve`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ reserve }),
+                  })
+                    .then(async () => {
+                      await refresh();
+                      await onChanged?.();
+                    })
+                    .catch((e) => {
+                      setGoals((current) =>
+                        current.map((goal) =>
+                          goal.id === g.id
+                            ? { ...goal, reserve: g.reserve }
+                            : goal,
+                        ),
+                      );
+                      setError(e.message);
+                    })
+                    .finally(() => setBusy(false));
+                }}
+              />
+              Reservar lo ahorrado del dinero disponible
+            </label>
           </article>
         ))}
       </div>
@@ -180,8 +225,9 @@ export default function Metas({
         )
       )}
       <p className="hint">
-        El progreso es informativo: no aparta dinero ni descuenta el saldo de
-        tus cuentas.
+        Reservar reduce Libre para gastar, sin mover dinero entre cuentas.
+        Actívalo solo si lo ahorrado sigue incluido en los saldos de Balance.
+        Sin marcarlo, el progreso es informativo.
       </p>
       <section className="panel goal-icon-intro">
         <h2>Nueva meta · elige un icono</h2>
@@ -208,7 +254,17 @@ export default function Metas({
           ))}
         </div>
       </section>
+      {security && <SecuritySettings onClose={() => setSecurity(false)} />}
       <section className="panel more-settings">
+        <div className="settings-line">
+          <div>
+            <strong>Seguridad de tu cuenta</strong>
+            <small>Contraseña y código de recuperación sin correo</small>
+          </div>
+          <button className="secondary" onClick={() => setSecurity(true)}>
+            Gestionar
+          </button>
+        </div>
         <GmailNotice onOpen={onReview} />
         <div className="settings-line">
           <div>

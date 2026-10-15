@@ -6,6 +6,7 @@ export const movementKind = (kind: string) =>
     expense: "Gasto",
     withdrawal: "Retiro de efectivo",
     transfer: "Transferencia",
+    card_payment: "Pago de tarjeta",
   })[kind] || kind;
 export default function MovementRow({
   item,
@@ -34,7 +35,7 @@ export default function MovementRow({
             <>
               {item.kind === "transfer" || item.kind === "withdrawal"
                 ? `${item.account_name || "Origen"} → ${item.destination_name || "Efectivo"}${item.fee_cents ? ` · comisión ${money(item.fee_cents)}` : ""}`
-                : `${item.category || movementKind(item.kind)} · ${item.account_name || ""}`}
+                : `${item.category || movementKind(item.kind)} · ${item.card_name || item.account_name || ""}`}
             </>
           ) : (
             <>

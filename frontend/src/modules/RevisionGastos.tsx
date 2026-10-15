@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Account, req, money, cents } from "../shared/api";
+import {
+  Account,
+  Card,
+  req,
+  money,
+  cents,
+  localToday,
+  dateLabel,
+} from "../shared/api";
 import Modal from "../shared/Modal";
 type Status = { configured: boolean; connected: boolean; enabled?: boolean };
 type Suggestion = {
@@ -11,10 +19,12 @@ type Suggestion = {
 };
 export default function RevisionGastos({
   accounts,
+  cards = [],
   reload,
   onConnect,
 }: {
   accounts: Account[];
+  cards?: Card[];
   reload: () => Promise<void>;
   onConnect: () => void;
 }) {
@@ -28,6 +38,42 @@ export default function RevisionGastos({
     [amount, setAmount] = useState(""),
     [concept, setConcept] = useState(""),
     [account, setAccount] = useState("");
+  const [day, setDay] = useState(localToday()),
+    [cardId, setCardId] = useState(""),
+    [existing, setExisting] = useState(""),
+    [allowDuplicate, setAllowDuplicate] = useState(false),
+    [matches, setMatches] = useState<
+      { id: number; concept: string; created_at: string }[]
+    >([]),
+    [checking, setChecking] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setExisting("");
+    setAllowDuplicate(false);
+    setMatches([]);
+    if (selected && cents(amount) > 0 && account) {
+      setChecking(true);
+      const q = new URLSearchParams({
+        amount_cents: String(cents(amount)),
+        account_id: account,
+        occurred_on: day,
+      });
+      if (cardId) q.set("card_id", cardId);
+      void req<typeof matches>("/expense-matches?" + q)
+        .then((r) => {
+          if (active) setMatches(r);
+        })
+        .catch((e) => {
+          if (active) setError(e.message);
+        })
+        .finally(() => {
+          if (active) setChecking(false);
+        });
+    } else setChecking(false);
+    return () => {
+      active = false;
+    };
+  }, [selected?.gmail_id, amount, account, day, cardId]);
   async function read() {
     const response = await req<{ suggestions: Suggestion[] }>(
       "/google/gmail/suggestions",
@@ -80,6 +126,10 @@ export default function RevisionGastos({
   }
   function select(x: Suggestion) {
     setSelected(x);
+    setDay(localToday());
+    setCardId("");
+    setExisting("");
+    setAllowDuplicate(false);
     setAmount(x.amount_cents ? String(x.amount_cents / 100) : "");
     setConcept((x.subject || "Compra detectada en Gmail").slice(0, 150));
     setAccount(String(accounts[0]?.id || ""));
@@ -90,19 +140,23 @@ export default function RevisionGastos({
     const value = cents(amount);
     if (!Number.isFinite(value) || value <= 0)
       throw new Error("Revisa el importe del gasto");
-    const result = await req<{ already_imported?: boolean }>(
-      "/google/gmail/import",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          gmail_id: selected.gmail_id,
-          account_id: Number(account),
-          amount_cents: value,
-          concept: concept.trim(),
-          category: "Otros",
-        }),
-      },
-    );
+    const result = await req<{
+      already_imported?: boolean;
+      linked_existing?: boolean;
+    }>("/google/gmail/import", {
+      method: "POST",
+      body: JSON.stringify({
+        gmail_id: selected.gmail_id,
+        account_id: Number(account),
+        amount_cents: value,
+        concept: concept.trim(),
+        category: "Otros",
+        occurred_on: day,
+        card_id: cardId ? Number(cardId) : null,
+        existing_movement_id: existing ? Number(existing) : null,
+        allow_duplicate: allowDuplicate,
+      }),
+    });
     setList((previous) =>
       previous.filter((x) => x.gmail_id !== selected.gmail_id),
     );
@@ -110,7 +164,9 @@ export default function RevisionGastos({
     setNotice(
       result.already_imported
         ? "Este correo ya estaba registrado."
-        : "Gasto registrado. Tu saldo está actualizado.",
+        : result.linked_existing
+          ? "Comprobante vinculado al consumo existente. No se descontó otra vez."
+          : "Consumo registrado. Saldo y deuda actualizados según el medio de pago.",
     );
     await reload();
   }
@@ -213,8 +269,8 @@ export default function RevisionGastos({
         ))}
         <p className="hint">
           Revisa el importe y la cuenta antes de confirmar. Un correo solo puede
-          registrarse una vez; distintos correos sobre la misma compra deben
-          descartarse manualmente.
+          registrarse una vez. Si hay consumos del mismo importe en fechas
+          cercanas, podrás vincular el correo al movimiento existente.
         </p>
       </section>
       {selected && (
@@ -224,7 +280,10 @@ export default function RevisionGastos({
             if (!busy) setSelected(null);
           }}
         >
-          <p className="hint">Se descontará de la cuenta que elijas.</p>
+          <p className="hint">
+            Usa la fecha y medio de pago del comprobante. Si ya existe el
+            consumo, vincúlalo para evitar duplicarlo.
+          </p>
           {error && (
             <p className="error" role="alert">
               {error}
@@ -260,10 +319,43 @@ export default function RevisionGastos({
               />
             </label>
             <label>
+              Fecha del consumo
+              <input
+                required
+                type="date"
+                max={localToday()}
+                value={day}
+                onChange={(e) => setDay(e.target.value)}
+              />
+            </label>
+            {cards.length > 0 && (
+              <label>
+                Medio de pago
+                <select
+                  value={cardId}
+                  onChange={(e) => {
+                    setCardId(e.target.value);
+                    const card = cards.find(
+                      (c) => String(c.id) === e.target.value,
+                    );
+                    if (card) setAccount(String(card.account_id));
+                  }}
+                >
+                  <option value="">Sin tarjeta · saldo de cuenta</option>
+                  {cards.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} · {c.last_four}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label>
               Cuenta
               <select
                 required
                 value={account}
+                disabled={!!cardId}
                 onChange={(e) => setAccount(e.target.value)}
               >
                 {accounts.map((a) => (
@@ -273,8 +365,55 @@ export default function RevisionGastos({
                 ))}
               </select>
             </label>
-            <button className="primary" disabled={busy || !account}>
-              {busy ? "Guardando…" : "Confirmar gasto"}
+            {checking && <p role="status">Buscando consumos parecidos…</p>}
+            {matches.length > 0 && (
+              <div className="subform form">
+                <p>
+                  Hay consumos del mismo importe en esta cuenta y fechas
+                  cercanas. No significa necesariamente que sean la misma
+                  compra.
+                </p>
+                <label>
+                  Vincular comprobante
+                  <select
+                    aria-label="Vincular comprobante"
+                    value={existing}
+                    onChange={(e) => setExisting(e.target.value)}
+                  >
+                    <option value="">Elegir un consumo existente</option>
+                    {matches.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        #{m.id} · {m.concept} · {dateLabel(m.created_at)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!existing && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={allowDuplicate}
+                      onChange={(e) => setAllowDuplicate(e.target.checked)}
+                    />
+                    Es otra compra: registrar un consumo nuevo
+                  </label>
+                )}
+              </div>
+            )}
+            <button
+              className="primary"
+              disabled={
+                busy ||
+                checking ||
+                !account ||
+                (matches.length > 0 && !existing && !allowDuplicate)
+              }
+            >
+              {busy
+                ? "Guardando…"
+                : existing
+                  ? "Vincular sin descontar"
+                  : "Confirmar gasto"}
             </button>
           </form>
         </Modal>

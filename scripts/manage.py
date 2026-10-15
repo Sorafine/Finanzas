@@ -132,7 +132,7 @@ def reset_password(username):
         user = db.execute('SELECT id FROM users WHERE username=?', (name,)).fetchone()
         if not user:
             raise ValueError('Usuario no encontrado.')
-        db.execute('UPDATE users SET password_hash=? WHERE id=?', (auth.password_hash(password), user['id']))
+        db.execute('UPDATE users SET password_hash=?,recovery_hash=NULL WHERE id=?', (auth.password_hash(password), user['id']))
         db.execute('DELETE FROM sessions WHERE user_id=?', (user['id'],))
         db.execute('DELETE FROM oauth_states WHERE user_id=?', (user['id'],))
     print('Contraseña actualizada; las sesiones anteriores quedaron cerradas.')

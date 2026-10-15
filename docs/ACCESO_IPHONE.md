@@ -132,7 +132,7 @@ En escritorio el menú contiene Inicio, Mi dinero, Pagos, Historial, Reportes y 
 
 Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago** guarda el vencimiento; cuando hayas pagado, **Ya pagué → Confirmar** descuenta el importe de la cuenta seleccionada y lo guarda en **Pagos → Pagados** y en **Historial**. Un pago mensual avanza al mes siguiente conservando su día habitual (los días 29–31 se ajustan al último día cuando sea necesario). Un pago único queda completado.
 
-Historial permite buscar conceptos, filtrar por cuenta/tipo/fechas y consultar registros antiguos mediante páginas. Toca un movimiento para ver sus datos y origen. No vuelvas a confirmar un pago cuyo gasto ya ingresaste desde Gmail o manualmente.
+Historial permite buscar conceptos, filtrar por cuenta/tipo/fechas y consultar registros antiguos mediante páginas. Toca un movimiento para ver sus datos y origen. Si ya ingresaste el gasto desde Gmail o manualmente, elige Usar movimiento existente al confirmar su vencimiento. También puedes editar o anular desde el detalle del historial, con un motivo y recálculo de saldos.
 
 Al actualizar, detén la app, ejecuta `git pull --ff-only origin codex/iphone-scripts`, vuelve a ejecutar `install` e inicia `serve` (o tu túnel habitual). Los datos existentes se conservan; el arranque añade la tabla del historial de pagos a los perfiles existentes.
 
@@ -141,7 +141,7 @@ Al actualizar, detén la app, ejecuta `git pull --ff-only origin codex/iphone-sc
 
 En **Mi dinero → Agregar tarjeta**, escribe el nombre de la tarjeta (por ejemplo, BCP Visa clásica), elige crédito o débito y guarda los últimos cuatro dígitos. La vista previa reconoce BCP, BBVA, Interbank, Scotiabank, Falabella y Ripley por el nombre de la tarjeta o de su cuenta; puedes cambiar el banco manualmente. Si no reconoce la entidad, muestra una ilustración genérica. Las ilustraciones se cargan desde la propia app y funcionan sin pedir imágenes a servicios externos.
 
-**Ver informe** muestra deuda/límite/disponible de crédito y las próximas fechas de cierre/pago según los datos que registres. En débito muestra el saldo de la cuenta. El mes y año seleccionados filtran gastos, ingresos, categorías y movimientos de la cuenta vinculada. Si dos tarjetas usan la misma cuenta, el informe muestra la misma actividad de esa cuenta; la app no identifica automáticamente cuál se usó ni actualiza por sí sola la deuda del crédito.
+**Ver informe** muestra deuda/límite/disponible de crédito y las próximas fechas de cierre/pago según los datos que registres. En débito muestra el saldo de la cuenta. El mes y año filtran consumos y pagos asignados a esa tarjeta. Seleccionarla en Nuevo movimiento o Gmail atribuye el consumo: en crédito aumenta la deuda y en débito descuenta saldo. Pagar tarjeta reduce deuda y saldo sin duplicar el gasto. Programar deuda crea un pago mensual vinculado; su importe usa la deuda registrada, no un estado de cuenta bancario. Los movimientos anteriores sin tarjeta permanecen en el historial de la cuenta.
 
 
 ## Transferencias, fechas y exportación
@@ -150,9 +150,11 @@ En **+ Nuevo → Transferir** elige origen, destino e importe. Puedes mover efec
 
 **Hoy / Ayer** y el selector de fecha guardan el movimiento en el día elegido de Perú. No se permiten gastos/ingresos futuros; usa Pagos para programarlos. El saldo actual cambia al guardar, incluso si el movimiento se fecha ayer.
 
-**Libre para gastar** reserva los pagos activos cuyo próximo vencimiento cae hasta el fin de mes, incluidos vencidos. No descuenta metas informativas ni deudas de tarjetas no programadas como pago. Puede ser negativo si los compromisos superan el saldo.
+**Libre para gastar** resta pagos ordinarios pendientes del mes, toda la deuda de crédito y metas que elijas reservar. Los pagos vinculados a tarjetas no se descuentan dos veces. Puede ser negativo si tus compromisos superan el saldo. Reserva una meta solo si su ahorro ya está incluido en tus cuentas.
 
 En **Historial**, los filtros rápidos y la búsqueda también se aplican a **Exportar**. El CSV incluye toda la selección, con fecha de Perú, cuenta, destino, categoría, importe y comisión. **Reportes** compara los últimos 3, 6 o 12 meses, incluidos cambios de año; el margen del mes es ingresos menos gastos y comisiones, no un aporte automático a una meta.
 
 
 La marca visible ahora es **Balance**, con el escarabajo ahorrador. Las carpetas de datos y los comandos conservan sus nombres para mantener los perfiles existentes. Consulta [funciones y estado para compartir](ESTADO_PARA_COMPARTIR.md) antes de invitar a otras personas.
+
+Consulta [las mejoras para uso local](MEJORAS_USO_LOCAL.md) para usar correcciones, reservas, vinculación de comprobantes y recuperación mediante un código de un solo uso, sin configurar correo.

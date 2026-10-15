@@ -21,7 +21,9 @@ export default function AuthGate({
     [error, setError] = useState(""),
     [registering, setRegistering] = useState(false),
     [registrationEnabled, setRegistrationEnabled] = useState(false),
-    [confirmation, setConfirmation] = useState("");
+    [confirmation, setConfirmation] = useState(""),
+    [recovering, setRecovering] = useState(false),
+    [recoveryCode, setRecoveryCode] = useState("");
   useEffect(() => {
     let active = true;
     const expired = () => {
@@ -57,19 +59,29 @@ export default function AuthGate({
     setBusy(true);
     setError("");
     try {
-      if (registering && password !== confirmation)
+      if ((registering || recovering) && password !== confirmation)
         throw new Error("Las contraseñas no coinciden");
       const session = await req<Session>(
-        registering ? "/auth/register" : "/auth/login",
+        recovering
+          ? "/auth/recover"
+          : registering
+            ? "/auth/register"
+            : "/auth/login",
         {
           method: "POST",
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({
+            username,
+            password,
+            ...(recovering ? { recovery_code: recoveryCode.trim() } : {}),
+          }),
         },
       );
       setCsrfToken(session.csrf_token);
       setPassword("");
       setConfirmation("");
       setRegistering(false);
+      setRecovering(false);
+      setRecoveryCode("");
       setUser(session);
     } catch (e) {
       setError((e as Error).message);
@@ -116,7 +128,13 @@ export default function AuthGate({
           <BrandMark decorative />
           <strong>Balance</strong>
         </div>
-        <h1>{registering ? "Crea tu espacio" : "Tu dinero, a tu ritmo"}</h1>
+        <h1>
+          {recovering
+            ? "Recupera tu cuenta"
+            : registering
+              ? "Crea tu espacio"
+              : "Tu dinero, a tu ritmo"}
+        </h1>
         <p className="muted">
           Entra a tu espacio para ver tus gastos, ahorrar y recordar tus pagos.
         </p>
@@ -138,8 +156,10 @@ export default function AuthGate({
             <input
               required
               type="password"
-              autoComplete={registering ? "new-password" : "current-password"}
-              minLength={registering ? 12 : 1}
+              autoComplete={
+                registering || recovering ? "new-password" : "current-password"
+              }
+              minLength={registering || recovering ? 12 : 1}
               maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -150,11 +170,23 @@ export default function AuthGate({
               {error}
             </p>
           )}
-          {registering && (
+          {recovering && (
+            <label>
+              Código de recuperación
+              <input
+                required
+                autoComplete="off"
+                maxLength={200}
+                value={recoveryCode}
+                onChange={(e) => setRecoveryCode(e.target.value)}
+              />
+            </label>
+          )}
+          {(registering || recovering) && (
             <>
               <p className="hint">
-                Usa al menos 12 caracteres. El usuario admite letras, números,
-                punto, @, guion y guion bajo.
+                Usa al menos 12 caracteres para la contraseña. El usuario admite
+                letras, números, punto, @, guion y guion bajo.
               </p>
               <label>
                 Repite la contraseña
@@ -171,18 +203,47 @@ export default function AuthGate({
             </>
           )}
           <button className="primary" disabled={busy}>
-            {busy ? "Guardando…" : registering ? "Crear mi cuenta" : "Entrar"}
+            {busy
+              ? "Guardando…"
+              : recovering
+                ? "Recuperar y entrar"
+                : registering
+                  ? "Crear mi cuenta"
+                  : "Entrar"}
           </button>
         </form>
         <p className="hint">
           <LockKeyhole size={15} /> Tus datos y tu cuenta Google son personales.
         </p>
+        <button
+          type="button"
+          className="register-switch"
+          disabled={busy}
+          onClick={() => {
+            setRecovering((v) => !v);
+            setRegistering(false);
+            setPassword("");
+            setConfirmation("");
+            setRecoveryCode("");
+            setError("");
+          }}
+        >
+          {recovering ? "Volver a entrar" : "Olvidé mi contraseña"}
+        </button>
+        {recovering && (
+          <p className="hint">
+            Necesitas el código que guardaste en Seguridad de tu cuenta. Si no
+            lo tienes, el administrador puede restablecer tu contraseña.
+          </p>
+        )}
         {registrationEnabled ? (
           <button
             type="button"
             className="register-switch"
             disabled={busy}
             onClick={() => {
+              setRecovering(false);
+              setRecoveryCode("");
               setRegistering((value) => !value);
               setError("");
               setPassword("");

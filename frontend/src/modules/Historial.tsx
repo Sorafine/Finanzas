@@ -10,6 +10,7 @@ import {
   dateShift,
 } from "../shared/api";
 import MovementRow, { movementKind } from "../shared/MovementRow";
+import MovementCorrection from "../shared/MovementCorrection";
 import Modal from "../shared/Modal";
 type Filters = {
   q: string;
@@ -22,10 +23,12 @@ export default function Historial({
   accounts,
   initialAccount = "",
   initialKind = "all",
+  reload,
 }: {
   accounts: Account[];
   initialAccount?: string;
   initialKind?: string;
+  reload?: () => Promise<void>;
 }) {
   const month = localToday().slice(0, 7) + "-01";
   const initial = {
@@ -45,6 +48,24 @@ export default function Historial({
     [retry, setRetry] = useState(0),
     [showFilters, setShowFilters] = useState(false),
     [period, setPeriod] = useState(initial.from ? "month" : "all");
+  const [correction, setCorrection] = useState<"edit" | "void" | null>(null),
+    [correctionBusy, setCorrectionBusy] = useState(false),
+    [audit, setAudit] = useState<
+      | {
+          id: number;
+          movement_id: number;
+          action: string;
+          reason: string;
+          created_at: string;
+        }[]
+      | null
+    >(null);
+  async function corrected() {
+    setSelected(null);
+    setCorrection(null);
+    setRetry((v) => v + 1);
+    await reload?.();
+  }
   function params() {
     const p = new URLSearchParams({ kind: filters.kind, q: filters.q });
     if (filters.account) p.set("account_id", filters.account);
@@ -116,6 +137,24 @@ export default function Historial({
   return (
     <div className="stack history-reference">
       <div className="page-actions align-end">
+        <button
+          className="secondary"
+          onClick={() =>
+            void req<
+              {
+                id: number;
+                movement_id: number;
+                action: string;
+                reason: string;
+                created_at: string;
+              }[]
+            >("/corrections")
+              .then(setAudit)
+              .catch((e) => setError(e.message))
+          }
+        >
+          Correcciones
+        </button>
         <a
           className="secondary"
           href={"/api/history?" + params() + "&format=csv"}
@@ -343,7 +382,43 @@ export default function Historial({
           </>
         )
       )}
-      {selected && (
+      {audit && (
+        <Modal title="Correcciones realizadas" onClose={() => setAudit(null)}>
+          {audit.length ? (
+            audit.map((a) => (
+              <article className="panel" key={a.id}>
+                <strong>
+                  Registro #{a.movement_id} ·{" "}
+                  {a.action === "void" ? "Anulado" : "Editado"}
+                </strong>
+                <p>{a.reason}</p>
+                <small>{dateLabel(a.created_at)}</small>
+              </article>
+            ))
+          ) : (
+            <p>Aún no has corregido movimientos.</p>
+          )}
+        </Modal>
+      )}
+      {selected && correction && (
+        <Modal
+          title={
+            correction === "void" ? "Anular movimiento" : "Editar movimiento"
+          }
+          onClose={() => {
+            if (!correctionBusy) setCorrection(null);
+          }}
+        >
+          <MovementCorrection
+            item={selected}
+            accounts={accounts}
+            voiding={correction === "void"}
+            onBusy={setCorrectionBusy}
+            onSaved={corrected}
+          />
+        </Modal>
+      )}
+      {selected && !correction && (
         <Modal title="Detalle del movimiento" onClose={() => setSelected(null)}>
           <div className="detail-amount">{money(selected.amount_cents)}</div>
           <h3>{selected.concept}</h3>
@@ -386,9 +461,26 @@ export default function Historial({
                 <dd>Pagado</dd>
               </>
             )}
+            {selected.card_name && (
+              <>
+                <dt>Tarjeta</dt>
+                <dd>{selected.card_name}</dd>
+              </>
+            )}
             <dt>Referencia</dt>
             <dd>Registro #{selected.id}</dd>
           </dl>
+          <div className="connection-actions">
+            <button className="secondary" onClick={() => setCorrection("edit")}>
+              Editar movimiento
+            </button>
+            <button
+              className="link overdue-text"
+              onClick={() => setCorrection("void")}
+            >
+              Anular movimiento
+            </button>
+          </div>
           <button
             className="secondary full-width"
             onClick={() => setSelected(null)}

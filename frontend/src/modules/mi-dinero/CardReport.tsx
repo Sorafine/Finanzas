@@ -41,6 +41,10 @@ type Report = {
   monthly: { month: number; expense_cents: number; income_cents: number }[];
   categories: { category: string; amount_cents: number }[];
   recent: (Movement & { account_name: string })[];
+  card_activity: Report["account_activity"];
+  card_monthly: Report["monthly"];
+  card_categories: Report["categories"];
+  card_recent: Report["recent"];
 };
 export default function CardReport({
   cardId,
@@ -63,7 +67,14 @@ export default function CardReport({
     setError("");
     req<Report>(`/cards/${cardId}/report?year=${year}&month=${month}`)
       .then((r) => {
-        if (active) setReport(r);
+        if (active)
+          setReport({
+            ...r,
+            account_activity: r.card_activity,
+            monthly: r.card_monthly,
+            categories: r.card_categories,
+            recent: r.card_recent,
+          });
       })
       .catch((e) => {
         if (active) setError(e.message);
@@ -177,8 +188,9 @@ export default function CardReport({
                     </span>
                   </div>
                   <p className="hint">
-                    Estado actualizado por ti al editar la tarjeta. Las compras
-                    de la cuenta no modifican esta deuda automáticamente.
+                    Los consumos registrados con esta tarjeta aumentan la deuda;
+                    los pagos la reducen. La deuda inicial y los ajustes se
+                    registran al editar la tarjeta.
                   </p>
                 </>
               ) : (
@@ -197,9 +209,9 @@ export default function CardReport({
           <section className="panel account-report-intro">
             <div className="section-head">
               <div>
-                <h2>Actividad de {report.account.name}</h2>
+                <h2>Actividad de {report.card.name}</h2>
                 <p className="muted">
-                  Movimientos registrados en la cuenta vinculada.
+                  Consumos y pagos asignados expresamente a esta tarjeta.
                 </p>
               </div>
               <div className="period-selector">
@@ -235,8 +247,9 @@ export default function CardReport({
               </div>
             </div>
             <p className="scope-note">
-              Si varias tarjetas comparten esta cuenta, sus movimientos aparecen
-              juntos. El informe no identifica automáticamente cuál usaste.
+              Las compras antiguas o guardadas sin seleccionar tarjeta
+              permanecen en el historial de la cuenta. No se atribuyen
+              automáticamente a esta tarjeta.
             </p>
           </section>
           {loading ? (
@@ -246,7 +259,7 @@ export default function CardReport({
               <div className="card-report-kpis">
                 <article className="stat">
                   <Coins size={20} />
-                  <small>Gastos de la cuenta</small>
+                  <small>Consumos de la tarjeta</small>
                   <strong>
                     {money(
                       report.account_activity.expense_cents +
@@ -256,7 +269,7 @@ export default function CardReport({
                 </article>
                 <article className="stat">
                   <Wallet size={20} />
-                  <small>Ingresos de la cuenta</small>
+                  <small>Pagos de la tarjeta</small>
                   <strong className="positive">
                     {money(report.account_activity.income_cents)}
                   </strong>
@@ -296,8 +309,8 @@ export default function CardReport({
                   ))}
                 </div>
                 <p className="hint">
-                  Gastos y comisiones de la cuenta. Los retiros de efectivo no
-                  cuentan como compras.
+                  Consumos asignados a esta tarjeta. Los pagos de deuda se
+                  muestran por separado y no cuentan como compras.
                 </p>
               </section>
               <div className="card-report-details">
@@ -339,7 +352,7 @@ export default function CardReport({
                       className="link"
                       onClick={() => onHistory(report.account.id)}
                     >
-                      Ver historial →
+                      Historial de la cuenta →
                     </button>
                   </div>
                   {report.recent.length ? (
