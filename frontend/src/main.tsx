@@ -10,6 +10,7 @@ import {
   ChartNoAxesCombined,
   Target,
   CircleUserRound,
+  ListTodo,
 } from "lucide-react";
 import AuthGate from "./shared/AuthGate";
 import Modal from "./shared/Modal";
@@ -23,6 +24,7 @@ import {
   localToday,
 } from "./shared/api";
 import MiDinero from "./modules/MiDinero";
+import MiDia from "./modules/MiDia";
 import Dashboard from "./modules/Dashboard";
 import Planes from "./modules/Planes";
 import Historial from "./modules/Historial";
@@ -38,6 +40,7 @@ import "./styles.css";
 import "./reference-theme.css";
 const pages = {
   inicio: "Inicio",
+  dia: "Mi día",
   dinero: "Mi dinero",
   pagos: "Pagos",
   historial: "Historial",
@@ -54,6 +57,7 @@ type View = keyof typeof pages;
 type RecordKind = "expense" | "income" | "transfer";
 const navigation = [
   { id: "inicio", name: "Inicio", icon: House },
+  { id: "dia", name: "Mi día", icon: ListTodo },
   { id: "dinero", name: "Mi dinero", icon: Wallet },
   { id: "pagos", name: "Pagos", icon: CalendarDays },
   { id: "historial", name: "Historial", icon: ReceiptText },
@@ -254,7 +258,7 @@ function App({
             >
               <RefreshCw size={16} />
             </button>
-            {!["inicio", "registrar"].includes(view) && (
+            {!["inicio", "registrar", "dia"].includes(view) && (
               <button
                 className="secondary header-register"
                 onClick={() => register()}
@@ -285,20 +289,32 @@ function App({
             Cargando tu espacio…
           </div>
         ) : view === "inicio" ? (
-          <Dashboard
-            key={version}
-            accounts={accounts}
-            cards={cards}
-            plans={plans}
-            availability={availability}
-            selectedMonth={selectedMonth}
-            onSelectMonth={setSelectedMonth}
-            onRegister={register}
-            onMoney={() => go("dinero")}
-            onPayments={() => go("pagos")}
-            onReview={() => go("revisar")}
-            onReports={() => go("reportes")}
-          />
+          <>
+            <button className="day-home-link" onClick={() => go("dia")}>
+              <ListTodo size={24} aria-hidden="true" />
+              <span>
+                <strong>Organiza tu día</strong>
+                <small>Tareas, estudios y hábitos en tu espacio personal</small>
+              </span>
+              <span aria-hidden="true">→</span>
+            </button>
+            <Dashboard
+              key={version}
+              accounts={accounts}
+              cards={cards}
+              plans={plans}
+              availability={availability}
+              selectedMonth={selectedMonth}
+              onSelectMonth={setSelectedMonth}
+              onRegister={register}
+              onMoney={() => go("dinero")}
+              onPayments={() => go("pagos")}
+              onReview={() => go("revisar")}
+              onReports={() => go("reportes")}
+            />
+          </>
+        ) : view === "dia" ? (
+          <MiDia key={version} />
         ) : view === "dinero" ? (
           <MiDinero
             accounts={accounts}
@@ -368,6 +384,7 @@ function App({
             onPayments={() => go("pagos")}
             onReports={() => go("reportes")}
             onGoals={() => go("metas")}
+            onDay={() => go("dia")}
           />
         )}
       </main>

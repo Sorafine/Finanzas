@@ -5,6 +5,7 @@ Actualización del 15 de octubre de 2026. Se adaptó la referencia `Balance · F
 ## Pantallas
 
 - **Inicio:** disponible real, simulador «¿Y si gasto?», saldos, hasta tres próximos pagos, gastos por mes seleccionable y acceso a revisar Gmail. El simulador no guarda un movimiento ni cambia saldos.
+- **Mi día:** tareas de estudios, personales y de casa con fecha, prioridad y estados; hábitos diarios y sus últimos siete días. Véase [el espacio personal](ECOSISTEMA.md).
 - **Mi dinero:** cuentas y tarjetas, con una entrada común para añadir una u otra. Se conservan transferencias, informes por tarjeta, deuda y programación de pagos.
 - **Pagos:** pendientes, pagados y pausados; confirmación con vista previa, movimiento existente, Calendar y comprobantes.
 - **Historial:** filtros, búsqueda, CSV, detalles, corrección y anulación con motivo.
@@ -12,11 +13,13 @@ Actualización del 15 de octubre de 2026. Se adaptó la referencia `Balance · F
 - **Metas:** progreso, iconos, aportes y reserva opcional, separados de la configuración.
 - **Perfil y conexiones:** estado de Google, Gmail, Calendar, seguridad, apariencia, administración exclusiva del propietario y cierre de sesión. Los accesos de Reportes y Metas también están aquí para móvil.
 
-En escritorio se muestran las siete secciones. En móvil hay cinco accesos inferiores: Inicio, Mi dinero, Pagos, Historial y Perfil. Desde Perfil se llega a Metas y Reportes. Los enlaces antiguos `#mas` siguen abriendo el perfil.
+En escritorio se muestran las ocho secciones. En móvil hay cinco accesos inferiores: Inicio, Mi dinero, Pagos, Historial y Perfil. Desde Perfil se llega a Mi día, Metas y Reportes; Inicio también ofrece acceso a Mi día. Los enlaces antiguos `#mas` siguen abriendo el perfil.
 
 ## Apariencia
 
 El tema inicial es **Noche**, como la referencia. En **Perfil → Apariencia** se elige **Día**, **Noche** o **Sistema**. La preferencia se conserva en ese navegador; no se guardan datos financieros en el almacenamiento del navegador. El modo Sistema responde a los cambios del dispositivo.
+
+El contenido queda centrado dentro del espacio disponible junto al menú lateral, con un ancho máximo para facilitar la lectura. En móvil ocupa el ancho disponible.
 
 Se conserva el escarabajo de Balance, con azul, dorado y verde para distinguir gastos, reservas e ingresos. Se incluye localmente la fuente Hanken Grotesk y su licencia SIL Open Font License; no hace falta pedir la fuente a Google al abrir la app.
 
@@ -52,6 +55,6 @@ Recarga con Ctrl+F5. Los usuarios y los datos permanecen en la carpeta privada a
 
 ## Comprobaciones
 
-Compilación TypeScript/Vite y 103 pruebas del backend correctas. Se recorrieron gastos, ingresos, transferencias, pagos, corrección/anulación, crédito, reservas y recuperación por código. La prueba del simulador comprobó que saldos e historial no cambian al moverlo. Se verificaron los meses seleccionados, categorías y margen con datos temporales, los temas Día/Noche/Sistema y su persistencia, y la separación entre propietario y usuario normal.
+Compilación TypeScript/Vite y 109 pruebas del backend correctas. Se recorrieron gastos, ingresos, transferencias, pagos, corrección/anulación, crédito, reservas y recuperación por código. La prueba del simulador comprobó que saldos e historial no cambian al moverlo. Se verificaron los meses seleccionados, categorías y margen con datos temporales, los temas Día/Noche/Sistema y su persistencia, y la separación entre propietario y usuario normal.
 
 Se comprobaron diez vistas y los formularios en anchos de 320, 390, 768, 1199 y 1637 píxeles. Se revisaron capturas de escritorio y móvil y el contraste de los textos de las pantallas principales en ambos temas. La validación fue en Linux/Chromium; Safari en un iPhone físico, la instalación Windows y el consentimiento real de Google deben comprobarse en sus dispositivos.

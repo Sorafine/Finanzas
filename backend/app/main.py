@@ -69,6 +69,8 @@ def init_finance_db():
         """)
     from .ledger_routes import init_ledger
     with connection() as db: init_ledger(db)
+    from .organizer_routes import init_organizer
+    with connection() as db: init_organizer(db)
     path = current_database.get() or DB
     path.chmod(0o600)
 
@@ -495,6 +497,8 @@ from .design_routes import router as design_router
 app.include_router(design_router)
 from .ledger_routes import router as ledger_router
 app.include_router(ledger_router)
+from .organizer_routes import router as organizer_router
+app.include_router(organizer_router)
 
 # One production origin: compiled frontend and authenticated /api routes.
 from fastapi.staticfiles import StaticFiles

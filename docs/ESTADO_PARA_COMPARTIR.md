@@ -25,6 +25,7 @@ Para el uso local indicado por el propietario, la app puede probarse en su compu
 | Metas | Objetivo de ahorro, fecha opcional, ocho iconos, progreso y aportes informativos. Reserva opcional de lo ahorrado para reducir Libre para gastar; no transfiere dinero. |
 | Gmail | Cada persona conecta su cuenta. Revisión periódica mientras Inicio o Revisar gastos está visible; propone comprobantes de consumos realizados en soles y descarta publicidad, recordatorios, transferencias y retiros. El usuario revisa importe/cuenta/fecha/tarjeta y confirma, descarta o vincula a un consumo existente. Avisos por coincidencias de importe y fecha. |
 | Google Calendar | Recordatorios de pagos únicos o recurrentes. Las series de fin de mes conservan el día habitual cuando se pasa por febrero. Pausar un pago intenta retirar su recordatorio. |
+| Mi día | Tareas privadas de estudios, personales y de casa: fechas, prioridades, edición y estados. Hábitos diarios con marcas de los últimos siete días en horario de Perú. No crea alarmas ni eventos de tareas. |
 | Administración | Un propietario: habilitar/pausar registro y Google; ver estados de usuarios/conexiones; pausar/reactivar accesos y retirar conexiones Google. No muestra contraseñas, tokens ni finanzas de otros usuarios. |
 | Contraseñas y sesiones | Cambio de contraseña y recuperación con código de un solo uso guardado por cada usuario;  Contraseñas con hash scrypt, limitación de intentos, sesiones con caducidad de siete días, cookie HttpOnly/SameSite y Secure con HTTPS, protección CSRF y cierre de sesiones al pausar o restablecer contraseña. |
 | Datos y respaldo | SQLite individual por persona fuera del proyecto; tokens Google cifrados; respaldo completo cifrado con contraseña y restauración en una carpeta vacía. Las actualizaciones conservan los perfiles existentes. |
@@ -60,7 +61,7 @@ Para abrir el registro al público en general, quedan pendientes la ampliación/
 
 ## Comprobaciones realizadas en esta revisión
 
-- Compilación TypeScript y Vite correcta; 103 pruebas automatizadas del backend correctas, con bases temporales y Google simulado.
+- Compilación TypeScript y Vite correcta; 109 pruebas automatizadas del backend correctas, con bases temporales y Google simulado.
 - Recorrido en Chromium con datos de ejemplo: saldo disponible, gasto con vista previa, transferencia de efectivo a banco, ingreso con fecha de ayer, confirmación de pago, comprobante, historial, exportación CSV filtrada, periodos de reportes y creación de metas.
 - Recorrido adicional en navegador: consumo con crédito, pago de tarjeta sin doble gasto, informe individual, editar/anular/auditar, reserva de meta, deuda programada, vincular un gasto existente y recuperar acceso con código.
 - Las nueve vistas y los paneles de movimiento/pago se comprobaron sin desbordamiento horizontal en anchos de 320, 390, 768, 1199 y 1637 píxeles. Se revisaron capturas del diseño Balance en escritorio y móvil.

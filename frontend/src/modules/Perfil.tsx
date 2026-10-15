@@ -20,6 +20,7 @@ export default function Perfil({
   onPayments,
   onReports,
   onGoals,
+  onDay,
   onLogout,
 }: {
   username: string;
@@ -30,6 +31,7 @@ export default function Perfil({
   onPayments: () => void;
   onReports: () => void;
   onGoals: () => void;
+  onDay: () => void;
   onLogout: () => void;
 }) {
   const [status, setStatus] = useState<Status | null>(null),
@@ -57,6 +59,9 @@ export default function Perfil({
         </p>
       )}
       <div className="profile-shortcuts">
+        <button className="secondary" onClick={onDay}>
+          Mi día: tareas y hábitos
+        </button>
         <button className="secondary" onClick={onGoals}>
           Mis metas de ahorro
         </button>

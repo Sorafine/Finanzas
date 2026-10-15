@@ -1,6 +1,6 @@
 # Balance
 
-Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Navegación: Inicio, Mi dinero, Pagos, Historial, Reportes, Metas y Perfil. Con diseño móvil y acceso desde Safari.
+Aplicación para organizar dinero, tareas y hábitos personales con React/TypeScript, FastAPI y SQLite. Navegación: Inicio, Mi día, Mi dinero, Pagos, Historial, Reportes, Metas y Perfil. Con diseño móvil y acceso desde Safari.
 
 ## Ejecutar en tu computadora y entrar desde iPhone
 
@@ -25,7 +25,11 @@ Consulta también [las mejoras para uso local](docs/MEJORAS_USO_LOCAL.md), con i
 
 Consulta [el diseño basado en el HTML](docs/DISENO_HTML.md): temas Día/Noche/Sistema, simulador, meses seleccionables, distribución por categorías y Perfil separado de Metas.
 
+Consulta [el espacio personal y las siguientes etapas](docs/ECOSISTEMA.md): Mi día con tareas, estudios, hábitos diarios y contenido centrado en ambos temas.
+
 ## Funciones
+
+- Mi día: tareas de estudios, personales y de casa; fecha, prioridad, edición y seguimiento. Hábitos diarios con marcas de los últimos siete días en horario de Perú.
 
 - Registrar ingresos, gastos y transferencias entre cualquier par de cuentas, incluido efectivo al banco, con comisión opcional. Las transferencias no son gastos, salvo su comisión.
 - Diseño en azul y menta con escarabajo ahorrador, menú lateral compacto y registro lateral con categorías por iconos.
