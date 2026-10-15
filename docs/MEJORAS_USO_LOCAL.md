@@ -27,7 +27,7 @@ Al anular el último pago confirmado de una serie, vuelve a abrirse su vencimien
 
 ## Registrar compras con tarjeta
 
-En **+ Nuevo → Gasto → Medio de pago**, selecciona la tarjeta:
+En **Mis finanzas → Gasto → Medio de pago**, selecciona la tarjeta:
 
 - **Crédito:** aumenta la deuda y registra el gasto, sin descontar dinero de la cuenta vinculada.
 - **Débito:** descuenta de la cuenta y atribuye el consumo a esa tarjeta.
@@ -61,7 +61,7 @@ Las coincidencias son avisos, no una identificación universal de operaciones ba
 
 En cada meta puedes marcar **Reservar lo ahorrado del dinero disponible**. Usa esta opción solo si ese ahorro ya está incluido en las cuentas de Balance. Reduce el disponible, pero no realiza una transferencia ni congela dinero. Si reservas más de lo que queda, el disponible puede ser negativo: revisa tu presupuesto. Desmarcar libera la reserva sin borrar el progreso.
 
-La reserva está desactivada inicialmente para todas las metas existentes; así no se presupone dónde está tu ahorro. Abre **Ver cálculo** en Inicio para ver pagos, crédito y reservas por separado.
+La reserva está desactivada inicialmente para todas las metas existentes; así no se presupone dónde está tu ahorro. Abre **Ver cálculo** en Mis finanzas para ver pagos, crédito y reservas por separado.
 
 ## Recuperar acceso sin correo
 
@@ -80,7 +80,7 @@ No hay envío de mensajes ni verificación de correo. Si no guardaste el código
 - Moneda base: soles; fechas en Perú. No se mezclan monedas ni se inventa un tipo de cambio.
 - Gmail y Calendar requieren conexión, credenciales y consentimiento Google. Las pruebas automáticas simulan esas APIs; la cuenta real debe comprobarse en tu equipo.
 - No hay sincronización con bancos ni ejecución de pagos/transferencias reales.
-- No hay push ni finanzas sin conexión. La revisión de Gmail ocurre mientras Inicio o Revisar gastos está visible; con el equipo apagado no hay servidor ni sincronización.
+- No hay push ni finanzas sin conexión. La revisión de Gmail ocurre mientras Mis finanzas o Revisar gastos está visible; con el equipo apagado no hay servidor ni sincronización.
 - SQLite financiero sigue sin cifrado propio en disco. Los tokens y respaldos están cifrados. Para proteger el equipo apagado, activa **Cifrado de dispositivo** o **BitLocker** si tu edición de Windows lo ofrece, y guarda su clave de recuperación fuera de la computadora. Una contraseña de la web no cifra los archivos de Windows.
 
 La administración de usuarios y conexiones sigue siendo exclusiva del propietario y no muestra las finanzas de otras personas.

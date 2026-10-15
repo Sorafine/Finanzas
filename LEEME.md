@@ -1,6 +1,6 @@
 # Balance
 
-Aplicación para organizar dinero, tareas y hábitos personales con React/TypeScript, FastAPI y SQLite. Navegación: Inicio, Mi día, Mi dinero, Pagos, Historial, Reportes, Metas y Perfil. Con diseño móvil y acceso desde Safari.
+Aplicación para organizar dinero, tareas y hábitos personales con React/TypeScript, FastAPI y SQLite. Inicio permite elegir Mis finanzas o Mi agenda diaria; cada espacio tiene su propio menú. Con diseño móvil y acceso desde Safari.
 
 ## Ejecutar en tu computadora y entrar desde iPhone
 
@@ -25,11 +25,11 @@ Consulta también [las mejoras para uso local](docs/MEJORAS_USO_LOCAL.md), con i
 
 Consulta [el diseño basado en el HTML](docs/DISENO_HTML.md): temas Día/Noche/Sistema, simulador, meses seleccionables, distribución por categorías y Perfil separado de Metas.
 
-Consulta [el espacio personal y las siguientes etapas](docs/ECOSISTEMA.md): Mi día con tareas, estudios, hábitos diarios y contenido centrado en ambos temas.
+Consulta [el espacio personal y las siguientes etapas](docs/ECOSISTEMA.md): Mi agenda diaria con tareas, estudios, hábitos diarios y contenido centrado en ambos temas.
 
 ## Funciones
 
-- Mi día: tareas de estudios, personales y de casa; fecha, prioridad, edición y seguimiento. Hábitos diarios con marcas de los últimos siete días en horario de Perú.
+- Mi agenda diaria: tareas de estudios, personales y de casa; fecha, prioridad, edición y seguimiento. Hábitos diarios con marcas de los últimos siete días en horario de Perú.
 
 - Registrar ingresos, gastos y transferencias entre cualquier par de cuentas, incluido efectivo al banco, con comisión opcional. Las transferencias no son gastos, salvo su comisión.
 - Diseño en azul y menta con escarabajo ahorrador, menú lateral compacto y registro lateral con categorías por iconos.
@@ -48,16 +48,16 @@ Consulta [el espacio personal y las siguientes etapas](docs/ECOSISTEMA.md): Mi d
 - Inicio de sesión, sesiones con cookie HttpOnly y CSRF, datos aislados, tokens Google cifrados y respaldo cifrado.
 - Manifest e iconos para Añadir a pantalla de inicio en Safari. Requiere conexión; no ofrece finanzas sin conexión.
 
-Los recordatorios no realizan pagos; los aportes a metas no trasladan fondos. Reservar una meta reduce el disponible calculado. Gmail busca cada minuto mientras Inicio o Revisar gastos estén visibles; no envía notificaciones push. Desconectar elimina los tokens locales; puedes revocar permisos desde tu cuenta Google.
+Los recordatorios no realizan pagos; los aportes a metas no trasladan fondos. Reservar una meta reduce el disponible calculado. Gmail busca cada minuto mientras Mis finanzas o Revisar gastos estén visibles; no envía notificaciones push. Desconectar elimina los tokens locales; puedes revocar permisos desde tu cuenta Google.
 
 ## Cómo usarla
 
-1. **Inicio:** Libre para gastar resta de las cuentas los pagos ordinarios activos hasta fin de mes, deuda de crédito y metas reservadas. No duplica pagos vinculados a tarjetas; las metas no reservadas son informativas. Los gráficos usan movimientos reales.
+1. **Inicio:** elige Mis finanzas o Mi agenda diaria. Toca el logo para volver al selector. **Mis finanzas:** Libre para gastar resta de las cuentas los pagos ordinarios activos hasta fin de mes, deuda de crédito y metas reservadas. No duplica pagos vinculados a tarjetas; las metas no reservadas son informativas. Los gráficos usan movimientos reales.
 2. **Mi dinero:** consulta la distribución del saldo, añade o edita cuentas, pasa efectivo al banco o transfiere dinero, y revisa tarjetas e informes.
 3. **Pagos:** programa un vencimiento sin descontar dinero. Cuando ya lo hayas pagado, pulsa **Ya pagué**, revisa importe y cuenta y confirma. Se guarda un gasto; un pago recurrente prepara el siguiente vencimiento.
 4. **Historial:** usa Este mes, Hoy, Semana o Todo, combina un tipo de movimiento y busca conceptos. Exportar descarga toda la selección filtrada, no solo la página visible. **Pagos → Pagados** conserva los comprobantes confirmados.
 5. **Reportes:** compara 3, 6 o 12 meses, categorías del mes que selecciones y el margen entre ingresos y gastos. **Metas** reúne los objetivos de ahorro. **Perfil** permite gestionar Gmail, Google, apariencia, seguridad, administración (solo propietario) y cerrar sesión.
-6. **+ Nuevo:** abre el panel de gasto, ingreso o transferencia. Puedes elegir fecha, usar Hoy/Ayer y revisar el saldo previsto antes de guardar. Programar un futuro pago se hace en Pagos.
+6. **Mis finanzas → Gasto, Ingreso o Transferir:** abre el panel de registro correspondiente. Puedes elegir fecha, usar Hoy/Ayer y revisar el saldo previsto antes de guardar. Programar un futuro pago se hace en Pagos.
 
 **Tarjetas:** en Mi dinero pulsa Agregar tarjeta, escribe un nombre como BCP Visa clásica y mira la vista previa. Puedes seleccionar el banco si la detección no coincide. Solo se guardan los últimos cuatro dígitos. Las ilustraciones son referenciales; no identifican el modelo físico exacto. Ver informe muestra la deuda y el límite que registres, con su porcentaje utilizado y próximas fechas. El informe muestra compras y pagos asignados a esa tarjeta. Los movimientos antiguos sin asignación permanecen en el historial de la cuenta. Seleccionar crédito al registrar aumenta la deuda sin descontar efectivo; Pagar tarjeta la reduce sin volver a contar el gasto. Editar la deuda permite conciliar el saldo inicial y ajustes externos.
 

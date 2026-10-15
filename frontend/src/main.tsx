@@ -25,6 +25,7 @@ import {
 } from "./shared/api";
 import MiDinero from "./modules/MiDinero";
 import MiDia from "./modules/MiDia";
+import Espacios from "./modules/Espacios";
 import Dashboard from "./modules/Dashboard";
 import Planes from "./modules/Planes";
 import Historial from "./modules/Historial";
@@ -40,7 +41,8 @@ import "./styles.css";
 import "./reference-theme.css";
 const pages = {
   inicio: "Inicio",
-  dia: "Mi día",
+  finanzas: "Mis finanzas",
+  dia: "Mi agenda diaria",
   dinero: "Mi dinero",
   pagos: "Pagos",
   historial: "Historial",
@@ -57,7 +59,8 @@ type View = keyof typeof pages;
 type RecordKind = "expense" | "income" | "transfer";
 const navigation = [
   { id: "inicio", name: "Inicio", icon: House },
-  { id: "dia", name: "Mi día", icon: ListTodo },
+  { id: "finanzas", name: "Mis finanzas", icon: Wallet },
+  { id: "dia", name: "Mi agenda", icon: ListTodo },
   { id: "dinero", name: "Mi dinero", icon: Wallet },
   { id: "pagos", name: "Pagos", icon: CalendarDays },
   { id: "historial", name: "Historial", icon: ReceiptText },
@@ -65,6 +68,19 @@ const navigation = [
   { id: "metas", name: "Metas", icon: Target },
   { id: "perfil", name: "Perfil", icon: CircleUserRound },
 ] as const;
+const financeViews: View[] = [
+  "finanzas",
+  "dinero",
+  "pagos",
+  "historial",
+  "reportes",
+  "metas",
+  "registrar",
+  "revisar",
+];
+type Space = "finance" | "agenda" | "home";
+const spaceFor = (view: View): Space =>
+  financeViews.includes(view) ? "finance" : view === "dia" ? "agenda" : "home";
 function App({
   username,
   onLogout,
@@ -82,6 +98,7 @@ function App({
       : "inicio";
   };
   const [view, setView] = useState<View>(route),
+    [space, setSpace] = useState<Space>(() => spaceFor(route())),
     [accounts, setAccounts] = useState<Account[]>([]),
     [cards, setCards] = useState<Card[]>([]),
     [plans, setPlans] = useState<Scheduled[]>([]),
@@ -123,8 +140,10 @@ function App({
     }
   }
   useEffect(() => {
-    void load();
-  }, []);
+    if (financeViews.includes(view)) void load();
+    if (view === "inicio" || view === "dia" || financeViews.includes(view))
+      setSpace(spaceFor(view));
+  }, [view]);
   useEffect(() => {
     const change = () => {
       setView(route());
@@ -159,11 +178,24 @@ function App({
     setNotice(message);
     await load();
     setVersion((v) => v + 1);
-    if (view === "registrar") go("inicio");
+    if (view === "registrar") go("finanzas");
   }
   const active = ["revisar", "conexiones", "admin", "mas"].includes(view)
     ? "perfil"
     : view;
+  const isFinancial = financeViews.includes(view);
+  const visibleNavigation = navigation.filter(
+    (item) =>
+      item.id === "inicio" ||
+      item.id === "perfil" ||
+      (space === "finance" && financeViews.includes(item.id)) ||
+      (space === "agenda" && item.id === "dia"),
+  );
+  const mobileNavigation = visibleNavigation.filter(
+    (item) =>
+      space !== "finance" ||
+      ["inicio", "finanzas", "pagos", "historial", "perfil"].includes(item.id),
+  );
   const date = new Intl.DateTimeFormat("es-PE", {
     weekday: "long",
     day: "numeric",
@@ -181,7 +213,7 @@ function App({
       onSaved={recorded}
       onCancel={() => {
         setRecordOpen(false);
-        if (view === "registrar") go("inicio");
+        if (view === "registrar") go("finanzas");
       }}
     />
   );
@@ -198,12 +230,17 @@ function App({
         Ir al contenido
       </a>
       <aside className="sidebar">
-        <div className="brand">
+        <button
+          type="button"
+          className="brand brand-home"
+          aria-label="Ir a la pantalla principal"
+          onClick={() => go("inicio")}
+        >
           <BrandMark decorative />
           <span>Balance</span>
-        </div>
+        </button>
         <nav aria-label="Navegación principal">
-          {navigation.map((m) => (
+          {visibleNavigation.map((m) => (
             <button
               key={m.id}
               className={active === m.id ? "active" : ""}
@@ -218,29 +255,36 @@ function App({
             </button>
           ))}
         </nav>
-        <button className="primary sidebar-register" onClick={() => register()}>
-          + Nuevo
-        </button>
       </aside>
       <main id="main-content" className={"page-" + view}>
         <header className="app-header">
-          <div>
-            {view === "inicio" && (
-              <div className="today-label">
-                {date.charAt(0).toUpperCase() + date.slice(1)}
-              </div>
-            )}
-            {["revisar", "conexiones", "admin"].includes(view) && (
-              <button className="back-link" onClick={() => go("perfil")}>
-                <ArrowLeft size={14} /> Perfil
-              </button>
-            )}
-            <h1 ref={heading} tabIndex={-1}>
-              {view === "inicio" ? `Hola, ${username}` : pages[view]}
-            </h1>
+          <div className="page-heading">
+            <button
+              type="button"
+              className="mobile-home"
+              aria-label="Ir a la pantalla principal"
+              onClick={() => go("inicio")}
+            >
+              <BrandMark decorative />
+            </button>
+            <div>
+              {view === "finanzas" && (
+                <div className="today-label">
+                  {date.charAt(0).toUpperCase() + date.slice(1)}
+                </div>
+              )}
+              {["revisar", "conexiones", "admin"].includes(view) && (
+                <button className="back-link" onClick={() => go("perfil")}>
+                  <ArrowLeft size={14} /> Perfil
+                </button>
+              )}
+              <h1 ref={heading} tabIndex={-1}>
+                {view === "inicio" ? `Hola, ${username}` : pages[view]}
+              </h1>
+            </div>
           </div>
           <div className="header-actions">
-            {view === "inicio" && updated && (
+            {view === "finanzas" && updated && (
               <span className="updated-label">
                 Actualizado{" "}
                 {updated.toLocaleTimeString("es-PE", {
@@ -250,20 +294,18 @@ function App({
                 })}
               </span>
             )}
-            <button
-              className="refresh"
-              disabled={refreshing}
-              aria-label="Actualizar datos"
-              onClick={() => void load().then(() => setVersion((v) => v + 1))}
-            >
-              <RefreshCw size={16} />
-            </button>
-            {!["inicio", "registrar", "dia"].includes(view) && (
+            {view !== "inicio" && (
               <button
-                className="secondary header-register"
-                onClick={() => register()}
+                className="refresh"
+                disabled={refreshing}
+                aria-label="Actualizar datos"
+                onClick={() => {
+                  if (isFinancial)
+                    void load().then(() => setVersion((v) => v + 1));
+                  else setVersion((v) => v + 1);
+                }}
               >
-                + Nuevo
+                <RefreshCw size={16} />
               </button>
             )}
           </div>
@@ -276,7 +318,7 @@ function App({
             </button>
           </div>
         )}
-        {error && (
+        {isFinancial && error && (
           <div className="error" role="alert">
             {error}
             <button className="link" onClick={() => void load()}>
@@ -284,35 +326,30 @@ function App({
             </button>
           </div>
         )}
-        {loading ? (
+        {view === "inicio" ? (
+          <Espacios
+            onFinance={() => go("finanzas")}
+            onAgenda={() => go("dia")}
+          />
+        ) : isFinancial && loading ? (
           <div className="panel empty" role="status">
             Cargando tu espacio…
           </div>
-        ) : view === "inicio" ? (
-          <>
-            <button className="day-home-link" onClick={() => go("dia")}>
-              <ListTodo size={24} aria-hidden="true" />
-              <span>
-                <strong>Organiza tu día</strong>
-                <small>Tareas, estudios y hábitos en tu espacio personal</small>
-              </span>
-              <span aria-hidden="true">→</span>
-            </button>
-            <Dashboard
-              key={version}
-              accounts={accounts}
-              cards={cards}
-              plans={plans}
-              availability={availability}
-              selectedMonth={selectedMonth}
-              onSelectMonth={setSelectedMonth}
-              onRegister={register}
-              onMoney={() => go("dinero")}
-              onPayments={() => go("pagos")}
-              onReview={() => go("revisar")}
-              onReports={() => go("reportes")}
-            />
-          </>
+        ) : view === "finanzas" ? (
+          <Dashboard
+            key={version}
+            accounts={accounts}
+            cards={cards}
+            plans={plans}
+            availability={availability}
+            selectedMonth={selectedMonth}
+            onSelectMonth={setSelectedMonth}
+            onRegister={register}
+            onMoney={() => go("dinero")}
+            onPayments={() => go("pagos")}
+            onReview={() => go("revisar")}
+            onReports={() => go("reportes")}
+          />
         ) : view === "dia" ? (
           <MiDia key={version} />
         ) : view === "dinero" ? (
@@ -388,25 +425,25 @@ function App({
           />
         )}
       </main>
-      <nav className="mobile-nav" aria-label="Navegación móvil">
-        {navigation
-          .filter((m) =>
-            ["inicio", "dinero", "pagos", "historial", "perfil"].includes(m.id),
-          )
-          .map((m) => (
-            <button
-              key={m.id}
-              className={active === m.id ? "active" : ""}
-              aria-current={active === m.id ? "page" : undefined}
-              onClick={() => {
-                if (m.id === "historial") setHistoryAccount("");
-                go(m.id);
-              }}
-            >
-              <m.icon size={18} aria-hidden="true" />
-              <small>{m.name}</small>
-            </button>
-          ))}
+      <nav
+        className="mobile-nav"
+        data-space={space}
+        aria-label="Navegación móvil"
+      >
+        {mobileNavigation.map((m) => (
+          <button
+            key={m.id}
+            className={active === m.id ? "active" : ""}
+            aria-current={active === m.id ? "page" : undefined}
+            onClick={() => {
+              if (m.id === "historial") setHistoryAccount("");
+              go(m.id);
+            }}
+          >
+            <m.icon size={18} aria-hidden="true" />
+            <small>{m.name}</small>
+          </button>
+        ))}
       </nav>
       {recordOpen && (
         <Modal

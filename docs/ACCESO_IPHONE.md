@@ -86,7 +86,7 @@ El Client Secret se pide sin mostrarlo. Reinicia el túnel y conecta Google desd
 
 En modo de prueba, Google puede limitar la duración de los permisos y pedir reconectar. Para distribuir una app con Gmail fuera de las personas de prueba puede requerirse verificación de Google. La conexión real solo se considera validada después de completar consentimiento, revisar un correo y crear un evento en la cuenta autorizada.
 
-Inicio y Revisar gastos buscan comprobantes de consumos realizados en soles cada minuto mientras están visibles. El filtro revisa el cuerpo del mensaje, exige evidencia de una operación realizada e importe y excluye promociones, ofertas de empleo, regalos, transferencias, retiros y recordatorios. Es conservador: los correos ambiguos o sin importe detectable no se proponen. Cada gasto requiere confirmación. Los correos se distinguen por buzón e ID para no duplicarlos. Calendar crea series mensuales/semanales/anuales; los recordatorios no efectúan pagos. Desconectar Google borra los tokens locales, pero no borra eventos ya creados ni revoca por sí solo los permisos en Google.
+Mis finanzas y Revisar gastos buscan comprobantes de consumos realizados en soles cada minuto mientras están visibles. El filtro revisa el cuerpo del mensaje, exige evidencia de una operación realizada e importe y excluye promociones, ofertas de empleo, regalos, transferencias, retiros y recordatorios. Es conservador: los correos ambiguos o sin importe detectable no se proponen. Cada gasto requiere confirmación. Los correos se distinguen por buzón e ID para no duplicarlos. Calendar crea series mensuales/semanales/anuales; los recordatorios no efectúan pagos. Desconectar Google borra los tokens locales, pero no borra eventos ya creados ni revoca por sí solo los permisos en Google.
 
 ## 6. Respaldo, actualización y datos
 
@@ -121,14 +121,14 @@ Instalación y compilación en Linux, pruebas de aislamiento de datos, cookies/C
 
 La cuenta administradora accede a **Usuarios y permisos** desde **Perfil**, tanto en escritorio como en móvil. Puede habilitar o pausar el registro web y el servicio Google, ver el estado de los usuarios, pausar/reactivar accesos y retirar una conexión Google. El panel no muestra contraseñas, tokens ni los gastos de otras personas. Pausar un usuario invalida sus sesiones y conserva sus datos; la cuenta administradora no se puede pausar desde el panel. Un segundo `admin-grant` para otra persona se rechaza.
 
-**Perfil → Cuenta de Google** permite a cada persona conectar o desconectar su propia cuenta Google. **Revisar gastos** tiene los comprobantes, la confirmación de importe/cuenta y la opción de descartar. El aviso de Inicio lleva a esa pantalla. La revisión requiere una cuenta Google conectada y el servicio habilitado; no registra consumos automáticamente.
+**Perfil → Cuenta de Google** permite a cada persona conectar o desconectar su propia cuenta Google. **Revisar gastos** tiene los comprobantes, la confirmación de importe/cuenta y la opción de descartar. El aviso de Mis finanzas lleva a esa pantalla. La revisión requiere una cuenta Google conectada y el servicio habilitado; no registra consumos automáticamente.
 
 Crear una cuenta en Balance no añade su Gmail a los usuarios de prueba de Google. Mientras OAuth esté en modo de prueba, agrega en Google Cloud el correo que cada persona usará al conectar. Para ampliar el acceso fuera de esos usuarios, Google puede requerir verificación y otros cambios en su consentimiento.
 
 
 ## Navegación y pagos realizados
 
-En escritorio el menú contiene Inicio, Mi dinero, Pagos, Historial, Reportes, Metas y Perfil. En móvil la barra inferior tiene cinco accesos; Reportes y Metas también se abren desde Perfil. El botón + Nuevo abre el formulario lateral adaptado a la pantalla.
+Al iniciar sesión, Inicio permite elegir Mis finanzas o Mi agenda diaria. El logo regresa al selector. Cada espacio tiene su propio menú en escritorio y móvil. Dentro de Mis finanzas, las acciones Gasto, Ingreso y Transferir abren el formulario lateral. Reportes y Metas también se abren desde Perfil. No hay botón global + Nuevo.
 
 Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago** guarda el vencimiento; cuando hayas pagado, **Ya pagué → Confirmar** descuenta el importe de la cuenta seleccionada y lo guarda en **Pagos → Pagados** y en **Historial**. Un pago mensual avanza al mes siguiente conservando su día habitual (los días 29–31 se ajustan al último día cuando sea necesario). Un pago único queda completado.
 
@@ -146,7 +146,7 @@ En **Mi dinero → Agregar tarjeta**, escribe el nombre de la tarjeta (por ejemp
 
 ## Transferencias, fechas y exportación
 
-En **+ Nuevo → Transferir** elige origen, destino e importe. Puedes mover efectivo al banco, retirar hacia efectivo o transferir entre cuentas y billeteras. El importe se conserva entre las dos cuentas; solo una comisión reduce el saldo total y cuenta como gasto. El registro de la transferencia es idempotente ante reintentos de la misma operación.
+En **Mis finanzas → Transferir** elige origen, destino e importe. Puedes mover efectivo al banco, retirar hacia efectivo o transferir entre cuentas y billeteras. El importe se conserva entre las dos cuentas; solo una comisión reduce el saldo total y cuenta como gasto. El registro de la transferencia es idempotente ante reintentos de la misma operación.
 
 **Hoy / Ayer** y el selector de fecha guardan el movimiento en el día elegido de Perú. No se permiten gastos/ingresos futuros; usa Pagos para programarlos. El saldo actual cambia al guardar, incluso si el movimiento se fecha ayer.
 

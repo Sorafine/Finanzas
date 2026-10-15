@@ -82,6 +82,7 @@ export default function AuthGate({
       setRegistering(false);
       setRecovering(false);
       setRecoveryCode("");
+      window.history.replaceState(null, "", "#inicio");
       setUser(session);
     } catch (e) {
       setError((e as Error).message);

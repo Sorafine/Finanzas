@@ -4,8 +4,9 @@ Actualización del 15 de octubre de 2026. Se adaptó la referencia `Balance · F
 
 ## Pantallas
 
-- **Inicio:** disponible real, simulador «¿Y si gasto?», saldos, hasta tres próximos pagos, gastos por mes seleccionable y acceso a revisar Gmail. El simulador no guarda un movimiento ni cambia saldos.
-- **Mi día:** tareas de estudios, personales y de casa con fecha, prioridad y estados; hábitos diarios y sus últimos siete días. Véase [el espacio personal](ECOSISTEMA.md).
+- **Inicio:** selector de Mis finanzas y Mi agenda diaria; también se abre tocando el logo.
+- **Mis finanzas:** disponible real, simulador «¿Y si gasto?», saldos, hasta tres próximos pagos, gastos por mes seleccionable y acceso a revisar Gmail. El simulador no guarda un movimiento ni cambia saldos.
+- **Mi agenda diaria:** tareas de estudios, personales y de casa con fecha, prioridad y estados; hábitos diarios y sus últimos siete días. Véase [el espacio personal](ECOSISTEMA.md).
 - **Mi dinero:** cuentas y tarjetas, con una entrada común para añadir una u otra. Se conservan transferencias, informes por tarjeta, deuda y programación de pagos.
 - **Pagos:** pendientes, pagados y pausados; confirmación con vista previa, movimiento existente, Calendar y comprobantes.
 - **Historial:** filtros, búsqueda, CSV, detalles, corrección y anulación con motivo.
@@ -13,7 +14,7 @@ Actualización del 15 de octubre de 2026. Se adaptó la referencia `Balance · F
 - **Metas:** progreso, iconos, aportes y reserva opcional, separados de la configuración.
 - **Perfil y conexiones:** estado de Google, Gmail, Calendar, seguridad, apariencia, administración exclusiva del propietario y cierre de sesión. Los accesos de Reportes y Metas también están aquí para móvil.
 
-En escritorio se muestran las ocho secciones. En móvil hay cinco accesos inferiores: Inicio, Mi dinero, Pagos, Historial y Perfil. Desde Perfil se llega a Mi día, Metas y Reportes; Inicio también ofrece acceso a Mi día. Los enlaces antiguos `#mas` siguen abriendo el perfil.
+El menú se adapta al espacio elegido. En Finanzas incluye el resumen, cuentas, pagos, historial, reportes y metas. En Agenda incluye tareas, estudios y hábitos. Inicio vuelve al selector y Perfil conserva las conexiones y ajustes. En móvil Inicio tiene dos accesos inferiores (Inicio y Perfil); Agenda tiene tres (Inicio, Mi agenda y Perfil), y Finanzas tiene cinco (Inicio, Mis finanzas, Pagos, Historial y Perfil). Mi dinero se abre desde el resumen financiero; Reportes y Metas también están en Perfil. El logo es un botón para volver al selector tanto en escritorio como en móvil. Se retiraron los botones globales «+ Nuevo»: los movimientos se registran desde las acciones de Mis finanzas. Los enlaces antiguos `#mas` siguen abriendo el perfil. `#inicio` abre el selector y `#finanzas` el resumen financiero. Un inicio de sesión nuevo abre el selector; recargar una sección con sesión activa conserva esa sección.
 
 ## Apariencia
 
