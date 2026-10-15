@@ -1,0 +1,1002 @@
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("./assets/fonts/HankenGrotesk-Variable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root[data-theme] {
+  font-family:
+    "Hanken Grotesk",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  --radius: 18px;
+  --gold: #f2b94b;
+  --navy: #102c4f;
+}
+:root[data-theme="dark"] {
+  --bg: #081a30;
+  --side: #081a30;
+  --surface: #142d4c;
+  --dialog: #0d223b;
+  --ink: #eaf1fb;
+  --text-soft: #a0b5d1;
+  --line: #3a5478;
+  --primary: #78a9e4;
+  --primary-strong: #336caf;
+  --soft: #183454;
+  --ok: #5fd0a5;
+  --okbg: #123a35;
+  --bad: #ff9b90;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #fff;
+  --side: #fff;
+  --surface: #f0f5fc;
+  --dialog: #fff;
+  --ink: #0f2a4a;
+  --text-soft: #526b8b;
+  --line: #bfcee2;
+  --primary: #1e4e8c;
+  --primary-strong: #1e4e8c;
+  --soft: #e6eef9;
+  --ok: #1f7a5c;
+  --okbg: #e8f2ee;
+  --bad: #ac352c;
+  color-scheme: light;
+}
+:root[data-theme] {
+  background: var(--bg);
+  color: var(--ink);
+}
+[data-theme] body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+}
+[data-theme] h1,
+[data-theme] h2,
+[data-theme] h3,
+[data-theme] .brand,
+[data-theme] .spend-value,
+[data-theme] .account-value,
+[data-theme] .account-total > strong,
+[data-theme] .detail-amount,
+[data-theme] .modal-heading h2,
+[data-theme] .history-summary strong,
+[data-theme] .margin-card strong {
+  font-family: inherit;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+}
+[data-theme] h1 {
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+[data-theme] h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+[data-theme] .sidebar {
+  width: 206px;
+  background: var(--side);
+  border-color: var(--line);
+  padding: 22px 14px;
+}
+[data-theme] main {
+  margin-left: 206px;
+  padding: 26px 34px 60px;
+  max-width: 1240px;
+  background: var(--bg);
+}
+[data-theme] .app-header {
+  margin-bottom: 24px;
+}
+[data-theme] .brand {
+  font-size: 20px;
+  font-weight: 650;
+  margin: 0 0 22px;
+}
+[data-theme] .brand > span {
+  color: var(--ink);
+}
+[data-theme] .brand > .brand-mark {
+  width: 44px;
+  height: 44px;
+  box-shadow: none;
+}
+[data-theme] .sidebar nav {
+  gap: 5px;
+}
+[data-theme] .sidebar nav button {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text-soft);
+  padding: 11px 14px;
+  border-radius: 12px;
+  gap: 10px;
+  min-height: 44px;
+}
+[data-theme] .sidebar nav button.active {
+  background: var(--primary-strong);
+  color: #fff;
+  box-shadow: none;
+}
+[data-theme] .sidebar nav button:hover:not(.active) {
+  background: var(--soft);
+  color: var(--ink);
+}
+[data-theme] button,
+[data-theme] a,
+[data-theme] input,
+[data-theme] select,
+[data-theme] textarea {
+  font-family: inherit;
+}
+[data-theme] a,
+[data-theme] .link,
+[data-theme] .back-link,
+[data-theme] .register-switch {
+  color: var(--primary);
+}
+[data-theme] .primary,
+[data-theme] .sidebar-register,
+[data-theme] .home-quick-actions > .primary {
+  background: var(--primary-strong);
+  border: 1px solid var(--primary-strong);
+  color: #fff;
+  box-shadow: none;
+  border-radius: 12px;
+  font-size: 14px;
+  padding: 11px 18px;
+  font-weight: 600;
+}
+[data-theme] .secondary,
+[data-theme] .refresh,
+[data-theme] .icon-button {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: none;
+  border-radius: 12px;
+  font-size: 14px;
+  padding: 10px 16px;
+  font-weight: 500;
+}
+[data-theme] .secondary:hover,
+[data-theme] .refresh:hover,
+[data-theme] .icon-button:hover {
+  background: var(--soft);
+}
+[data-theme] .refresh,
+[data-theme] .icon-button {
+  padding: 10px;
+  min-width: 42px;
+  min-height: 42px;
+}
+[data-theme] .panel,
+[data-theme] .stat,
+[data-theme] .history-summary > div,
+[data-theme] .plan-stats,
+[data-theme] .gmail-suggestion {
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: 18px;
+  color: var(--ink);
+  box-shadow: none;
+}
+[data-theme] .panel {
+  padding: 22px;
+}
+[data-theme] .spend-card {
+  padding: 26px 30px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 0;
+  border-radius: 22px;
+  min-width: 0;
+}
+[data-theme] .spend-card .spend-value {
+  font-family: inherit;
+  font-size: clamp(40px, 5.8vw, 80px);
+  font-weight: 600;
+  line-height: 1.1;
+  padding: 0;
+  margin: 8px 0 16px;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+[data-theme] .spend-card .overline {
+  font-size: 18px;
+  text-transform: none;
+  color: var(--ink);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+[data-theme] .spend-subtitle {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin: 3px 0 0;
+  line-height: 1.5;
+}
+[data-theme] .spend-card .balance-track {
+  background: #6f8fb8;
+  height: 9px;
+  margin: 16px 0 10px;
+}
+[data-theme] .spend-card .balance-track > i {
+  background: var(--gold);
+}
+[data-theme] .spend-card .spend-breakdown {
+  margin: 10px 0;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+[data-theme] .spend-card .spend-breakdown b {
+  color: var(--ink);
+}
+[data-theme] .spend-hint {
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 12px;
+  margin: 8px 0;
+}
+[data-theme] .spend-hint p {
+  margin: 8px 0;
+}
+[data-theme] .spending-simulator {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 14px;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+[data-theme] .spending-simulator label {
+  font-size: 13px;
+  display: block;
+  color: var(--text-soft);
+}
+[data-theme] .spending-simulator b {
+  color: var(--ink);
+}
+[data-theme] .spending-simulator input {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 12px 0;
+  accent-color: var(--gold);
+  min-height: 22px;
+  border: 0;
+  box-shadow: none;
+}
+[data-theme] .spending-simulator small {
+  font-size: 11px;
+  color: var(--text-soft);
+}
+[data-theme] .home-top-grid {
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  gap: 18px;
+}
+[data-theme] .home-bottom-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 18px;
+}
+[data-theme] .account-line,
+[data-theme] .next-payment-button,
+[data-theme] .reference-category,
+[data-theme] .movement,
+[data-theme] .settings-line,
+[data-theme] .payment-entry,
+[data-theme] .history-day h2,
+[data-theme] .scope-note {
+  border-color: var(--line);
+  color: var(--ink);
+}
+[data-theme] .account-line span,
+[data-theme] .account-line b,
+[data-theme] .payment-info h3,
+[data-theme] .payment-side strong,
+[data-theme] .movement strong,
+[data-theme] .movement-value,
+[data-theme] .history-summary strong,
+[data-theme] .detail-list dd {
+  color: var(--ink);
+}
+[data-theme] .account-line {
+  font-size: 14px;
+}
+[data-theme] .next-payment-button {
+  padding: 13px 0;
+  background: transparent;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  text-align: left;
+  font-family: inherit;
+}
+[data-theme] .next-payment-button:last-child {
+  border-bottom: 0;
+}
+[data-theme] .next-payment-button b {
+  font-size: 14px;
+}
+[data-theme] .date-badge {
+  background: var(--gold);
+  color: #102c4f;
+  border-radius: 12px;
+}
+[data-theme] .mini-chart {
+  height: 160px;
+  gap: 10px;
+  padding-top: 14px;
+  align-items: stretch;
+}
+[data-theme] .mini-chart > button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  color: var(--text-soft);
+  height: 100%;
+}
+[data-theme] .mini-chart > button i {
+  background: #799bc9;
+  display: block;
+  max-width: 28px;
+  width: 80%;
+  border-radius: 7px 7px 2px 2px;
+  min-height: 0;
+  flex-shrink: 1;
+}
+[data-theme] .mini-chart > button i.current {
+  background: var(--primary);
+}
+[data-theme] .mini-chart > button[aria-pressed="true"] small {
+  color: var(--ink);
+  font-weight: 700;
+}
+[data-theme] .mini-chart > button small {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+[data-theme] .gmail-notice {
+  background: var(--okbg);
+  color: var(--ink);
+  border: 1px solid transparent;
+  border-radius: 18px;
+  padding: 20px 22px;
+}
+[data-theme] .gmail-notice strong {
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+}
+[data-theme] .gmail-notice small,
+[data-theme] .updated-label,
+[data-theme] .today-label,
+[data-theme] .plan-stats small,
+[data-theme] .settings-line small,
+[data-theme] .payment-info p,
+[data-theme] .payment-info small,
+[data-theme] .account-tile small,
+[data-theme] .history-summary small,
+[data-theme] .movement small,
+[data-theme] .pay-summary,
+[data-theme] .card-preview-caption {
+  color: var(--text-soft);
+}
+[data-theme] .gmail-notice .secondary {
+  background: var(--primary-strong);
+  border-color: var(--primary-strong);
+  color: #fff;
+}
+[data-theme] .muted,
+[data-theme] .hint {
+  color: var(--text-soft);
+}
+[data-theme] .positive,
+[data-theme] .margin-card strong,
+[data-theme] .movement-value.income {
+  color: var(--ok);
+}
+[data-theme] .overdue-text,
+[data-theme] .error {
+  color: var(--bad) !important;
+}
+[data-theme] .error {
+  background: color-mix(in srgb, var(--bad) 10%, var(--bg));
+  border-color: var(--bad);
+  border-radius: 12px;
+}
+[data-theme] .success-msg {
+  background: var(--okbg);
+  color: var(--ok);
+  border-color: var(--ok);
+}
+[data-theme] .filter-chips button,
+[data-theme] .segmented button,
+[data-theme] .tabs button {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+[data-theme] .filter-chips button.selected,
+[data-theme] .segmented button.chosen,
+[data-theme] .tabs button.chosen {
+  background: var(--primary-strong);
+  border-color: var(--primary-strong);
+  color: #fff;
+  box-shadow: none;
+}
+[data-theme] .segmented,
+[data-theme] .tabs {
+  background: transparent;
+  gap: 8px;
+  border-radius: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+[data-theme] .badge,
+[data-theme] .status-pill {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--ink);
+}
+[data-theme] .status-pill.overdue {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+[data-theme] .status-pill.upcoming,
+[data-theme] .paid-label {
+  color: var(--ok);
+}
+[data-theme] input:not([type="checkbox"]):not([type="range"]),
+[data-theme] select,
+[data-theme] textarea,
+[data-theme] .concept-input {
+  background: var(--dialog);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: none;
+  font-size: 15px;
+  max-width: 100%;
+}
+[data-theme] input::placeholder,
+[data-theme] textarea::placeholder {
+  color: var(--text-soft);
+  opacity: 1;
+}
+[data-theme] select option {
+  background: var(--dialog);
+  color: var(--ink);
+}
+[data-theme] label,
+[data-theme] .form label {
+  color: var(--text-soft);
+}
+[data-theme] input:focus-visible,
+[data-theme] select:focus-visible,
+[data-theme] button:focus-visible,
+[data-theme] a:focus-visible,
+[data-theme] summary:focus-visible,
+[data-theme] textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+[data-theme] .progress,
+[data-theme] .credit-progress,
+[data-theme] .account-distribution {
+  background: var(--soft);
+  border-radius: 8px;
+  overflow: hidden;
+}
+[data-theme] .progress > i,
+[data-theme] .credit-progress > i {
+  background: var(--primary);
+  border-radius: 8px;
+}
+[data-theme] .goal-symbol {
+  background: var(--primary-strong);
+  color: #fff;
+}
+[data-theme] .goal-icon-grid button,
+[data-theme] .category-picker button {
+  color: var(--ink);
+}
+[data-theme] .goal-icon-grid button > span,
+[data-theme] .category-picker button > span {
+  background: var(--soft);
+  color: var(--primary);
+}
+[data-theme] .goal-icon-grid button.selected > span,
+[data-theme] .category-picker button.selected > span {
+  background: var(--primary-strong);
+  color: #fff;
+}
+[data-theme] .metas-reference .account-grid > .panel {
+  padding: 22px;
+}
+[data-theme] .goal-title h2 {
+  font-size: 17px;
+}
+[data-theme] .goal-update {
+  font-size: 13px;
+  padding: 10px 0;
+}
+[data-theme] .profile-identity {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+[data-theme] .profile-identity h2 {
+  font-size: 22px;
+  margin: 0 0 3px;
+  overflow-wrap: anywhere;
+}
+[data-theme] .profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--primary-strong);
+  color: #fff;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+[data-theme] .profile-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+[data-theme] .settings-line {
+  padding: 16px 0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+[data-theme] .settings-line strong {
+  font-size: 15px;
+}
+[data-theme] .settings-line small {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+[data-theme] .settings-line > .grow {
+  flex: 1;
+  min-width: 180px;
+}
+[data-theme] .settings-line > svg {
+  color: var(--primary);
+}
+[data-theme] .appearance-picker {
+  width: 140px;
+  margin: 0;
+  flex-shrink: 0;
+}
+[data-theme] .modal-overlay {
+  background: #020e1fc4;
+  backdrop-filter: blur(4px);
+}
+[data-theme] .modal-card,
+[data-theme] .modal-drawer .modal-card,
+[data-theme] .modal-payment .modal-card {
+  background: var(--dialog);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px #0003;
+}
+[data-theme] .modal-heading h2 {
+  color: var(--ink);
+  font-weight: 650;
+}
+[data-theme] .editor-fields > label,
+[data-theme] .repeat-switch,
+[data-theme] .subform,
+[data-theme] .movement-editor .subform,
+[data-theme] .payment-balance-preview {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+[data-theme] .editor-fields label,
+[data-theme] .editor-footer,
+[data-theme] .category-picker small {
+  color: var(--text-soft);
+}
+[data-theme] .big-amount,
+[data-theme] .big-amount input,
+[data-theme] .big-amount b {
+  font-family: inherit;
+  color: var(--ink);
+}
+[data-theme] .big-amount input {
+  background: transparent !important;
+  border: 0 !important;
+  font-size: inherit !important;
+}
+[data-theme] .editor-fields > label input,
+[data-theme] .editor-fields > label select {
+  background: transparent;
+  border: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+[data-theme] .payment-balance-preview {
+  background: var(--okbg);
+}
+[data-theme] .report-month-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-right: auto;
+}
+[data-theme] .report-month-selector input {
+  width: 170px;
+}
+[data-theme] .reference-report-chart {
+  gap: 16px;
+  height: 220px;
+}
+[data-theme] .reference-report-month {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  color: var(--text-soft);
+  font-family: inherit;
+}
+[data-theme] .reference-report-month.selected small {
+  color: var(--ink);
+  font-weight: 700;
+}
+[data-theme] .report-bar-pair {
+  gap: 5px;
+}
+[data-theme] .report-bar-pair i {
+  border-radius: 8px 8px 3px 3px;
+  max-width: 32px;
+}
+[data-theme] .report-bar-pair .income {
+  background: var(--ok);
+}
+[data-theme] .report-bar-pair .expense {
+  background: var(--primary);
+}
+[data-theme] .margin-card {
+  background: var(--okbg);
+}
+[data-theme] .margin-card strong {
+  font-size: clamp(28px, 4vw, 44px);
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+[data-theme] .category-distribution {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+[data-theme] .category-donut {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  mask: radial-gradient(circle, transparent 42px, #000 43px);
+}
+[data-theme] .category-legend {
+  flex: 1;
+  min-width: 180px;
+}
+[data-theme] .category-legend > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding: 9px 0;
+  font-size: 13px;
+}
+[data-theme] .category-legend > div:last-child {
+  border: 0;
+}
+[data-theme] .category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+[data-theme] .category-legend small {
+  color: var(--text-soft);
+}
+[data-theme] .login-page {
+  background: var(--bg);
+}
+[data-theme] .login-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  border-radius: 22px;
+  color: var(--ink);
+}
+[data-theme] .login-brand,
+[data-theme] .login-brand strong,
+[data-theme] .login-card h1 {
+  font-family: inherit;
+  color: var(--ink);
+}
+[data-theme] .scope-note,
+[data-theme] .card-chart-track,
+[data-theme] .mov-icon {
+  background: var(--soft);
+  color: var(--primary);
+}
+[data-theme] .mov-icon.expense {
+  color: var(--bad);
+}
+[data-theme] .mov-icon.income {
+  color: var(--ok);
+  background: var(--okbg);
+}
+[data-theme] .card-dates,
+[data-theme] .credit-snapshot .utilization-line,
+[data-theme] .credit-snapshot .utilization-line b {
+  color: var(--text-soft);
+  border-color: var(--line);
+}
+[data-theme] .detail-list dt {
+  color: var(--text-soft);
+}
+[data-theme] .date-shortcuts button {
+  color: var(--primary);
+}
+[data-theme] .mobile-nav {
+  background: var(--side);
+  border-color: var(--line);
+}
+[data-theme] .mobile-nav button {
+  color: var(--text-soft);
+}
+[data-theme] .mobile-nav button.active {
+  color: var(--ink);
+  background: var(--soft);
+}
+@media (max-width: 1100px) {
+  [data-theme] .home-top-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+  [data-theme] .spend-card {
+    padding: 24px;
+  }
+  [data-theme] .spend-card .spend-value {
+    font-size: clamp(34px, 5.3vw, 64px);
+  }
+}
+@media (max-width: 900px) {
+  [data-theme] main {
+    margin-left: 0;
+    padding: 22px 18px calc(96px + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+  }
+  [data-theme] .sidebar {
+    display: none;
+  }
+  [data-theme] .home-top-grid,
+  [data-theme] .home-bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-theme] .home-quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  [data-theme] .home-quick-actions button {
+    padding: 12px 5px;
+    font-size: 13px;
+  }
+  [data-theme] .spend-card .spend-value {
+    font-size: clamp(36px, 8.5vw, 72px);
+  }
+  [data-theme] .profile-shortcuts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  [data-theme] .mobile-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  [data-theme] .app-header {
+    margin-bottom: 22px;
+    gap: 12px;
+  }
+  [data-theme] .report-month-selector {
+    flex-wrap: wrap;
+  }
+  [data-theme] .reports-reference > .page-actions {
+    gap: 12px;
+  }
+  [data-theme] .reference-report-chart {
+    height: 190px;
+    gap: 7px;
+  }
+  [data-theme] .reference-report-month small {
+    font-size: 10px;
+  }
+}
+@media (max-width: 480px) {
+  [data-theme] main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  [data-theme] .panel {
+    padding: 18px;
+  }
+  [data-theme] .spend-card {
+    padding: 22px 20px;
+  }
+  [data-theme] .spend-card .spend-value {
+    font-size: clamp(32px, 9vw, 44px);
+  }
+  [data-theme] .app-header h1 {
+    font-size: 28px;
+  }
+  [data-theme] .updated-label {
+    display: none;
+  }
+  [data-theme] .settings-line > .grow {
+    min-width: 150px;
+  }
+  [data-theme] .settings-line > svg {
+    display: none;
+  }
+  [data-theme] .category-distribution {
+    justify-content: center;
+    gap: 14px;
+  }
+  [data-theme] .category-legend {
+    min-width: 0;
+    width: 100%;
+    flex-basis: 100%;
+  }
+  [data-theme] .reference-report-chart {
+    gap: 4px;
+  }
+  [data-theme] .reference-report-month small {
+    font-size: 9px;
+  }
+  [data-theme] .report-bar-pair {
+    gap: 2px;
+  }
+  [data-theme] .report-month-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+  [data-theme] .report-month-selector input {
+    width: 170px;
+  }
+  [data-theme] .profile-identity {
+    gap: 14px;
+  }
+  [data-theme] .profile-identity > div {
+    min-width: 0;
+    flex: 1;
+  }
+  [data-theme] .modal-card {
+    padding: 20px;
+  }
+  [data-theme] .profile-shortcuts .secondary {
+    font-size: 13px;
+    padding: 12px 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme] *,
+  [data-theme] *::before,
+  [data-theme] *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+/* Keep new interactive chart labels inside each bar, rather than the legacy absolute layout. */
+[data-theme] .mini-chart > button {
+  position: relative;
+}
+[data-theme] .mini-chart > button small {
+  position: static;
+  width: auto;
+  text-align: center;
+}
+[data-theme] .mini-chart > button i {
+  max-height: 125px;
+}
+[data-theme] .page-actions.align-end {
+  margin-top: 0;
+  margin-bottom: 0;
+  min-height: 0;
+  position: static;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+[data-theme] .plans-reference > .page-actions > .primary {
+  position: static;
+}
+[data-theme] .account-distribution > i:nth-child(2) {
+  background: var(--gold);
+}
+[data-theme] .movement-button:hover {
+  background: var(--soft);
+}
+[data-theme] .history-day h2 {
+  background: transparent;
+}
+:root[data-theme]
+  :is(
+    button,
+    input,
+    select,
+    textarea,
+    h1,
+    h2,
+    h3,
+    strong,
+    b,
+    small,
+    p,
+    label,
+    span,
+    a,
+    dd,
+    dt
+  ) {
+  font-family: inherit;
+}
+[data-theme] .payment-entry {
+  background: transparent;
+  border-color: var(--line);
+}
+[data-theme] .account-total > small,
+[data-theme] .upcoming-caption,
+[data-theme] .scope-note,
+[data-theme] .admin-user small {
+  color: var(--text-soft);
+}
+[data-theme] .history-summary strong.positive {
+  color: var(--ok);
+}
+[data-theme] .callback-address {
+  background: var(--soft);
+  color: var(--ink);
+  border-color: var(--line);
+}
+[data-theme] .payment-options {
+  color: var(--text-soft);
+}
+
+[data-theme] .skip-link {
+  background: var(--dialog);
+  color: var(--ink);
+}

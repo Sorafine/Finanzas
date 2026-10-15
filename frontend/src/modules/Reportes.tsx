@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
-import BrandMark from "../shared/BrandMark";
+import CategoryDonut from "../shared/CategoryDonut";
 import { Insights, req, money, monthName } from "../shared/api";
-export default function Reportes() {
+export default function Reportes({
+  selectedMonth,
+  onSelectMonth,
+}: {
+  selectedMonth: string;
+  onSelectMonth: (month: string) => void;
+}) {
   const [months, setMonths] = useState(6),
     [data, setData] = useState<Insights | null>(null),
     [error, setError] = useState("");
@@ -9,7 +15,7 @@ export default function Reportes() {
     let active = true;
     setData(null);
     setError("");
-    req<Insights>(`/insights?months=${months}`)
+    req<Insights>(`/insights?months=${months}&month=${selectedMonth}`)
       .then((x) => {
         if (active) setData(x);
       })
@@ -19,19 +25,27 @@ export default function Reportes() {
     return () => {
       active = false;
     };
-  }, [months]);
+  }, [months, selectedMonth]);
   const max = Math.max(
-      1,
-      ...(data?.monthly.flatMap((m) => [m.income_cents, m.expense_cents]) ||
-        []),
-    ),
-    catMax = Math.max(
-      1,
-      ...(data?.categories.map((c) => c.amount_cents) || []),
-    );
+    1,
+    ...(data?.monthly.flatMap((m) => [m.income_cents, m.expense_cents]) || []),
+  );
   return (
     <div className="stack reports-reference">
       <div className="page-actions align-end">
+        <label className="report-month-selector">
+          Mes del detalle
+          <input
+            aria-label="Mes del detalle"
+            type="month"
+            min="2000-01"
+            max="2100-12"
+            value={selectedMonth}
+            onChange={(e) => {
+              if (e.target.value) onSelectMonth(e.target.value);
+            }}
+          />
+        </label>
         <div className="filter-chips" aria-label="Periodo del reporte">
           {[3, 6, 12].map((n) => (
             <button
@@ -57,7 +71,22 @@ export default function Reportes() {
             <h2>Ingresos y gastos</h2>
             <div className="reference-report-chart">
               {data.monthly.map((m) => (
-                <div className="reference-report-month" key={m.month}>
+                <button
+                  type="button"
+                  className={
+                    "reference-report-month " +
+                    (selectedMonth === m.month ? "selected" : "")
+                  }
+                  key={m.month}
+                  onClick={() => onSelectMonth(m.month)}
+                  aria-pressed={selectedMonth === m.month}
+                  aria-label={
+                    "Ver detalle de " +
+                    monthName(m.month + "-01") +
+                    " " +
+                    m.month.slice(0, 4)
+                  }
+                >
                   <div className="report-bar-pair">
                     <i
                       className="income"
@@ -80,44 +109,34 @@ export default function Reportes() {
                     Ingresos {money(m.income_cents)}, gastos{" "}
                     {money(m.expense_cents)}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
             <p className="hint">Verde: ingresos · Azul: gastos</p>
           </section>
           <div className="report-bottom-grid">
             <section className="panel">
-              <h2>Gasto por categoría ({monthName()})</h2>
-              {data.categories.length ? (
-                data.categories.map((c) => (
-                  <div className="reference-category" key={c.category}>
-                    <span>{c.category}</span>
-                    <div className="progress">
-                      <i
-                        style={{ width: (c.amount_cents / catMax) * 100 + "%" }}
-                      />
-                    </div>
-                    <b>{money(c.amount_cents)}</b>
-                  </div>
-                ))
-              ) : (
-                <p className="muted">Aún no registras gastos este mes.</p>
-              )}
+              <h2>
+                Gasto por categoría ({monthName(selectedMonth + "-01")}{" "}
+                {selectedMonth.slice(0, 4)})
+              </h2>
+              <CategoryDonut categories={data.categories} />
             </section>
             <section className="panel margin-card">
-              <BrandMark decorative className="report-mascot" transparent />
               <small>
-                {data.margin_percent !== null && data.margin_percent < 0
+                {data.selected.expense_cents > data.selected.income_cents
                   ? "Gastaste más de lo que ingresó"
-                  : "Te quedó este mes"}
+                  : "Te quedó en este mes"}
               </small>
               <strong>
-                {data.margin_percent === null ? "—" : `${data.margin_percent}%`}
+                {money(
+                  data.selected.income_cents - data.selected.expense_cents,
+                )}
               </strong>
               <p>
                 {data.margin_percent === null
                   ? "Registra ingresos para calcular el margen."
-                  : "de tus ingresos, después de gastos y comisiones."}
+                  : `${data.margin_percent}% de tus ingresos, después de gastos y comisiones.`}
                 {data.previous_margin_percent !== null
                   ? ` Mes anterior: ${data.previous_margin_percent}%.`
                   : ""}

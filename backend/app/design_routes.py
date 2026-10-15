@@ -54,10 +54,17 @@ def month_offset(day:date,delta:int)->date:
 
 
 @router.get('/insights')
-def insights(months:int=Query(default=6,ge=3,le=12)):
+def insights(months:int=Query(default=6,ge=3,le=12),month:str|None=None):
     if months not in (3,6,12):raise HTTPException(400,"Selecciona 3, 6 o 12 meses")
     today=datetime.now(ZoneInfo('America/Lima')).date();current=today.replace(day=1)
-    first=month_offset(current,1-months);end=month_offset(current,1)
+    selected=current
+    if month:
+        import re
+        if not re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])',month):raise HTTPException(400,'Mes inválido')
+        try:selected=date.fromisoformat(month+'-01')
+        except ValueError:raise HTTPException(400,'Mes inválido')
+        if not 2000<=selected.year<=2100:raise HTTPException(400,'Elige un año entre 2000 y 2100')
+    first=month_offset(current,1-months);end=month_offset(selected,1)
     def bound(day):return datetime(day.year,day.month,1,tzinfo=ZoneInfo('America/Lima')).astimezone(timezone.utc).isoformat()
     with connection() as db:
         monthly=[]
@@ -69,17 +76,21 @@ def insights(months:int=Query(default=6,ge=3,le=12)):
             monthly.append({'month':start.strftime('%Y-%m'),**row})
         categories=[dict(r) for r in db.execute('''SELECT COALESCE(NULLIF(trim(category),''),'Otros') AS category,
             SUM(amount_cents) AS amount_cents FROM movements WHERE kind='expense' AND created_at>=? AND created_at<?
-            GROUP BY COALESCE(NULLIF(trim(category),''),'Otros') ORDER BY amount_cents DESC''',(bound(current),bound(end)))]
-        fees=db.execute("SELECT COALESCE(SUM(fee_cents),0) FROM movements WHERE kind='withdrawal' AND created_at>=? AND created_at<?",(bound(current),bound(end))).fetchone()[0]
+            GROUP BY COALESCE(NULLIF(trim(category),''),'Otros') ORDER BY amount_cents DESC''',(bound(selected),bound(end)))]
+        fees=db.execute("SELECT COALESCE(SUM(fee_cents),0) FROM movements WHERE kind='withdrawal' AND created_at>=? AND created_at<?",(bound(selected),bound(end))).fetchone()[0]
         if fees:
             existing=next((c for c in categories if c['category']=='Comisiones'),None)
             if existing: existing['amount_cents']+=fees
             else: categories.append({'category':'Comisiones','amount_cents':fees})
             categories.sort(key=lambda c:c['amount_cents'],reverse=True)
-        previous=month_offset(current,-1)
+        previous=month_offset(selected,-1)
         prev=dict(db.execute('''SELECT COALESCE(SUM(CASE WHEN kind='income' THEN amount_cents ELSE 0 END),0) AS income_cents,
             COALESCE(SUM(CASE WHEN kind='expense' THEN amount_cents WHEN kind='withdrawal' THEN fee_cents ELSE 0 END),0) AS expense_cents
-            FROM movements WHERE created_at>=? AND created_at<?''',(bound(previous),bound(current))).fetchone())
+            FROM movements WHERE created_at>=? AND created_at<?''',(bound(previous),bound(selected))).fetchone())
+        selected_totals=dict(db.execute('''SELECT COALESCE(SUM(CASE WHEN kind='income' THEN amount_cents ELSE 0 END),0) AS income_cents,
+            COALESCE(SUM(CASE WHEN kind='expense' THEN amount_cents WHEN kind='withdrawal' THEN fee_cents ELSE 0 END),0) AS expense_cents
+            FROM movements WHERE created_at>=? AND created_at<?''',(bound(selected),bound(end))).fetchone())
         def margin(row):return round(100*(row['income_cents']-row['expense_cents'])/row['income_cents'],1) if row['income_cents'] else None
         return {'monthly':monthly,'categories':categories,'current':monthly[-1],
-                'margin_percent':margin(monthly[-1]),'previous_margin_percent':margin(prev)}
+                'selected_month':selected.strftime('%Y-%m'),'selected':selected_totals,
+                'margin_percent':margin(selected_totals),'previous_margin_percent':margin(prev)}

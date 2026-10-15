@@ -1,6 +1,6 @@
 # Balance
 
-Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Navegación: Inicio, Mi dinero, Pagos, Historial, Reportes y Metas y más. Con diseño móvil y acceso desde Safari.
+Aplicación de finanzas personales con React/TypeScript, FastAPI y SQLite. Navegación: Inicio, Mi dinero, Pagos, Historial, Reportes, Metas y Perfil. Con diseño móvil y acceso desde Safari.
 
 ## Ejecutar en tu computadora y entrar desde iPhone
 
@@ -22,6 +22,8 @@ La computadora debe permanecer encendida. La web y la API compiladas se sirven j
 Consulta [el inventario completo y la revisión para compartir](docs/ESTADO_PARA_COMPARTIR.md). Describe qué está implementado, los límites y la prueba privada recomendada antes de invitar usuarios.
 
 Consulta también [las mejoras para uso local](docs/MEJORAS_USO_LOCAL.md), con instrucciones para corregir movimientos, gestionar crédito, evitar duplicados y recuperar tu cuenta sin correo.
+
+Consulta [el diseño basado en el HTML](docs/DISENO_HTML.md): temas Día/Noche/Sistema, simulador, meses seleccionables, distribución por categorías y Perfil separado de Metas.
 
 ## Funciones
 
@@ -50,7 +52,7 @@ Los recordatorios no realizan pagos; los aportes a metas no trasladan fondos. Re
 2. **Mi dinero:** consulta la distribución del saldo, añade o edita cuentas, pasa efectivo al banco o transfiere dinero, y revisa tarjetas e informes.
 3. **Pagos:** programa un vencimiento sin descontar dinero. Cuando ya lo hayas pagado, pulsa **Ya pagué**, revisa importe y cuenta y confirma. Se guarda un gasto; un pago recurrente prepara el siguiente vencimiento.
 4. **Historial:** usa Este mes, Hoy, Semana o Todo, combina un tipo de movimiento y busca conceptos. Exportar descarga toda la selección filtrada, no solo la página visible. **Pagos → Pagados** conserva los comprobantes confirmados.
-5. **Reportes:** compara 3, 6 o 12 meses, categorías del mes actual y el margen entre ingresos y gastos. **Metas y más** permite elegir iconos y acceder a Gmail, Google, administración (solo propietario) y cerrar sesión.
+5. **Reportes:** compara 3, 6 o 12 meses, categorías del mes que selecciones y el margen entre ingresos y gastos. **Metas** reúne los objetivos de ahorro. **Perfil** permite gestionar Gmail, Google, apariencia, seguridad, administración (solo propietario) y cerrar sesión.
 6. **+ Nuevo:** abre el panel de gasto, ingreso o transferencia. Puedes elegir fecha, usar Hoy/Ayer y revisar el saldo previsto antes de guardar. Programar un futuro pago se hace en Pagos.
 
 **Tarjetas:** en Mi dinero pulsa Agregar tarjeta, escribe un nombre como BCP Visa clásica y mira la vista previa. Puedes seleccionar el banco si la detección no coincide. Solo se guardan los últimos cuatro dígitos. Las ilustraciones son referenciales; no identifican el modelo físico exacto. Ver informe muestra la deuda y el límite que registres, con su porcentaje utilizado y próximas fechas. El informe muestra compras y pagos asignados a esa tarjeta. Los movimientos antiguos sin asignación permanecen en el historial de la cuenta. Seleccionar crédito al registrar aumenta la deuda sin descontar efectivo; Pagar tarjeta la reduce sin volver a contar el gasto. Editar la deuda permite conciliar el saldo inicial y ajustes externos.

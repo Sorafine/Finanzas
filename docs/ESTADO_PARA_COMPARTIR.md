@@ -10,16 +10,16 @@ Para el uso local indicado por el propietario, la app puede probarse en su compu
 
 | Apartado | Funciones disponibles |
 | --- | --- |
-| Marca y móvil | Balance, escarabajo ahorrador azul y dorado, menú lateral y barra móvil, iconos para navegador y pantalla de inicio. Se abre en Safari y puede añadirse a la pantalla de inicio. |
+| Marca y móvil | Diseño del HTML, temas Día/Noche/Sistema, fuente local y Perfil separado de Metas. Balance, escarabajo ahorrador azul y dorado, menú lateral y barra móvil, iconos para navegador y pantalla de inicio. Se abre en Safari y puede añadirse a la pantalla de inicio. |
 | Usuarios | Registro web cuando el propietario lo habilita; usuario y contraseña; perfiles financieros y conexiones Google separados. También se crean usuarios por terminal. |
-| Inicio | Saldos, próximo pago, gastos reales y aviso Gmail. Disponible después de pagos ordinarios del mes, deuda de crédito y metas reservadas; desglose del cálculo. |
+| Inicio | Simulador sin registro de movimientos, meses seleccionables, saldos, próximo pago, gastos reales y aviso Gmail. Disponible después de pagos ordinarios del mes, deuda de crédito y metas reservadas; desglose del cálculo. |
 | Cuentas | Banco, efectivo y billetera digital; saldo inicial al crear, cambio de nombre, distribución del dinero e historial filtrado por cuenta. |
 | Gasto e ingreso | Panel Nuevo movimiento; importe, concepto, cuenta y fecha; Hoy/Ayer; ocho categorías por iconos y sugerencia de categoría por palabras del concepto. Vista previa del saldo. |
 | Gasto recurrente | Un gasto mensual puede crear el siguiente vencimiento, con recordatorio opcional de Calendar. El gasto actual se registra al guardar. |
 | Transferencias | Entre cuentas, billeteras y efectivo, en ambos sentidos; comisión opcional, vista previa de ambos saldos y control de reintentos de la misma operación. El principal no cuenta como gasto. |
 | Pagos | Programar una vez, semanal, mensual o anual; pendientes/pagados/pausados; vencidos; confirmar importe real, cuenta y fecha; saldo previsto. Confirmar registra o vincula el movimiento y avanza el vencimiento. Un pago de tarjeta reduce deuda sin duplicar el gasto. Cada vencimiento se registra una vez. |
 | Historial | Agrupación, búsqueda y filtros, CSV completo, detalle, edición y anulación con motivo, control de versión y registro privado de correcciones. |
-| Reportes | Últimos 3, 6 o 12 meses, ingresos frente a gastos y comisiones, categorías del mes, margen del mes y comparación con el anterior. |
+| Reportes | Últimos 3, 6 o 12 meses, ingresos frente a gastos y comisiones; mes de detalle seleccionable, distribución circular por categorías y margen comparado con el mes anterior. |
 | Tarjetas | Débito y crédito; últimos cuatro dígitos, marca, banco detectado por nombre o elegido manualmente. BCP, BBVA, Interbank, Scotiabank, Falabella, Ripley y opción genérica. |
 | Informe de tarjeta | Límite, deuda, disponible, porcentaje usado y próximas fechas de cierre/pago del crédito; saldo de la cuenta en débito. Consumos y pagos atribuidos a cada tarjeta por mes y categoría; deuda actualizada con esos registros. |
 | Metas | Objetivo de ahorro, fecha opcional, ocho iconos, progreso y aportes informativos. Reserva opcional de lo ahorrado para reducir Libre para gastar; no transfiere dinero. |
@@ -60,7 +60,7 @@ Para abrir el registro al público en general, quedan pendientes la ampliación/
 
 ## Comprobaciones realizadas en esta revisión
 
-- Compilación TypeScript y Vite correcta; 101 pruebas automatizadas del backend correctas, con bases temporales y Google simulado.
+- Compilación TypeScript y Vite correcta; 103 pruebas automatizadas del backend correctas, con bases temporales y Google simulado.
 - Recorrido en Chromium con datos de ejemplo: saldo disponible, gasto con vista previa, transferencia de efectivo a banco, ingreso con fecha de ayer, confirmación de pago, comprobante, historial, exportación CSV filtrada, periodos de reportes y creación de metas.
 - Recorrido adicional en navegador: consumo con crédito, pago de tarjeta sin doble gasto, informe individual, editar/anular/auditar, reserva de meta, deuda programada, vincular un gasto existente y recuperar acceso con código.
 - Las nueve vistas y los paneles de movimiento/pago se comprobaron sin desbordamiento horizontal en anchos de 320, 390, 768, 1199 y 1637 píxeles. Se revisaron capturas del diseño Balance en escritorio y móvil.
@@ -100,3 +100,5 @@ py -3 scripts/manage.py test
 ```
 
 Los comandos, la carpeta del proyecto, la cookie de sesión y `%LOCALAPPDATA%\FinanzasApp` conservan sus nombres anteriores para no perder la configuración ni los datos al cambiar la marca.
+
+Consulta [el diseño del HTML y su navegación](DISENO_HTML.md) para localizar las opciones en Perfil y Metas.

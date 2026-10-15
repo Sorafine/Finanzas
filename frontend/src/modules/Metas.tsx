@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Target, Plus } from "lucide-react";
 import { goalIcons } from "../shared/FinanceUI";
-import GmailNotice from "./GmailNotice";
 import { req, money, cents, dateLabel } from "../shared/api";
-import SecuritySettings from "../shared/SecuritySettings";
 import Modal from "../shared/Modal";
 type Goal = {
   id: number;
@@ -15,20 +13,8 @@ type Goal = {
   reserve: number;
 };
 export default function Metas({
-  username,
-  isAdmin,
-  onReview,
-  onConnect,
-  onAdmin,
-  onLogout,
   onChanged,
 }: {
-  username: string;
-  isAdmin: boolean;
-  onReview: () => void;
-  onConnect: () => void;
-  onAdmin: () => void;
-  onLogout: () => void;
   onChanged?: () => Promise<void>;
 }) {
   const [goals, setGoals] = useState<Goal[]>([]),
@@ -42,7 +28,6 @@ export default function Metas({
     [amount, setAmount] = useState(""),
     [due, setDue] = useState(""),
     [formError, setFormError] = useState("");
-  const [security, setSecurity] = useState(false);
   const [icon, setIcon] = useState("travel");
   const refresh = async () => setGoals(await req<Goal[]>("/goals"));
   useEffect(() => {
@@ -253,56 +238,6 @@ export default function Metas({
             </button>
           ))}
         </div>
-      </section>
-      {security && <SecuritySettings onClose={() => setSecurity(false)} />}
-      <section className="panel more-settings">
-        <div className="settings-line">
-          <div>
-            <strong>Seguridad de tu cuenta</strong>
-            <small>Contraseña y código de recuperación sin correo</small>
-          </div>
-          <button className="secondary" onClick={() => setSecurity(true)}>
-            Gestionar
-          </button>
-        </div>
-        <GmailNotice onOpen={onReview} />
-        <div className="settings-line">
-          <div>
-            <strong>Cuenta de Google</strong>
-            <small>Gestiona tu conexión de Gmail y Calendar</small>
-          </div>
-          <button className="secondary" onClick={onConnect}>
-            Gestionar
-          </button>
-        </div>
-        {isAdmin && (
-          <div className="settings-line">
-            <div>
-              <strong>Usuarios y permisos</strong>
-              <small>Solo visible para administradores</small>
-            </div>
-            <button className="secondary" onClick={onAdmin}>
-              Abrir
-            </button>
-          </div>
-        )}
-        <div className="settings-line">
-          <div>
-            <strong>Cerrar sesión</strong>
-            <small>{username}</small>
-          </div>
-          <button className="secondary" onClick={onLogout}>
-            Salir
-          </button>
-        </div>
-        <button
-          className="link mobile-reports-link"
-          onClick={() => {
-            location.hash = "reportes";
-          }}
-        >
-          Ver reportes
-        </button>
       </section>
       {(create || selected) && (
         <Modal

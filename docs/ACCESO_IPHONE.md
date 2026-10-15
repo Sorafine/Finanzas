@@ -119,16 +119,16 @@ Instalación y compilación en Linux, pruebas de aislamiento de datos, cookies/C
 
 ## Administración y revisión de Gmail
 
-La cuenta administradora accede a **Usuarios y permisos** desde **Metas y más**, tanto en escritorio como en móvil. Puede habilitar o pausar el registro web y el servicio Google, ver el estado de los usuarios, pausar/reactivar accesos y retirar una conexión Google. El panel no muestra contraseñas, tokens ni los gastos de otras personas. Pausar un usuario invalida sus sesiones y conserva sus datos; la cuenta administradora no se puede pausar desde el panel. Un segundo `admin-grant` para otra persona se rechaza.
+La cuenta administradora accede a **Usuarios y permisos** desde **Perfil**, tanto en escritorio como en móvil. Puede habilitar o pausar el registro web y el servicio Google, ver el estado de los usuarios, pausar/reactivar accesos y retirar una conexión Google. El panel no muestra contraseñas, tokens ni los gastos de otras personas. Pausar un usuario invalida sus sesiones y conserva sus datos; la cuenta administradora no se puede pausar desde el panel. Un segundo `admin-grant` para otra persona se rechaza.
 
-**Conexiones** permite a cada persona conectar o desconectar su propia cuenta Google. **Revisar gastos** tiene los comprobantes, la confirmación de importe/cuenta y la opción de descartar. El aviso de Inicio lleva a esa pantalla. La revisión requiere una cuenta Google conectada y el servicio habilitado; no registra consumos automáticamente.
+**Perfil → Cuenta de Google** permite a cada persona conectar o desconectar su propia cuenta Google. **Revisar gastos** tiene los comprobantes, la confirmación de importe/cuenta y la opción de descartar. El aviso de Inicio lleva a esa pantalla. La revisión requiere una cuenta Google conectada y el servicio habilitado; no registra consumos automáticamente.
 
 Crear una cuenta en Balance no añade su Gmail a los usuarios de prueba de Google. Mientras OAuth esté en modo de prueba, agrega en Google Cloud el correo que cada persona usará al conectar. Para ampliar el acceso fuera de esos usuarios, Google puede requerir verificación y otros cambios en su consentimiento.
 
 
 ## Navegación y pagos realizados
 
-En escritorio el menú contiene Inicio, Mi dinero, Pagos, Historial, Reportes y Metas y más. En móvil la barra inferior agrupa Reportes y las opciones de Google/administración dentro de Más. El botón + Nuevo abre el formulario lateral adaptado a la pantalla.
+En escritorio el menú contiene Inicio, Mi dinero, Pagos, Historial, Reportes, Metas y Perfil. En móvil la barra inferior tiene cinco accesos; Reportes y Metas también se abren desde Perfil. El botón + Nuevo abre el formulario lateral adaptado a la pantalla.
 
 Para registrar un pago de una suscripción o recibo: **Pagos → Programar pago** guarda el vencimiento; cuando hayas pagado, **Ya pagué → Confirmar** descuenta el importe de la cuenta seleccionada y lo guarda en **Pagos → Pagados** y en **Historial**. Un pago mensual avanza al mes siguiente conservando su día habitual (los días 29–31 se ajustan al último día cuando sea necesario). Un pago único queda completado.
 

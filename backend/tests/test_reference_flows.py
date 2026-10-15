@@ -56,6 +56,18 @@ class ReferenceFlows(unittest.TestCase):
         self.assertEqual(main.get_scheduled()[0]['next_due_date'],'2026-02-28')
         history.pay_scheduled(p['id'],history.PayIn(due_date=p['due_date'],account_id=self.bank['id'],amount_cents=1000))
         self.assertEqual(main.get_scheduled()[0]['next_due_date'],'2026-03-31')
+    def test_selected_month_categories_and_margin_use_the_requested_period(self):
+        main.add_movement(main.MovementIn(kind='income',amount_cents=1000,concept='Ingreso anterior',account_id=self.bank['id'],occurred_on=date(2025,12,20)))
+        main.add_movement(main.MovementIn(kind='expense',amount_cents=100,concept='Diciembre',category='Servicios',account_id=self.bank['id'],occurred_on=date(2025,12,31)))
+        main.add_movement(main.MovementIn(kind='expense',amount_cents=500,concept='Enero',category='Comida',account_id=self.bank['id'],occurred_on=date(2026,1,1)))
+        december=design.insights(months=6,month='2025-12');january=design.insights(months=6,month='2026-01')
+        self.assertEqual(december['selected_month'],'2025-12');self.assertEqual(december['selected']['expense_cents'],100)
+        self.assertEqual(december['categories'],[{'category':'Servicios','amount_cents':100}]);self.assertEqual(december['margin_percent'],90)
+        self.assertEqual(january['categories'],[{'category':'Comida','amount_cents':500}]);self.assertIsNone(january['margin_percent']);self.assertEqual(january['previous_margin_percent'],90)
+        self.assertEqual(len(december['monthly']),6)
+    def test_invalid_selected_month_is_rejected(self):
+        for month in ('2026-13','2026-1','0000-01','1999-01','2101-01','2026-01<script>'):
+            with self.subTest(month=month),self.assertRaises(HTTPException):design.insights(months=6,month=month)
     def test_rolling_reports_cross_year_and_exclude_transferred_principal(self):
         self.assertEqual(design.month_offset(date(2026,1,1),-1),date(2025,12,1))
         design.transfer(self.item(fee_cents=20));r=design.insights(months=6)

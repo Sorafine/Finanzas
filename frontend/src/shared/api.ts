@@ -127,6 +127,8 @@ export const frequencyLabel = {
 };
 
 export type Insights = {
+  selected_month: string;
+  selected: { income_cents: number; expense_cents: number };
   monthly: { month: string; income_cents: number; expense_cents: number }[];
   categories: { category: string; amount_cents: number }[];
   current: { month: string; income_cents: number; expense_cents: number };

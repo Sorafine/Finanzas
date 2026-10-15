@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { RefreshCw, ArrowLeft } from "lucide-react";
+import {
+  RefreshCw,
+  ArrowLeft,
+  House,
+  Wallet,
+  CalendarDays,
+  ReceiptText,
+  ChartNoAxesCombined,
+  Target,
+  CircleUserRound,
+} from "lucide-react";
 import AuthGate from "./shared/AuthGate";
 import Modal from "./shared/Modal";
 import BrandMark from "./shared/BrandMark";
@@ -17,20 +27,24 @@ import Dashboard from "./modules/Dashboard";
 import Planes from "./modules/Planes";
 import Historial from "./modules/Historial";
 import Registrar from "./modules/Registrar";
+import "./shared/theme";
+import Perfil from "./modules/Perfil";
 import Metas from "./modules/Metas";
 import Conexiones from "./modules/Conexiones";
 import RevisionGastos from "./modules/RevisionGastos";
 import Administracion from "./modules/Administracion";
 import Reportes from "./modules/Reportes";
 import "./styles.css";
+import "./reference-theme.css";
 const pages = {
   inicio: "Inicio",
   dinero: "Mi dinero",
   pagos: "Pagos",
   historial: "Historial",
   reportes: "Reportes",
-  mas: "Metas y más",
-  metas: "Metas y más",
+  mas: "Perfil y conexiones",
+  perfil: "Perfil y conexiones",
+  metas: "Metas de ahorro",
   registrar: "Nuevo movimiento",
   revisar: "Revisar gastos de Gmail",
   conexiones: "Cuenta de Google",
@@ -39,12 +53,13 @@ const pages = {
 type View = keyof typeof pages;
 type RecordKind = "expense" | "income" | "transfer";
 const navigation = [
-  { id: "inicio", name: "Inicio" },
-  { id: "dinero", name: "Mi dinero" },
-  { id: "pagos", name: "Pagos" },
-  { id: "historial", name: "Historial" },
-  { id: "reportes", name: "Reportes" },
-  { id: "mas", name: "Metas y más" },
+  { id: "inicio", name: "Inicio", icon: House },
+  { id: "dinero", name: "Mi dinero", icon: Wallet },
+  { id: "pagos", name: "Pagos", icon: CalendarDays },
+  { id: "historial", name: "Historial", icon: ReceiptText },
+  { id: "reportes", name: "Reportes", icon: ChartNoAxesCombined },
+  { id: "metas", name: "Metas", icon: Target },
+  { id: "perfil", name: "Perfil", icon: CircleUserRound },
 ] as const;
 function App({
   username,
@@ -78,6 +93,7 @@ function App({
     [recordDestination, setRecordDestination] = useState(""),
     [historyAccount, setHistoryAccount] = useState(""),
     [version, setVersion] = useState(0),
+    [selectedMonth, setSelectedMonth] = useState(localToday().slice(0, 7)),
     [updated, setUpdated] = useState<Date | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   async function load() {
@@ -141,8 +157,8 @@ function App({
     setVersion((v) => v + 1);
     if (view === "registrar") go("inicio");
   }
-  const active = ["revisar", "conexiones", "admin", "metas"].includes(view)
-    ? "mas"
+  const active = ["revisar", "conexiones", "admin", "mas"].includes(view)
+    ? "perfil"
     : view;
   const date = new Intl.DateTimeFormat("es-PE", {
     weekday: "long",
@@ -193,7 +209,7 @@ function App({
                 go(m.id);
               }}
             >
-              <span className="nav-dot" />
+              <m.icon size={18} aria-hidden="true" />
               {m.name}
             </button>
           ))}
@@ -211,8 +227,8 @@ function App({
               </div>
             )}
             {["revisar", "conexiones", "admin"].includes(view) && (
-              <button className="back-link" onClick={() => go("mas")}>
-                <ArrowLeft size={14} /> Metas y más
+              <button className="back-link" onClick={() => go("perfil")}>
+                <ArrowLeft size={14} /> Perfil
               </button>
             )}
             <h1 ref={heading} tabIndex={-1}>
@@ -275,6 +291,8 @@ function App({
             cards={cards}
             plans={plans}
             availability={availability}
+            selectedMonth={selectedMonth}
+            onSelectMonth={setSelectedMonth}
             onRegister={register}
             onMoney={() => go("dinero")}
             onPayments={() => go("pagos")}
@@ -312,7 +330,11 @@ function App({
             reload={load}
           />
         ) : view === "reportes" ? (
-          <Reportes key={version} />
+          <Reportes
+            key={version}
+            selectedMonth={selectedMonth}
+            onSelectMonth={setSelectedMonth}
+          />
         ) : view === "revisar" ? (
           <RevisionGastos
             key={version}
@@ -332,22 +354,28 @@ function App({
           <Administracion key={version} />
         ) : view === "registrar" ? (
           movement
+        ) : view === "metas" ? (
+          <Metas onChanged={load} />
         ) : (
-          <Metas
+          <Perfil
             key={version}
             username={username}
-            onChanged={load}
             isAdmin={isAdmin}
             onReview={() => go("revisar")}
             onConnect={() => go("conexiones")}
             onAdmin={() => go("admin")}
             onLogout={onLogout}
+            onPayments={() => go("pagos")}
+            onReports={() => go("reportes")}
+            onGoals={() => go("metas")}
           />
         )}
       </main>
       <nav className="mobile-nav" aria-label="Navegación móvil">
         {navigation
-          .filter((m) => m.id !== "reportes")
+          .filter((m) =>
+            ["inicio", "dinero", "pagos", "historial", "perfil"].includes(m.id),
+          )
           .map((m) => (
             <button
               key={m.id}
@@ -358,8 +386,8 @@ function App({
                 go(m.id);
               }}
             >
-              <span className="nav-dot" />
-              <small>{m.id === "mas" ? "Más" : m.name}</small>
+              <m.icon size={18} aria-hidden="true" />
+              <small>{m.name}</small>
             </button>
           ))}
       </nav>

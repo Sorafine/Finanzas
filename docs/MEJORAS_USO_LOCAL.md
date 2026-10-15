@@ -65,7 +65,7 @@ La reserva está desactivada inicialmente para todas las metas existentes; así 
 
 ## Recuperar acceso sin correo
 
-En **Metas y más → Seguridad de tu cuenta**:
+En **Perfil → Seguridad de tu cuenta**:
 
 1. Introduce tu contraseña actual y genera un código de recuperación.
 2. Guarda el código fuera de esta computadora, por ejemplo en tu gestor de contraseñas. Solo se muestra al generarlo; la app guarda su hash.

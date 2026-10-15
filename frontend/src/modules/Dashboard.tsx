@@ -13,12 +13,14 @@ import {
 } from "../shared/api";
 import { DateBadge } from "../shared/FinanceUI";
 import GmailNotice from "./GmailNotice";
-import BrandMark from "../shared/BrandMark";
+
 export default function Dashboard({
   accounts,
   cards,
   plans,
   availability,
+  selectedMonth,
+  onSelectMonth,
   onRegister,
   onMoney,
   onPayments,
@@ -29,6 +31,8 @@ export default function Dashboard({
   cards: Card[];
   plans: Scheduled[];
   availability: Availability | null;
+  selectedMonth: string;
+  onSelectMonth: (month: string) => void;
   onRegister: (kind: "expense" | "income" | "transfer") => void;
   onMoney: () => void;
   onPayments: () => void;
@@ -36,7 +40,8 @@ export default function Dashboard({
   onReports: () => void;
 }) {
   const [insights, setInsights] = useState<Insights | null>(null),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [simulation, setSimulation] = useState(0);
   useEffect(() => {
     let active = true;
     req<Insights>("/insights?months=6")
@@ -63,6 +68,11 @@ export default function Dashboard({
     total = accounts.reduce((n, a) => n + a.balance_cents, 0),
     free = availability?.available_cents ?? total - committed,
     next = pending[0];
+  const selectedExpenses =
+    insights?.monthly.find((m) => m.month === selectedMonth)?.expense_cents ??
+    0;
+  const simulationMax = Math.max(50000, Math.max(0, free));
+  const simulated = Math.min(simulation, simulationMax);
   const max = Math.max(
     1,
     ...(insights?.monthly.map((m) => m.expense_cents) || []),
@@ -71,8 +81,10 @@ export default function Dashboard({
     <div className="stack home-reference">
       <div className="home-top-grid">
         <section className="spend-card">
-          <BrandMark className="spend-mascot" decorative transparent />
           <div className="overline">LIBRE PARA GASTAR</div>
+          <p className="spend-subtitle">
+            Lo que puedes usar sin descuidar tus pagos ni tus metas
+          </p>
           <strong className="spend-value">{money(free)}</strong>
           <div
             className="balance-track"
@@ -97,13 +109,14 @@ export default function Dashboard({
               <b>{money(availability?.committed_cents ?? committed)}</b>
             </span>
           </div>
-          <p className="spend-hint">
-            Saldo menos pagos del mes, deuda de crédito y metas que decidiste
-            reservar. No duplica los pagos de tarjeta vinculados.
-          </p>
           {availability && (
             <details className="spend-hint">
               <summary>Ver cálculo</summary>
+              <p className="spend-hint">
+                Saldo menos pagos del mes, deuda de crédito y metas que
+                decidiste reservar. No duplica los pagos de tarjeta vinculados.
+              </p>
+
               <p>
                 Pagos: {money(availability.scheduled_cents)} · Crédito:{" "}
                 {money(availability.credit_debt_cents)} · Metas reservadas:{" "}
@@ -111,6 +124,24 @@ export default function Dashboard({
               </p>
             </details>
           )}
+          <div className="spending-simulator">
+            <label htmlFor="simulate-expense">
+              ¿Y si gasto <b>{money(simulated)}</b>? Te quedarían{" "}
+              <b className={free - simulated < 0 ? "overdue-text" : ""}>
+                {money(free - simulated)}
+              </b>
+            </label>
+            <input
+              id="simulate-expense"
+              type="range"
+              min="0"
+              max={simulationMax}
+              step="100"
+              value={simulated}
+              onChange={(e) => setSimulation(Number(e.target.value))}
+            />
+            <small>Solo una simulación; no registra un gasto.</small>
+          </div>
         </section>
         <section className="panel home-accounts">
           <h2>Mis cuentas</h2>
@@ -147,23 +178,29 @@ export default function Dashboard({
       <div className="home-bottom-grid">
         <section className="panel">
           <div className="section-head">
-            <h2>Próximo pago</h2>
+            <h2>Próximos pagos</h2>
             <button className="link" onClick={onPayments}>
               Ver pagos
             </button>
           </div>
           {next ? (
-            <button className="next-payment-button" onClick={onPayments}>
-              <DateBadge day={next.due_date} />
-              <span className="grow">
-                <strong>{next.name}</strong>
-                <small>
-                  {dueLabel(next.due_date)} ·{" "}
-                  {accounts.find((a) => a.id === next.account_id)?.name}
-                </small>
-              </span>
-              <b>{money(next.amount_cents)}</b>
-            </button>
+            pending.slice(0, 3).map((payment) => (
+              <button
+                key={payment.id}
+                className="next-payment-button"
+                onClick={onPayments}
+              >
+                <DateBadge day={payment.due_date} />
+                <span className="grow">
+                  <strong>{payment.name}</strong>
+                  <small>
+                    {dueLabel(payment.due_date)} ·{" "}
+                    {accounts.find((a) => a.id === payment.account_id)?.name}
+                  </small>
+                </span>
+                <b>{money(payment.amount_cents)}</b>
+              </button>
+            ))
           ) : (
             <div className="home-empty">
               <p>No tienes pagos pendientes.</p>
@@ -175,7 +212,7 @@ export default function Dashboard({
         </section>
         <section className="panel home-expense-chart">
           <div className="section-head">
-            <h2>Gasto de {monthName()}</h2>
+            <h2>Gasto de {monthName(selectedMonth + "-01")}</h2>
             <button className="link" onClick={onReports}>
               Ver reportes
             </button>
@@ -187,25 +224,34 @@ export default function Dashboard({
           ) : insights ? (
             <>
               <p className="muted">
-                {insights.current.expense_cents
-                  ? `${money(insights.current.expense_cents)} registrados este mes`
-                  : "Aún no registras gastos este mes"}
+                {selectedExpenses
+                  ? `${money(selectedExpenses)} registrados · toca una barra para cambiar de mes`
+                  : "Sin gastos en este mes · toca una barra para cambiar de mes"}
               </p>
               <div
                 className="mini-chart"
                 aria-label="Gastos de los últimos seis meses"
               >
-                {insights.monthly.map((m, i) => (
-                  <div key={m.month}>
+                {insights.monthly.map((m) => (
+                  <button
+                    type="button"
+                    key={m.month}
+                    aria-label={
+                      "Ver gastos de " +
+                      monthName(m.month + "-01") +
+                      " " +
+                      m.month.slice(0, 4)
+                    }
+                    aria-pressed={selectedMonth === m.month}
+                    onClick={() => onSelectMonth(m.month)}
+                  >
                     <i
                       title={`${monthName(m.month + "-01")}: ${money(m.expense_cents)}`}
                       style={{ height: (m.expense_cents / max) * 100 + "%" }}
-                      className={
-                        i === insights.monthly.length - 1 ? "current" : ""
-                      }
+                      className={selectedMonth === m.month ? "current" : ""}
                     />
                     <small>{monthName(m.month + "-01").slice(0, 3)}</small>
-                  </div>
+                  </button>
                 ))}
               </div>
             </>

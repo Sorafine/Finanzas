@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Account, Card, money, dateLabel, localToday } from "../shared/api";
 import { banks, detectBank } from "../shared/banks";
+import Modal from "../shared/Modal";
 import CardModal from "./mi-dinero/CardModal";
 import AccountModal from "./mi-dinero/AccountModal";
 import CardPayment from "./mi-dinero/CardPayment";
@@ -34,6 +35,7 @@ export default function MiDinero({
   onHistory,
   notify,
 }: Props) {
+  const [chooser, setChooser] = useState(false);
   const [accountForm, setAccountForm] = useState<Account | null | undefined>(),
     [cardForm, setCardForm] = useState<Card | null | undefined>(),
     [payCard, setPayCard] = useState<Card | null>(null),
@@ -66,8 +68,8 @@ export default function MiDinero({
   return (
     <div className="stack money-reference">
       <div className="page-actions align-end">
-        <button className="primary" onClick={() => setAccountForm(null)}>
-          + Agregar cuenta
+        <button className="primary" onClick={() => setChooser(true)}>
+          + Agregar cuenta o tarjeta
         </button>
       </div>
       <section className="panel account-total">
@@ -285,6 +287,30 @@ export default function MiDinero({
           </div>
         )}
       </section>
+      {chooser && (
+        <Modal title="¿Qué quieres agregar?" onClose={() => setChooser(false)}>
+          <div className="stack">
+            <button
+              className="secondary"
+              onClick={() => {
+                setChooser(false);
+                setAccountForm(null);
+              }}
+            >
+              Cuenta bancaria, efectivo o billetera
+            </button>
+            <button
+              className="primary"
+              onClick={() => {
+                setChooser(false);
+                setCardForm(null);
+              }}
+            >
+              Tarjeta de débito o crédito
+            </button>
+          </div>
+        </Modal>
+      )}
       {payCard && (
         <CardPayment
           card={payCard}

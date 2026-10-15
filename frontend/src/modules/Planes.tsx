@@ -410,8 +410,8 @@ export default function Planes({
             )}
           </section>
           <p className="hint">
-            ¿Ya registraste el gasto manualmente o desde Gmail? Evita
-            confirmarlo de nuevo aquí para no duplicarlo.{" "}
+            ¿Ya registraste el gasto manualmente o desde Gmail? Al pulsar Ya
+            pagué, vincula el movimiento existente para no descontarlo otra vez.{" "}
             <button className="link" onClick={onRegister}>
               Registrar otro gasto
             </button>
