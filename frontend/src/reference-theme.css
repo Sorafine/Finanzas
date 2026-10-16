@@ -1725,3 +1725,8 @@
     gap: 8px;
   }
 }
+
+[data-theme] .student-calendar-class-state {
+  display: block;
+  margin-top: 6px;
+}

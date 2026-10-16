@@ -73,6 +73,8 @@ def init_finance_db():
     with connection() as db: init_organizer(db)
     from .student_routes import init_student
     with connection() as db: init_student(db)
+    from .student_calendar import init_student_calendar
+    with connection() as db: init_student_calendar(db)
     path = current_database.get() or DB
     path.chmod(0o600)
 
@@ -503,6 +505,8 @@ from .organizer_routes import router as organizer_router
 app.include_router(organizer_router)
 from .student_routes import router as student_router
 app.include_router(student_router)
+from .student_calendar import router as student_calendar_router
+app.include_router(student_calendar_router)
 
 # One production origin: compiled frontend and authenticated /api routes.
 from fastapi.staticfiles import StaticFiles

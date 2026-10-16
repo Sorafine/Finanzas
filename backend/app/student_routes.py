@@ -143,7 +143,8 @@ def edit_course(course_id: int, item: CourseIn):
             raise HTTPException(400, 'La nueva escala dejaría notas fuera de rango. Corrígelas antes de cambiarla.')
         db.execute('UPDATE student_courses SET title=?,color=?,maximum=?,passing=?,rounding=? WHERE id=?',
                    (item.title, item.color, float(item.maximum), float(item.passing), item.rounding, course_id))
-        return {'updated': True}
+    from .student_calendar import notify_changes
+    return {'updated': True, 'calendar_sync': notify_changes()}
 
 
 @router.delete('/courses/{course_id}')
@@ -151,7 +152,8 @@ def delete_course(course_id: int):
     with connection() as db:
         course_exists(db, course_id)
         db.execute('DELETE FROM student_courses WHERE id=?', (course_id,))
-        return {'deleted': True}
+    from .student_calendar import notify_changes
+    return {'deleted': True, 'calendar_sync': notify_changes()}
 
 
 def save_assessment(course_id, item, assessment_id=None):
@@ -224,9 +226,12 @@ def save_class(item, class_id=None):
             raise HTTPException(409, 'Esta clase se cruza con otra de tu horario')
         values = (item.course_id, item.weekday, item.starts, item.ends, item.room.strip())
         if class_id is None:
-            return {'id': db.execute('INSERT INTO student_classes(course_id,weekday,starts,ends,room) VALUES(?,?,?,?,?)', values).lastrowid}
-        db.execute('UPDATE student_classes SET course_id=?,weekday=?,starts=?,ends=?,room=? WHERE id=?', (*values, class_id))
-        return {'updated': True}
+            result = {'id': db.execute('INSERT INTO student_classes(course_id,weekday,starts,ends,room) VALUES(?,?,?,?,?)', values).lastrowid}
+        else:
+            db.execute('UPDATE student_classes SET course_id=?,weekday=?,starts=?,ends=?,room=? WHERE id=?', (*values, class_id))
+            result = {'updated': True}
+    from .student_calendar import notify_changes
+    return {**result, 'calendar_sync': notify_changes()}
 
 
 @router.post('/classes', status_code=201)
@@ -244,7 +249,8 @@ def delete_class(class_id: int):
     with connection() as db:
         if not db.execute('DELETE FROM student_classes WHERE id=?', (class_id,)).rowcount:
             raise HTTPException(404, 'Clase no encontrada')
-        return {'deleted': True}
+    from .student_calendar import notify_changes
+    return {'deleted': True, 'calendar_sync': notify_changes()}
 
 
 class MoodIn(BaseModel):

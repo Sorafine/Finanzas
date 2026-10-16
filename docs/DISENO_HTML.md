@@ -58,6 +58,6 @@ Recarga con Ctrl+F5. Los usuarios y los datos permanecen en la carpeta privada a
 
 ## Comprobaciones
 
-Compilación TypeScript/Vite y 124 pruebas del backend correctas. Se recorrieron gastos, ingresos, transferencias, pagos, corrección/anulación, crédito, reservas y recuperación por código. La prueba del simulador comprobó que saldos e historial no cambian al moverlo. Se verificaron los meses seleccionados, categorías y margen con datos temporales, los temas Día/Noche/Sistema y su persistencia, y la separación entre propietario y usuario normal.
+Compilación TypeScript/Vite y 141 pruebas del backend correctas. Se recorrieron gastos, ingresos, transferencias, pagos, corrección/anulación, crédito, reservas y recuperación por código. La prueba del simulador comprobó que saldos e historial no cambian al moverlo. Se verificaron los meses seleccionados, categorías y margen con datos temporales, los temas Día/Noche/Sistema y su persistencia, y la separación entre propietario y usuario normal.
 
 Se comprobaron diez vistas y los formularios en anchos de 320, 390, 768, 1199 y 1637 píxeles. Se revisaron capturas de escritorio y móvil y el contraste de los textos de las pantallas principales en ambos temas. La validación fue en Linux/Chromium; Safari en un iPhone físico, la instalación Windows y el consentimiento real de Google deben comprobarse en sus dispositivos.

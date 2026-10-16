@@ -29,9 +29,11 @@ Consulta [el espacio personal y las siguientes etapas](docs/ECOSISTEMA.md): Mi a
 
 Consulta [la agenda del estudiante](docs/AGENDA_ESTUDIANTE.md): horario, cursos y notas ponderadas, riesgo de desaprobar con regla 10.5 → 11, enfoque y bienestar.
 
+Consulta [la conexión del horario a Google Calendar](docs/CALENDAR_ACADEMICO.md): activación, actualizaciones, retiros y reintentos sin duplicados.
+
 ## Funciones
 
-- Cursos y notas: evaluaciones ponderadas, nota necesaria en lo pendiente y estados de aprobación/riesgo; escala y redondeo configurables por materia. Horario semanal exportable a Calendar, temporizador de estudio persistente y bienestar privado.
+- Cursos y notas: evaluaciones ponderadas, nota necesaria en lo pendiente y estados de aprobación/riesgo; escala y redondeo configurables por materia. Horario semanal conectado a Google Calendar con activación personal y reintentos, o exportable por archivo, temporizador de estudio persistente y bienestar privado.
 - Mi agenda diaria: tareas de estudios, personales y de casa; fecha, prioridad, edición y seguimiento. Hábitos diarios con marcas de los últimos siete días en horario de Perú.
 
 - Registrar ingresos, gastos y transferencias entre cualquier par de cuentas, incluido efectivo al banco, con comisión opcional. Las transferencias no son gastos, salvo su comisión.

@@ -36,6 +36,7 @@ export default function Cursos() {
     [error, setError] = useState(""),
     [formError, setFormError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
   const [editor, setEditor] = useState<CourseForm | null>(null),
     [evaluation, setEvaluation] = useState<AssessmentForm | null>(null),
     [removing, setRemoving] = useState<{
@@ -65,10 +66,18 @@ export default function Cursos() {
     setBusy(true);
     setFormError("");
     try {
-      await req("/student" + path, {
+      const result = await req<{
+        calendar_sync?: { pending: boolean; message?: string };
+      }>("/student" + path, {
         method,
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
+      setNotice(
+        result.calendar_sync?.pending
+          ? "Guardado en Balance. Calendar pendiente: " +
+              (result.calendar_sync.message || "reintenta desde Horario")
+          : "",
+      );
       close();
       await load();
     } catch (e) {
@@ -89,6 +98,11 @@ export default function Cursos() {
   }
   return (
     <div className="stack student-courses">
+      {notice && (
+        <p className="success-msg" role="status">
+          {notice}
+        </p>
+      )}
       <div className="student-toolbar">
         <p className="muted">
           Tu regla inicial: 11 de 20, redondeando desde 10.5. Puedes ajustarla
@@ -463,7 +477,7 @@ export default function Cursos() {
             <p>
               Eliminar «{removing.title}»
               {removing.course
-                ? " también elimina sus evaluaciones y clases. Sus tareas y sesiones de estudio se conservan sin curso"
+                ? " también elimina sus evaluaciones y clases, y retira sus series vinculadas en Google Calendar. Sus tareas y sesiones de estudio se conservan sin curso"
                 : ""}
               . No se puede deshacer.
             </p>

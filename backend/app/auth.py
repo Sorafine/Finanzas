@@ -226,13 +226,25 @@ def google_token():
         raise HTTPException(503, 'No se pudo leer tu conexión de Google; revisa el respaldo de la clave') from None
 
 
-def save_google_token(credentials, account_key=None):
+def save_google_token(credentials, account_key=None, previous_info=None):
     info = json.loads(credentials.to_json())
     if account_key:
         info['finanzas_account_key'] = account_key
     encrypted = cipher().encrypt(json.dumps(info).encode()).decode()
     with registry() as db:
+        if previous_info is not None:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT encrypted FROM google_credentials WHERE user_id=?', (identity().user_id,)).fetchone()
+            if not row:
+                return False
+            try:
+                current = json.loads(cipher().decrypt(row['encrypted'].encode()))
+            except (InvalidToken, ValueError):
+                return False
+            if current != previous_info:
+                return False
         db.execute('INSERT INTO google_credentials VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET encrypted=excluded.encrypted', (identity().user_id, encrypted))
+    return True
 
 
 router = APIRouter(prefix='/auth', tags=['Sesión'])

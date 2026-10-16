@@ -84,8 +84,8 @@ export default function Perfil({
         <h2>Conexiones</h2>
         <p className="muted">
           Gmail revisa comprobantes financieros; Calendar gestiona recordatorios
-          de pagos. El horario académico se exporta desde Horario. No se leen ni
-          registran entregas universitarias automáticamente.
+          de pagos. El horario académico se conecta o se exporta desde Horario.
+          No se leen ni registran entregas universitarias automáticamente.
         </p>
         <div className="settings-line">
           <Mail size={21} />
@@ -112,8 +112,9 @@ export default function Perfil({
           <div className="grow">
             <strong>Google Calendar</strong>
             <small>
-              Recordatorios opcionales para tus pagos. Cada pago se sincroniza
-              desde sus opciones.
+              Recordatorios opcionales de pagos y sincronización del horario
+              académico. Los pagos se gestionan desde Pagos y las clases desde
+              Horario.
             </small>
           </div>
           <button className="secondary" onClick={onPayments}>

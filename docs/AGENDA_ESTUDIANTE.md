@@ -45,7 +45,7 @@ Las tareas existentes se conservan. Ahora puedes vincularlas a un curso y manten
 
 En **Horario → Agregar clase**, elige curso, día de lunes a domingo, inicio, fin y aula o enlace opcional. Son clases semanales, en hora de Perú. Se pueden editar y eliminar; el servidor rechaza cruces de horario y clases cuya hora final no sea posterior al inicio del mismo día.
 
-**Exportar 16 semanas** descarga un archivo `.ics` con 16 ocurrencias semanales por clase, desde la siguiente fecha correspondiente. Puedes importarlo en Google Calendar u otro calendario. No hay sincronización académica automática; evita importarlo repetidamente para no duplicar eventos. Cambiar una clase en Balance no cambia los eventos ya importados.
+**Exportar 16 semanas** descarga un archivo `.ics` con 16 ocurrencias semanales por clase, desde la siguiente fecha correspondiente. Puedes importarlo en Google Calendar u otro calendario. La conexión directa se activa en el cuadro Google Calendar de Horario; consulta [Calendar académico](CALENDAR_ACADEMICO.md). Evita usar a la vez conexión e importación para las mismas clases. Cambiar una clase en Balance no cambia los eventos ya importados por archivo.
 
 Eliminar un curso elimina sus evaluaciones y clases después de confirmarlo. Conserva sus tareas y sesiones de estudio, desvinculadas del curso.
 
@@ -68,7 +68,7 @@ El porcentaje de hábitos corresponde a las marcas de los últimos siete días r
 
 ## Google y finanzas
 
-El perfil conserva las conexiones reales. Gmail revisa comprobantes financieros y Calendar gestiona recordatorios de pagos, como antes. **No se detectan automáticamente avisos universitarios ni entregas desde Gmail.** El horario académico usa la exportación `.ics`, sin mostrar una sincronización que no existe. El cuadro de dinero utiliza el disponible real registrado y no inventa un presupuesto semanal.
+El perfil conserva las conexiones reales. Gmail revisa comprobantes financieros y Calendar gestiona recordatorios de pagos, como antes. **No se detectan automáticamente avisos universitarios ni entregas desde Gmail.** El horario académico se conecta directamente a Calendar si cada usuario lo activa en Horario; también conserva la exportación `.ics` como alternativa. El cuadro de dinero utiliza el disponible real registrado y no inventa un presupuesto semanal.
 
 ## Datos y actualización
 
@@ -87,6 +87,6 @@ Recarga con Ctrl+F5. Para uso solo local, sustituye el último comando por `serv
 
 ## Validación
 
-Compilación TypeScript/Vite y **124 pruebas del servidor** correctas. Incluyen 10.49/10.5/10.51, redondeo solo al final, cero frente a pendiente, pesos decimales, esquemas incompletos, otras escalas, recuperación, imposibilidad matemática y aprobación asegurada. También se probaron aislamiento/CSRF, migraciones, tareas por curso, borrados relacionados, cruces de horario, sueño, ánimo, semanas de Perú, pausa/continuación y guardado único del temporizador.
+Compilación TypeScript/Vite y **141 pruebas del servidor** correctas. Incluyen 10.49/10.5/10.51, redondeo solo al final, cero frente a pendiente, pesos decimales, esquemas incompletos, otras escalas, recuperación, imposibilidad matemática y aprobación asegurada. También se probaron aislamiento/CSRF, migraciones, tareas por curso, borrados relacionados, cruces de horario, sueño, ánimo, semanas de Perú, pausa/continuación y guardado único del temporizador.
 
 Se recorrieron las nuevas pantallas en Chromium, ambos temas y anchos 320, 390, 768, 901, 1199, 1637 y 1920, sin desbordamientos y con contraste legible. Se verificaron formularios reales, exportación `.ics`, persistencia al recargar, acceso móvil a todas las herramientas y ausencia de cambios financieros. Estas pruebas usan perfiles temporales; no sustituyen la prueba física de Windows/iPhone ni el consentimiento real de Google.

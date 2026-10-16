@@ -12,7 +12,7 @@ Al iniciar sesión se muestra un selector con **Mis finanzas** y **Mi agenda dia
 - **Resumen:** pendientes, tareas para hoy o antes y hábitos hechos hoy. No hay datos de ejemplo ni puntuaciones inventadas.
 - **Dos apariencias:** Día/Noche/Sistema. El contenido queda centrado en el espacio libre junto al menú y aprovecha la pantalla completa en móvil.
 
-La vista vuelve a consultar los datos al regresar a la pestaña y cada minuto mientras está visible. Al pasar medianoche, las marcas se presentan para el nuevo día de Perú. No envía notificaciones, no crea eventos en Calendar ni programa alarmas para tareas o hábitos.
+La vista vuelve a consultar los datos al regresar a la pestaña y cada minuto mientras está visible. Al pasar medianoche, las marcas se presentan para el nuevo día de Perú. No envía notificaciones ni programa alarmas para tareas o hábitos. Las clases del horario sí se pueden sincronizar con Calendar al activar la conexión personal; consulta [Calendar académico](CALENDAR_ACADEMICO.md).
 
 ## Privacidad y conservación
 
@@ -48,7 +48,7 @@ Para uso solo local, sustituye el último comando por `py -3 scripts/manage.py s
 
 ## Comprobaciones de esta etapa
 
-Compilación TypeScript/Vite y 124 pruebas del servidor correctas. Se verificaron creación, edición, finalización, reapertura y eliminación de tareas; marcas diarias, reintentos, desmarcado, cambio de fecha de Perú y aislamiento entre cuentas. Las pruebas comprueban que estas acciones no cambian el resumen financiero y que las actualizaciones de tablas conservan los registros.
+Compilación TypeScript/Vite y 141 pruebas del servidor correctas. Se verificaron creación, edición, finalización, reapertura y eliminación de tareas; marcas diarias, reintentos, desmarcado, cambio de fecha de Perú y aislamiento entre cuentas. Las pruebas comprueban que estas acciones no cambian el resumen financiero y que las actualizaciones de tablas conservan los registros.
 
 Se comprobaron formularios, contraste, centrado y ausencia de desbordamiento horizontal en Chromium a 320, 390, 768, 901, 1199, 1637, 1920 y 2560 píxeles en ambos temas. Se verificó el acceso desde Inicio y desde Perfil en móvil. Los recorridos previos de la app financiera se mantienen; estas comprobaciones usan bases temporales y no sustituyen una prueba en Safari/iPhone o Windows reales.
 

@@ -3,6 +3,9 @@ import { Plus, Pencil, Trash2, Download } from "lucide-react";
 import { req, localToday } from "../shared/api";
 import { ClassTime, Course, studentApi, weekdays } from "../shared/student";
 import Modal from "../shared/Modal";
+import StudentCalendar, {
+  StudentCalendarStatus,
+} from "../shared/StudentCalendar";
 type Editor = {
   id?: number;
   course_id: string;
@@ -11,7 +14,10 @@ type Editor = {
   ends: string;
   room: string;
 };
-export default function Horario() {
+export default function Horario({ onConnect }: { onConnect: () => void }) {
+  const [revision, setRevision] = useState(0),
+    [calendar, setCalendar] = useState<StudentCalendarStatus | null>(null),
+    [notice, setNotice] = useState("");
   const [classes, setClasses] = useState<ClassTime[]>([]),
     [courses, setCourses] = useState<Course[]>([]),
     [editor, setEditor] = useState<Editor | null>(null),
@@ -28,6 +34,7 @@ export default function Horario() {
       ]);
       setCourses(c);
       setClasses(s);
+      setRevision((v) => v + 1);
       setError("");
     } catch (e) {
       setError((e as Error).message);
@@ -54,7 +61,9 @@ export default function Horario() {
     setBusy(true);
     setFormError("");
     try {
-      await req("/student/classes" + (editor.id ? "/" + editor.id : ""), {
+      const result = await req<{
+        calendar_sync?: { pending: boolean; message?: string };
+      }>("/student/classes" + (editor.id ? "/" + editor.id : ""), {
         method: editor.id ? "PUT" : "POST",
         body: JSON.stringify({
           course_id: Number(editor.course_id),
@@ -65,6 +74,12 @@ export default function Horario() {
         }),
       });
       setEditor(null);
+      setNotice(
+        result.calendar_sync?.pending
+          ? "Guardado en Balance. Calendar pendiente: " +
+              (result.calendar_sync.message || "reintenta la sincronización")
+          : "Clase guardada.",
+      );
       await load();
     } catch (e) {
       setFormError((e as Error).message);
@@ -134,6 +149,16 @@ export default function Horario() {
     (new Date(localToday() + "T12:00:00Z").getUTCDay() + 6) % 7;
   return (
     <div className="stack">
+      <StudentCalendar
+        revision={revision}
+        onConnect={onConnect}
+        onStatus={setCalendar}
+      />
+      {notice && (
+        <p className="success-msg" role="status">
+          {notice}
+        </p>
+      )}
       <div className="student-toolbar">
         <p className="muted">
           Clases semanales · horario de Perú. Crea tus cursos antes de añadir
@@ -193,6 +218,16 @@ export default function Horario() {
                     style={{ borderLeftColor: c.color }}
                   >
                     <strong>{c.course_title}</strong>
+                    {calendar?.enabled && (
+                      <small className="student-calendar-class-state">
+                        {calendar.connected &&
+                        calendar.classes.some(
+                          (s) => s.class_id === c.id && s.synced,
+                        )
+                          ? "Calendar: sincronizado"
+                          : "Calendar: pendiente"}
+                      </small>
+                    )}
                     <p>
                       {c.starts}–{c.ends}
                     </p>
@@ -231,8 +266,9 @@ export default function Horario() {
       )}
       <p className="muted student-caption">
         La exportación crea un archivo .ics con 16 ocurrencias por clase. Puedes
-        importarlo en Google Calendar u otro calendario. No hay sincronización
-        automática; evita importar dos veces el mismo horario.
+        importarlo en Google Calendar u otro calendario. Si activas la conexión,
+        no importes también el archivo: duplicaría las clases. Los eventos
+        importados por archivo no se vinculan automáticamente.
       </p>
       {editor && (
         <Modal
@@ -328,7 +364,11 @@ export default function Horario() {
           }}
         >
           <div className="stack">
-            <p>¿Eliminar esta clase de {removing.course_title} del horario?</p>
+            <p>
+              ¿Eliminar esta clase de {removing.course_title} del horario? Si
+              está vinculada a Google Calendar, también se retirará su serie de
+              clases.
+            </p>
             {formError && (
               <p className="error" role="alert">
                 {formError}

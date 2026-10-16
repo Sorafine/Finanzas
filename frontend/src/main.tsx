@@ -399,7 +399,7 @@ function App({
             onWellbeing={() => go("bienestar")}
           />
         ) : view === "horario" ? (
-          <Horario key={version} />
+          <Horario key={version} onConnect={() => go("conexiones")} />
         ) : view === "cursos" ? (
           <Cursos key={version} />
         ) : view === "enfoque" ? (

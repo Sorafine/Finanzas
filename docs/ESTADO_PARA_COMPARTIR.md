@@ -26,7 +26,7 @@ Para el uso local indicado por el propietario, la app puede probarse en su compu
 | Metas | Objetivo de ahorro, fecha opcional, ocho iconos, progreso y aportes informativos. Reserva opcional de lo ahorrado para reducir Libre para gastar; no transfiere dinero. |
 | Gmail | Cada persona conecta su cuenta. Revisión periódica mientras Mis finanzas o Revisar gastos está visible; propone comprobantes de consumos realizados en soles y descarta publicidad, recordatorios, transferencias y retiros. El usuario revisa importe/cuenta/fecha/tarjeta y confirma, descarta o vincula a un consumo existente. Avisos por coincidencias de importe y fecha. |
 | Google Calendar | Recordatorios de pagos únicos o recurrentes. Las series de fin de mes conservan el día habitual cuando se pasa por febrero. Pausar un pago intenta retirar su recordatorio. |
-| Agenda del estudiante | Inicio con clases y entregas, cursos con notas ponderadas y regla 10.5 → 11 configurable; cálculo de riesgo y nota necesaria. Horario semanal exportable a .ics, temporizador persistente, sesiones de estudio y bienestar privados. No importa avisos universitarios desde Gmail ni sincroniza automáticamente clases con Google. |
+| Agenda del estudiante | Inicio con clases y entregas, cursos con notas ponderadas y regla 10.5 → 11 configurable; cálculo de riesgo y nota necesaria. Horario semanal conectado a Calendar con activación personal, IDs estables, actualización y retiro con reintentos; exportación .ics alternativa, temporizador persistente, sesiones de estudio y bienestar privados. No importa avisos universitarios desde Gmail. |
 | Mi agenda diaria | Tareas privadas de estudios, personales y de casa: fechas, prioridades, edición y estados. Hábitos diarios con marcas de los últimos siete días en horario de Perú. No crea alarmas ni eventos de tareas. |
 | Administración | Un propietario: habilitar/pausar registro y Google; ver estados de usuarios/conexiones; pausar/reactivar accesos y retirar conexiones Google. No muestra contraseñas, tokens ni finanzas de otros usuarios. |
 | Contraseñas y sesiones | Cambio de contraseña y recuperación con código de un solo uso guardado por cada usuario;  Contraseñas con hash scrypt, limitación de intentos, sesiones con caducidad de siete días, cookie HttpOnly/SameSite y Secure con HTTPS, protección CSRF y cierre de sesiones al pausar o restablecer contraseña. |
@@ -63,7 +63,7 @@ Para abrir el registro al público en general, quedan pendientes la ampliación/
 
 ## Comprobaciones realizadas en esta revisión
 
-- Compilación TypeScript y Vite correcta; 124 pruebas automatizadas del backend correctas, con bases temporales y Google simulado.
+- Compilación TypeScript y Vite correcta; 141 pruebas automatizadas del backend correctas, con bases temporales y Google simulado.
 - Recorrido en Chromium con datos de ejemplo: saldo disponible, gasto con vista previa, transferencia de efectivo a banco, ingreso con fecha de ayer, confirmación de pago, comprobante, historial, exportación CSV filtrada, periodos de reportes y creación de metas.
 - Recorrido adicional en navegador: consumo con crédito, pago de tarjeta sin doble gasto, informe individual, editar/anular/auditar, reserva de meta, deuda programada, vincular un gasto existente y recuperar acceso con código.
 - Las nueve vistas y los paneles de movimiento/pago se comprobaron sin desbordamiento horizontal en anchos de 320, 390, 768, 1199 y 1637 píxeles. Se revisaron capturas del diseño Balance en escritorio y móvil.
