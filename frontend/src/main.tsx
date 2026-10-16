@@ -11,6 +11,9 @@ import {
   Target,
   CircleUserRound,
   ListTodo,
+  BookOpen,
+  Timer,
+  Leaf,
 } from "lucide-react";
 import AuthGate from "./shared/AuthGate";
 import Modal from "./shared/Modal";
@@ -25,6 +28,11 @@ import {
 } from "./shared/api";
 import MiDinero from "./modules/MiDinero";
 import MiDia from "./modules/MiDia";
+import AgendaInicio from "./modules/AgendaInicio";
+import Cursos from "./modules/Cursos";
+import Horario from "./modules/Horario";
+import Enfoque from "./modules/Enfoque";
+import Bienestar from "./modules/Bienestar";
 import Espacios from "./modules/Espacios";
 import Dashboard from "./modules/Dashboard";
 import Planes from "./modules/Planes";
@@ -42,7 +50,12 @@ import "./reference-theme.css";
 const pages = {
   inicio: "Inicio",
   finanzas: "Mis finanzas",
+  agenda: "Inicio del estudiante",
   dia: "Mi agenda diaria",
+  horario: "Horario de clases",
+  cursos: "Cursos y notas",
+  enfoque: "Enfoque",
+  bienestar: "Bienestar",
   dinero: "Mi dinero",
   pagos: "Pagos",
   historial: "Historial",
@@ -60,7 +73,12 @@ type RecordKind = "expense" | "income" | "transfer";
 const navigation = [
   { id: "inicio", name: "Inicio", icon: House },
   { id: "finanzas", name: "Mis finanzas", icon: Wallet },
+  { id: "agenda", name: "Inicio de agenda", icon: House },
   { id: "dia", name: "Mi agenda", icon: ListTodo },
+  { id: "horario", name: "Horario", icon: CalendarDays },
+  { id: "cursos", name: "Cursos y notas", icon: BookOpen },
+  { id: "enfoque", name: "Enfoque", icon: Timer },
+  { id: "bienestar", name: "Bienestar", icon: Leaf },
   { id: "dinero", name: "Mi dinero", icon: Wallet },
   { id: "pagos", name: "Pagos", icon: CalendarDays },
   { id: "historial", name: "Historial", icon: ReceiptText },
@@ -78,9 +96,21 @@ const financeViews: View[] = [
   "registrar",
   "revisar",
 ];
+const agendaViews: View[] = [
+  "agenda",
+  "dia",
+  "horario",
+  "cursos",
+  "enfoque",
+  "bienestar",
+];
 type Space = "finance" | "agenda" | "home";
 const spaceFor = (view: View): Space =>
-  financeViews.includes(view) ? "finance" : view === "dia" ? "agenda" : "home";
+  financeViews.includes(view)
+    ? "finance"
+    : agendaViews.includes(view)
+      ? "agenda"
+      : "home";
 function App({
   username,
   onLogout,
@@ -141,7 +171,11 @@ function App({
   }
   useEffect(() => {
     if (financeViews.includes(view)) void load();
-    if (view === "inicio" || view === "dia" || financeViews.includes(view))
+    if (
+      view === "inicio" ||
+      agendaViews.includes(view) ||
+      financeViews.includes(view)
+    )
       setSpace(spaceFor(view));
   }, [view]);
   useEffect(() => {
@@ -189,12 +223,14 @@ function App({
       item.id === "inicio" ||
       item.id === "perfil" ||
       (space === "finance" && financeViews.includes(item.id)) ||
-      (space === "agenda" && item.id === "dia"),
+      (space === "agenda" && agendaViews.includes(item.id)),
   );
-  const mobileNavigation = visibleNavigation.filter(
-    (item) =>
-      space !== "finance" ||
-      ["inicio", "finanzas", "pagos", "historial", "perfil"].includes(item.id),
+  const mobileNavigation = visibleNavigation.filter((item) =>
+    space === "finance"
+      ? ["inicio", "finanzas", "pagos", "historial", "perfil"].includes(item.id)
+      : space === "agenda"
+        ? ["agenda", "dia", "horario", "cursos", "perfil"].includes(item.id)
+        : true,
   );
   const date = new Intl.DateTimeFormat("es-PE", {
     weekday: "long",
@@ -268,7 +304,7 @@ function App({
               <BrandMark decorative />
             </button>
             <div>
-              {view === "finanzas" && (
+              {(view === "finanzas" || view === "agenda") && (
                 <div className="today-label">
                   {date.charAt(0).toUpperCase() + date.slice(1)}
                 </div>
@@ -279,7 +315,9 @@ function App({
                 </button>
               )}
               <h1 ref={heading} tabIndex={-1}>
-                {view === "inicio" ? `Hola, ${username}` : pages[view]}
+                {view === "inicio" || view === "agenda"
+                  ? `Hola, ${username}`
+                  : pages[view]}
               </h1>
             </div>
           </div>
@@ -329,7 +367,7 @@ function App({
         {view === "inicio" ? (
           <Espacios
             onFinance={() => go("finanzas")}
-            onAgenda={() => go("dia")}
+            onAgenda={() => go("agenda")}
           />
         ) : isFinancial && loading ? (
           <div className="panel empty" role="status">
@@ -350,6 +388,24 @@ function App({
             onReview={() => go("revisar")}
             onReports={() => go("reportes")}
           />
+        ) : view === "agenda" ? (
+          <AgendaInicio
+            key={version}
+            onTasks={() => go("dia")}
+            onSchedule={() => go("horario")}
+            onCourses={() => go("cursos")}
+            onFinance={() => go("finanzas")}
+            onFocus={() => go("enfoque")}
+            onWellbeing={() => go("bienestar")}
+          />
+        ) : view === "horario" ? (
+          <Horario key={version} />
+        ) : view === "cursos" ? (
+          <Cursos key={version} />
+        ) : view === "enfoque" ? (
+          <Enfoque key={version} />
+        ) : view === "bienestar" ? (
+          <Bienestar key={version} />
         ) : view === "dia" ? (
           <MiDia key={version} />
         ) : view === "dinero" ? (

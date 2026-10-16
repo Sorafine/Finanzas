@@ -54,6 +54,7 @@ class TaskIn(TitleIn):
     area: Literal['study', 'personal', 'home'] = 'personal'
     due_on: date | None = None
     priority: Literal['normal', 'high'] = 'normal'
+    course_id: int | None = None
 
     @field_validator('due_on')
     @classmethod
@@ -73,9 +74,10 @@ def overview():
     today = today_in_peru()
     days = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
     with connection() as db:
-        tasks = [dict(row) for row in db.execute('''SELECT * FROM personal_tasks
-            ORDER BY completed, CASE WHEN due_on IS NULL THEN 1 ELSE 0 END,
-            due_on, CASE WHEN priority='high' THEN 0 ELSE 1 END, id DESC''')]
+        tasks = [dict(row) for row in db.execute('''SELECT t.*,c.title AS course_title,c.color AS course_color FROM personal_tasks t
+            LEFT JOIN student_courses c ON c.id=t.course_id
+            ORDER BY t.completed, CASE WHEN t.due_on IS NULL THEN 1 ELSE 0 END,
+            t.due_on, CASE WHEN t.priority='high' THEN 0 ELSE 1 END, t.id DESC''')]
         habits = [dict(row) for row in db.execute('SELECT * FROM personal_habits ORDER BY id')]
         marks = {}
         for row in db.execute('SELECT habit_id,day FROM personal_habit_days WHERE day>=? AND day<=?', (days[0], days[-1])):
@@ -88,16 +90,22 @@ def overview():
 @router.post('/tasks', status_code=201)
 def add_task(item: TaskIn):
     with connection() as db:
-        row = db.execute('INSERT INTO personal_tasks(title,area,due_on,priority) VALUES(?,?,?,?)',
-                         (item.title, item.area, item.due_on.isoformat() if item.due_on else None, item.priority))
+        if item.course_id is not None:
+            from .student_routes import course_exists
+            course_exists(db, item.course_id)
+        row = db.execute('INSERT INTO personal_tasks(title,area,due_on,priority,course_id) VALUES(?,?,?,?,?)',
+                         (item.title, item.area, item.due_on.isoformat() if item.due_on else None, item.priority, item.course_id))
         return {'id': row.lastrowid}
 
 
 @router.put('/tasks/{task_id}')
 def edit_task(task_id: int, item: TaskIn):
     with connection() as db:
-        row = db.execute('UPDATE personal_tasks SET title=?,area=?,due_on=?,priority=? WHERE id=?',
-                         (item.title, item.area, item.due_on.isoformat() if item.due_on else None, item.priority, task_id))
+        if item.course_id is not None:
+            from .student_routes import course_exists
+            course_exists(db, item.course_id)
+        row = db.execute('UPDATE personal_tasks SET title=?,area=?,due_on=?,priority=?,course_id=? WHERE id=?',
+                         (item.title, item.area, item.due_on.isoformat() if item.due_on else None, item.priority, item.course_id, task_id))
         if not row.rowcount:
             raise HTTPException(404, 'Tarea no encontrada')
         return {'updated': True}

@@ -82,6 +82,11 @@ export default function Perfil({
       </section>
       <section className="panel">
         <h2>Conexiones</h2>
+        <p className="muted">
+          Gmail revisa comprobantes financieros; Calendar gestiona recordatorios
+          de pagos. El horario académico se exporta desde Horario. No se leen ni
+          registran entregas universitarias automáticamente.
+        </p>
         <div className="settings-line">
           <Mail size={21} />
           <div className="grow">

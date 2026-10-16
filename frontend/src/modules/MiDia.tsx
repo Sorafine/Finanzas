@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { req } from "../shared/api";
 import Modal from "../shared/Modal";
+import { Course, studentApi } from "../shared/student";
 
 type Area = "study" | "personal" | "home";
 type Task = {
@@ -20,6 +21,9 @@ type Task = {
   due_on: string | null;
   priority: "normal" | "high";
   completed: number;
+  course_id: number | null;
+  course_title: string | null;
+  course_color: string | null;
 };
 type Habit = { id: number; title: string; days: string[] };
 type Overview = {
@@ -35,6 +39,7 @@ type Editor = {
   area: Area;
   due_on: string;
   priority: "normal" | "high";
+  course_id: string;
 };
 const areaNames: Record<Area, string> = {
   study: "Estudios",
@@ -48,6 +53,7 @@ const shortDate = (day: string) =>
     timeZone: "America/Lima",
   }).format(new Date(day + "T12:00:00-05:00"));
 export default function MiDia() {
+  const [courses, setCourses] = useState<Course[]>([]);
   const [data, setData] = useState<Overview | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -61,7 +67,12 @@ export default function MiDia() {
   const [formError, setFormError] = useState("");
   async function load() {
     try {
-      setData(await req<Overview>("/organizer"));
+      const [overview, subjects] = await Promise.all([
+        req<Overview>("/organizer"),
+        studentApi<Course[]>("/courses"),
+      ]);
+      setData(overview);
+      setCourses(subjects);
       setError("");
     } catch (e) {
       setError((e as Error).message);
@@ -108,6 +119,10 @@ export default function MiDia() {
     setFormError("");
     setEditor({
       kind,
+      course_id:
+        item && "course_id" in item && item.course_id
+          ? String(item.course_id)
+          : "",
       id: item?.id,
       title: item?.title || "",
       area: item && "area" in item ? item.area : "study",
@@ -243,7 +258,7 @@ export default function MiDia() {
                   <div className="grow">
                     <strong>{task.title}</strong>
                     <div className="day-task-meta">
-                      <span>{areaNames[task.area]}</span>
+                      <span>{task.course_title || areaNames[task.area]}</span>
                       {task.priority === "high" && (
                         <span className="day-priority">Prioridad alta</span>
                       )}
@@ -433,6 +448,9 @@ export default function MiDia() {
                   ? {
                       title: editor.title,
                       area: editor.area,
+                      course_id: editor.course_id
+                        ? Number(editor.course_id)
+                        : null,
                       due_on: editor.due_on || null,
                       priority: editor.priority,
                     }
@@ -471,6 +489,27 @@ export default function MiDia() {
                     {Object.entries(areaNames).map(([v, n]) => (
                       <option key={v} value={v}>
                         {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Curso (opcional)
+                  <select
+                    aria-label="Curso de la tarea"
+                    value={editor.course_id}
+                    onChange={(e) =>
+                      setEditor({
+                        ...editor,
+                        course_id: e.target.value,
+                        area: e.target.value ? "study" : editor.area,
+                      })
+                    }
+                  >
+                    <option value="">Sin curso</option>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title}
                       </option>
                     ))}
                   </select>

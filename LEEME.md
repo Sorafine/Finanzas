@@ -27,8 +27,11 @@ Consulta [el diseño basado en el HTML](docs/DISENO_HTML.md): temas Día/Noche/S
 
 Consulta [el espacio personal y las siguientes etapas](docs/ECOSISTEMA.md): Mi agenda diaria con tareas, estudios, hábitos diarios y contenido centrado en ambos temas.
 
+Consulta [la agenda del estudiante](docs/AGENDA_ESTUDIANTE.md): horario, cursos y notas ponderadas, riesgo de desaprobar con regla 10.5 → 11, enfoque y bienestar.
+
 ## Funciones
 
+- Cursos y notas: evaluaciones ponderadas, nota necesaria en lo pendiente y estados de aprobación/riesgo; escala y redondeo configurables por materia. Horario semanal exportable a Calendar, temporizador de estudio persistente y bienestar privado.
 - Mi agenda diaria: tareas de estudios, personales y de casa; fecha, prioridad, edición y seguimiento. Hábitos diarios con marcas de los últimos siete días en horario de Perú.
 
 - Registrar ingresos, gastos y transferencias entre cualquier par de cuentas, incluido efectivo al banco, con comisión opcional. Las transferencias no son gastos, salvo su comisión.

@@ -22,12 +22,14 @@ Los cambios no crean movimientos, no descuentan saldo y no modifican el cálculo
 
 La app sigue necesitando el servidor y conexión. No se guardan tareas ni hábitos en localStorage; ese almacenamiento solo conserva la preferencia de apariencia.
 
+## Agenda del estudiante ampliada
+
+Ya están disponibles Inicio de agenda, horario semanal, Cursos y notas con cálculo de aprobación, Enfoque y Bienestar. Consulta [la guía de la agenda del estudiante](AGENDA_ESTUDIANTE.md) para la regla 10.5 → 11, los estados de riesgo, la exportación a Calendar y los límites reales de Gmail.
+
 ## Propuesta para siguientes etapas (todavía no implementadas)
 
-1. **Agenda de estudios:** cursos, horario semanal, exámenes y entregas con vista de calendario. Decidir si basta con las tareas o hace falta un calendario propio antes de añadir campos.
-2. **Enfoque:** temporizador de estudio con pausas, enlazado opcionalmente a una tarea. Sin bloquear el dispositivo ni afirmar que habrá alarmas con la aplicación cerrada.
-3. **Proyectos personales:** objetivos no financieros, pasos pequeños y progreso, separados de las metas de ahorro actuales.
-4. **Resumen de la semana:** tareas terminadas, hábitos y gastos para revisar lo que funcionó y preparar la siguiente semana.
+1. **Proyectos personales:** objetivos no financieros, pasos pequeños y progreso, separados de las metas de ahorro actuales.
+2. **Resumen de la semana:** tareas terminadas, hábitos y gastos para revisar lo que funcionó y preparar la siguiente semana.
 
 No se añadieron chat público, comparaciones entre adolescentes, perfiles públicos, seguimiento de ubicación ni acceso familiar automático. Cualquier función para compartir información requiere definir qué decide compartir la persona y con quién.
 
@@ -46,8 +48,8 @@ Para uso solo local, sustituye el último comando por `py -3 scripts/manage.py s
 
 ## Comprobaciones de esta etapa
 
-Compilación TypeScript/Vite y 109 pruebas del servidor correctas. Se verificaron creación, edición, finalización, reapertura y eliminación de tareas; marcas diarias, reintentos, desmarcado, cambio de fecha de Perú y aislamiento entre cuentas. Las pruebas comprueban que estas acciones no cambian el resumen financiero y que las actualizaciones de tablas conservan los registros.
+Compilación TypeScript/Vite y 124 pruebas del servidor correctas. Se verificaron creación, edición, finalización, reapertura y eliminación de tareas; marcas diarias, reintentos, desmarcado, cambio de fecha de Perú y aislamiento entre cuentas. Las pruebas comprueban que estas acciones no cambian el resumen financiero y que las actualizaciones de tablas conservan los registros.
 
 Se comprobaron formularios, contraste, centrado y ausencia de desbordamiento horizontal en Chromium a 320, 390, 768, 901, 1199, 1637, 1920 y 2560 píxeles en ambos temas. Se verificó el acceso desde Inicio y desde Perfil en móvil. Los recorridos previos de la app financiera se mantienen; estas comprobaciones usan bases temporales y no sustituyen una prueba en Safari/iPhone o Windows reales.
 
-El selector de espacios se comprobó sin solicitudes de saldos/cuentas: Agenda funciona sin cargar finanzas. Se verificaron el regreso por el logo, los menús contextuales, la ausencia de los botones globales + Nuevo, el registro de un gasto desde Mis finanzas, el historial y el retorno al selector tras un nuevo inicio de sesión. Recargar una sección con sesión vigente conserva esa sección. Se revisaron doce vistas a 320–2560 píxeles en ambos temas.
+El selector y la lista de tareas se comprobaron sin depender de saldos/cuentas. El nuevo Inicio de agenda consulta el resumen financiero de forma opcional, sin bloquear las herramientas personales si falla. Se verificaron el regreso por el logo, los menús contextuales, la ausencia de los botones globales + Nuevo, el registro de un gasto desde Mis finanzas, el historial y el retorno al selector tras un nuevo inicio de sesión. Recargar una sección con sesión vigente conserva esa sección. Se revisaron doce vistas a 320–2560 píxeles en ambos temas.
